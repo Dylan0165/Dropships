@@ -27,11 +27,12 @@ Trendscraper/trendscraper.db
 Trendscraper/logs/
 Trendscraper/.env
 
-# ── Env files (keep .env.example) ────────────────────────────
-.env
-.env.local
-.env.*.local
-UIcontrol/.env
+# ── Env files ─────────────────────────────────────────────────
+# Private repo — .env files ARE committed so teammates can pull
+# Uncomment these lines if you ever make this repo public:
+# .env
+# .env.local
+# .env.*.local
 
 # ── SQLite databases ─────────────────────────────────────────
 *.db
