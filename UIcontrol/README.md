@@ -151,3 +151,47 @@ Real Next.js/React components are stored in `Websitecomponentscodes/`:
 | checkout-flow | checkout | Cart summary + promo code + CTA |
 
 The Components view in the UI shows these with actual source code preview and copy functionality.
+
+---
+
+## Trendscraper Integration
+
+The dashboard includes a **Trendscraper** view (TrendingUp icon in the sidebar) for AI-powered niche discovery.
+
+### Start the dashboard
+```bash
+cd UIcontrol
+npm run dev
+```
+
+URL: **http://localhost:5173**
+Trendscraper page: **http://localhost:5173** (click the TrendingUp icon in the sidebar)
+
+### Requirements
+
+The Python Trendscraper service must be running on port 8001 for data to load:
+
+```bash
+cd Trendscraper
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
+python main.py
+```
+
+### Environment
+
+`.env` already contains:
+```
+VITE_TRENDSCRAPER_URL=http://localhost:8001
+```
+
+### Features
+
+- Real-time scraper status (online/offline indicator)
+- Run history with status badges
+- Niche cards with trend score, competition level and market size
+- One-click approve/reject with optimistic UI updates
+- Product table per niche (sorted by margin)
+- Manual "Nu uitvoeren" trigger button
+- Auto-polling: status every 30s, niches every 10s

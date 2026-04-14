@@ -1,0 +1,62 @@
+# ── Dependencies ──────────────────────────────────────────────
+node_modules/
+.pnp
+.pnp.js
+
+# ── Build outputs ─────────────────────────────────────────────
+dist/
+build/
+.next/
+out/
+.output/
+
+# ── Python ────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+*.egg-info/
+.eggs/
+dist/
+*.dist-info/
+
+# ── Trendscraper runtime ──────────────────────────────────────
+Trendscraper/trendscraper.db
+Trendscraper/logs/
+Trendscraper/.env
+
+# ── Env files (keep .env.example) ────────────────────────────
+.env
+.env.local
+.env.*.local
+UIcontrol/.env
+
+# ── SQLite databases ─────────────────────────────────────────
+*.db
+*.sqlite
+*.sqlite3
+
+# ── Logs ──────────────────────────────────────────────────────
+*.log
+logs/
+
+# ── OS / editor ───────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.vscode/settings.json
+*.swp
+*.swo
+
+# ── Vite / cache ──────────────────────────────────────────────
+.vite/
+*.tsbuildinfo
+
+# ── Bun ───────────────────────────────────────────────────────
+.bun/
+bun.lockb
+
+# ── Test coverage ─────────────────────────────────────────────
+coverage/
+.nyc_output/

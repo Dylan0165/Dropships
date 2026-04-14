@@ -8,10 +8,11 @@ import { StoresView } from './components/views/StoresView'
 import { ComponentsView } from './components/views/ComponentsView'
 import { DashboardView } from './components/views/DashboardView'
 import { SettingsView } from './components/views/SettingsView'
+import { TrendScraperView } from './components/views/TrendScraperView'
 import { usePipeline } from './hooks/usePipeline'
 import type { AgentId } from './types'
 
-type View = 'pipeline' | 'stores' | 'components' | 'runs' | 'dashboard' | 'settings'
+type View = 'pipeline' | 'stores' | 'components' | 'runs' | 'dashboard' | 'settings' | 'trendscraper'
 
 export default function App() {
   const [view, setView] = useState<View>('pipeline')
@@ -91,6 +92,7 @@ export default function App() {
             {view === 'stores' && <StoresView />}
             {view === 'components' && <ComponentsView />}
             {view === 'dashboard' && <DashboardView />}
+            {view === 'trendscraper' && <TrendScraperView />}
             {view === 'settings' && <SettingsView />}
           </div>
         </div>

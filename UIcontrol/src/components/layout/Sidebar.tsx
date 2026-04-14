@@ -1,15 +1,16 @@
-import { Workflow, Store, Package, History, BarChart2, Settings } from 'lucide-react'
+import { Workflow, Store, Package, History, BarChart2, Settings, TrendingUp } from 'lucide-react'
 import clsx from 'clsx'
 
-type View = 'pipeline' | 'stores' | 'components' | 'runs' | 'dashboard' | 'settings'
+type View = 'pipeline' | 'stores' | 'components' | 'runs' | 'dashboard' | 'settings' | 'trendscraper'
 
 const NAV_ITEMS: { view: View; Icon: typeof Workflow; tooltip: string }[] = [
-  { view: 'pipeline',   Icon: Workflow,   tooltip: 'Pipeline' },
-  { view: 'dashboard',  Icon: BarChart2,  tooltip: 'Dashboard' },
-  { view: 'stores',     Icon: Store,      tooltip: 'Stores' },
-  { view: 'components', Icon: Package,    tooltip: 'Components' },
-  { view: 'runs',       Icon: History,    tooltip: 'Runs' },
-  { view: 'settings',   Icon: Settings,   tooltip: 'Settings' },
+  { view: 'pipeline',     Icon: Workflow,    tooltip: 'Pipeline' },
+  { view: 'dashboard',   Icon: BarChart2,   tooltip: 'Dashboard' },
+  { view: 'trendscraper', Icon: TrendingUp,  tooltip: 'Trendscraper' },
+  { view: 'stores',      Icon: Store,       tooltip: 'Stores' },
+  { view: 'components',  Icon: Package,     tooltip: 'Components' },
+  { view: 'runs',        Icon: History,     tooltip: 'Runs' },
+  { view: 'settings',   Icon: Settings,    tooltip: 'Settings' },
 ]
 
 interface Props {
