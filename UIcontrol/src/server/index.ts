@@ -11,6 +11,9 @@ import * as store from './store.js'
 import * as coordinator from './coordinator.js'
 import * as deepseek from './deepseek.js'
 import db from './db.js'
+import { notifyApprovalNeeded } from './whatsapp.js'
+
+const APPROVAL_PIN = process.env.APPROVAL_PIN ?? '1234'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const PORT = parseInt(process.env.PORT ?? '3001', 10)
@@ -44,6 +47,19 @@ function broadcast(event: WsEvent): void {
     if (ws.readyState === WebSocket.OPEN) {
       ws.send(data)
     }
+  }
+
+  // WhatsApp notificatie bij escalatie
+  if (event.type === 'agent_escalation') {
+    const run = store.getRun(event.runId)
+    const payload = event.payload as { severity?: string; reason?: string }
+    notifyApprovalNeeded({
+      agentId: event.agentId ?? 'unknown',
+      niche: run?.niche ?? 'onbekend',
+      severity: payload.severity ?? 'MEDIUM',
+      reason: payload.reason ?? 'Agent heeft goedkeuring nodig',
+      runId: event.runId,
+    }).catch(console.error)
   }
 }
 
@@ -102,6 +118,37 @@ app.post('/api/pipeline/stop', (req, res) => {
     timestamp: new Date().toISOString(),
   })
   res.json({ success: true })
+})
+
+// ── ApprovalApp endpoints ──────────────────────────────────────────────────
+
+app.post('/api/approvals/verify-pin', (req, res) => {
+  const { pin } = req.body
+  res.json({ ok: String(pin) === APPROVAL_PIN })
+})
+
+app.get('/api/approvals/pending', (_req, res) => {
+  const allRuns = store.getAllRuns()
+  const pending: unknown[] = []
+
+  for (const run of allRuns) {
+    if (run.status !== 'running') continue
+    for (const [agentId, agent] of Object.entries(run.agents)) {
+      if (agent.status === 'waiting_approval' && agent.escalation && !agent.escalation.decision) {
+        pending.push({
+          runId: run.runId,
+          agentId,
+          niche: run.niche,
+          severity: agent.escalation.severity,
+          reason: agent.escalation.reason,
+          createdAt: agent.escalation.createdAt,
+          outputJson: agent.outputJson ?? null,
+        })
+      }
+    }
+  }
+
+  res.json(pending)
 })
 
 app.post('/api/pipeline/approve', (req, res) => {
