@@ -1,0 +1,71 @@
+name: Deploy to Tool Server
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          path: /home/student/Dropships
+          clean: false
+
+      - name: Pull latest code
+        run: |
+          cd /home/student/Dropships
+          git pull origin main
+
+      - name: Install UIcontrol dependencies
+        run: |
+          cd /home/student/Dropships/UIcontrol
+          npm install
+
+      - name: Install ApprovalApp dependencies
+        run: |
+          cd /home/student/Dropships/ApprovalApp
+          npm install
+
+      - name: Install Trendscraper dependencies
+        run: |
+          cd /home/student/Dropships/Trendscraper
+          source venv/bin/activate
+          pip install -r requirements.txt --break-system-packages
+          deactivate
+
+      - name: Install WebsiteInspector dependencies
+        run: |
+          cd /home/student/Dropships/WebsiteInspector
+          source venv/bin/activate
+          pip install -r requirements.txt --break-system-packages
+          deactivate
+
+      - name: Restart UIcontrol
+        run: |
+          pm2 restart uicontrol || pm2 start /home/student/Dropships/UIcontrol/dist/server/index.js --name uicontrol
+          pm2 save
+
+      - name: Restart ApprovalApp
+        run: |
+          pm2 restart approvalapp || pm2 start npm --name approvalapp -- --prefix /home/student/Dropships/ApprovalApp run preview
+          pm2 save
+
+      - name: Restart Trendscraper
+        run: |
+          pm2 restart trendscraper || pm2 start /home/student/Dropships/Trendscraper/main.py --name trendscraper --interpreter /home/student/Dropships/Trendscraper/venv/bin/python
+          pm2 save
+
+      - name: Restart WebsiteInspector
+        run: |
+          pm2 restart inspector || pm2 start /home/student/Dropships/WebsiteInspector/main.py --name inspector --interpreter /home/student/Dropships/WebsiteInspector/venv/bin/python
+          pm2 save
+
+      - name: Health check
+        run: |
+          sleep 5
+          curl -f http://localhost:3001/api/health && echo "UIcontrol OK"
+          curl -f http://localhost:8001/health && echo "Trendscraper OK"
