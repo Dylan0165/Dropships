@@ -66,6 +66,115 @@ db.exec(`
     key TEXT PRIMARY KEY,
     value TEXT NOT NULL
   );
+
+  CREATE TABLE IF NOT EXISTS agent_outputs (
+    run_id        TEXT NOT NULL,
+    agent_id      TEXT NOT NULL,
+    output_json   TEXT NOT NULL,
+    completed_at  TEXT NOT NULL,
+    PRIMARY KEY (run_id, agent_id),
+    FOREIGN KEY (run_id) REFERENCES runs(run_id)
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_agent_outputs_run ON agent_outputs(run_id);
 `)
+
+
+// ── Lifecycle events ──────────────────────────────────────────────────────────
+db.exec(`
+  CREATE TABLE IF NOT EXISTS lifecycle_events (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    store_id   TEXT NOT NULL,
+    event_type TEXT NOT NULL,
+    payload    TEXT NOT NULL DEFAULT '{}',
+    created_at TEXT NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_lifecycle_store ON lifecycle_events(store_id);
+  CREATE INDEX IF NOT EXISTS idx_lifecycle_type  ON lifecycle_events(event_type);
+
+  CREATE TABLE IF NOT EXISTS store_products (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    store_id   TEXT NOT NULL,
+    product_id TEXT NOT NULL,
+    title      TEXT NOT NULL DEFAULT '',
+    price      REAL NOT NULL DEFAULT 0,
+    status     TEXT NOT NULL DEFAULT 'active',
+    added_at   TEXT NOT NULL,
+    UNIQUE(store_id, product_id)
+  );
+  CREATE INDEX IF NOT EXISTS idx_store_products ON store_products(store_id);
+
+  -- Skills performance tracking
+  CREATE TABLE IF NOT EXISTS skills_performance (
+    id               INTEGER PRIMARY KEY AUTOINCREMENT,
+    run_id           TEXT NOT NULL,
+    agent_id         TEXT NOT NULL,
+    success          INTEGER NOT NULL DEFAULT 1,
+    attempts         INTEGER NOT NULL DEFAULT 1,
+    duration_ms      INTEGER NOT NULL DEFAULT 0,
+    cost_eur         REAL    NOT NULL DEFAULT 0,
+    validation_errors TEXT   NOT NULL DEFAULT '[]',
+    output_quality   INTEGER NOT NULL DEFAULT 70,
+    created_at       TEXT    NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_skills_agent ON skills_performance(agent_id);
+  CREATE INDEX IF NOT EXISTS idx_skills_run   ON skills_performance(run_id);
+
+  -- Component A/B experiments
+  CREATE TABLE IF NOT EXISTS component_experiments (
+    id             INTEGER PRIMARY KEY AUTOINCREMENT,
+    experiment_id  TEXT NOT NULL UNIQUE,
+    component_name TEXT NOT NULL,
+    variant_a      TEXT NOT NULL,
+    variant_b      TEXT NOT NULL,
+    store_id       TEXT NOT NULL DEFAULT '',
+    impressions_a  INTEGER NOT NULL DEFAULT 0,
+    impressions_b  INTEGER NOT NULL DEFAULT 0,
+    conversions_a  INTEGER NOT NULL DEFAULT 0,
+    conversions_b  INTEGER NOT NULL DEFAULT 0,
+    winner         TEXT,
+    declared_at    TEXT,
+    created_at     TEXT NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_experiments_store ON component_experiments(store_id);
+  CREATE INDEX IF NOT EXISTS idx_experiments_comp  ON component_experiments(component_name);
+`)
+
+// Helper for the runner to persist agent outputs immediately on completion.
+export function saveAgentOutput(runId: string, agentId: string, output: Record<string, unknown>): void {
+  try {
+    db.prepare(
+      `INSERT OR REPLACE INTO agent_outputs (run_id, agent_id, output_json, completed_at)
+       VALUES (?, ?, ?, ?)`,
+    ).run(runId, agentId, JSON.stringify(output), new Date().toISOString())
+  } catch (err) {
+    console.error(`[db] saveAgentOutput(${runId}, ${agentId}) failed:`, err)
+  }
+}
+
+export function getAgentOutput(runId: string, agentId: string): Record<string, unknown> | null {
+  try {
+    const row = db.prepare(
+      `SELECT output_json FROM agent_outputs WHERE run_id = ? AND agent_id = ?`,
+    ).get(runId, agentId) as { output_json: string } | undefined
+    if (!row) return null
+    return JSON.parse(row.output_json) as Record<string, unknown>
+  } catch (err) {
+    console.error(`[db] getAgentOutput(${runId}, ${agentId}) failed:`, err)
+    return null
+  }
+}
+
+export function getResumableRuns(): { runId: string; niche: string }[] {
+  try {
+    const rows = db.prepare(
+      `SELECT run_id, niche FROM runs WHERE status = 'running'`,
+    ).all() as { run_id: string; niche: string }[]
+    return rows.map(r => ({ runId: r.run_id, niche: r.niche }))
+  } catch (err) {
+    console.error('[db] getResumableRuns failed:', err)
+    return []
+  }
+}
 
 export default db

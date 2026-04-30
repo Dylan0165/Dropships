@@ -22,8 +22,8 @@ describe('pipeline constants', () => {
     }
   })
 
-  it('should have 6 agents using deepseek-reasoner', () => {
-    const reasoners = AGENT_CONFIGS.filter(c => c.model === 'deepseek-reasoner')
+  it('should have 6 agents using deepseek-v4-pro', () => {
+    const reasoners = AGENT_CONFIGS.filter(c => c.model === 'deepseek-v4-pro')
     expect(reasoners.length).toBe(6) // niche-reviewer, product-reviewer, store-reviewer, ads-reviewer, growth-agent, security-agent
   })
 

@@ -1,18 +1,14 @@
-import path from 'path'
-import fs from 'fs'
-import { fileURLToPath } from 'url'
 import type { AgentId, WsEvent } from '../types/index.js'
 import * as store from './store.js'
+import * as trendscraper from './trendscraper.js'
+import { runAgent as runValidatedAgent } from './agent-runner.js'
+import { saveAgentOutput } from './db.js'
+import { generateProductImages } from './image-gen.js'
 import { AGENT_CONFIGS, PIPELINE_EDGES } from '../constants/pipeline.js'
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const workspaceRoot = path.resolve(__dirname, '../../../')
-const skillsPath = process.env.SKILLS_PATH ?? path.join(workspaceRoot, 'Skillslibrary')
-
-const DEEPSEEK_BASE_URL = process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com'
 const PRICING: Record<string, { input: number; output: number }> = {
-  'deepseek-chat': { input: 0.27, output: 1.10 },
-  'deepseek-reasoner': { input: 0.55, output: 2.19 },
+  'deepseek-v4-flash': { input: 0.14, output: 0.28 },
+  'deepseek-v4-pro':   { input: 0.435, output: 0.87 },
 }
 const USD_TO_EUR = 0.92
 
@@ -21,73 +17,10 @@ const activeRuns = new Set<string>()
 // Approval wait resolvers
 const approvalWaiters = new Map<string, (decision: { decision: string; opmerking?: string }) => void>()
 
-// ── Load skill prompt for an agent ──
-function loadSkillPrompt(agentId: AgentId): string {
-  const skillDir = path.join(skillsPath, agentId)
-  const skillFile = path.join(skillDir, 'SKILL.md')
-  if (fs.existsSync(skillFile)) return fs.readFileSync(skillFile, 'utf-8')
-  return `You are the ${agentId} agent. Complete your task and return JSON output.`
-}
-
-// ── Call DeepSeek API ──
-async function callDeepSeek(
-  model: string,
-  systemPrompt: string,
-  userPrompt: string,
-): Promise<{ content: string; inputTokens: number; outputTokens: number }> {
-  const apiKey = process.env.DEEPSEEK_API_KEY
-  if (!apiKey) throw new Error('DEEPSEEK_API_KEY not set — configure it in Settings')
-
-  const response = await fetch(`${DEEPSEEK_BASE_URL}/chat/completions`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt },
-      ],
-      max_tokens: 4096,
-      temperature: 0.7,
-    }),
-    signal: AbortSignal.timeout(120_000),
-  })
-
-  if (!response.ok) {
-    const txt = await response.text()
-    throw new Error(`DeepSeek API error ${response.status}: ${txt.slice(0, 300)}`)
-  }
-
-  const data = await response.json() as {
-    choices: { message: { content: string } }[]
-    usage: { prompt_tokens: number; completion_tokens: number }
-  }
-
-  return {
-    content: data.choices[0]?.message?.content ?? '',
-    inputTokens: data.usage?.prompt_tokens ?? 0,
-    outputTokens: data.usage?.completion_tokens ?? 0,
-  }
-}
-
 function computeCost(model: string, inputTokens: number, outputTokens: number): number {
-  const p = PRICING[model] || PRICING['deepseek-chat']
+  const p = PRICING[model] || PRICING['deepseek-v4-flash']
   const usd = (inputTokens / 1_000_000) * p.input + (outputTokens / 1_000_000) * p.output
   return Math.round(usd * USD_TO_EUR * 10000) / 10000
-}
-
-function tryParseJson(text: string): Record<string, unknown> | null {
-  // Try to extract JSON from markdown code blocks or raw text
-  const jsonMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/)
-  const raw = jsonMatch ? jsonMatch[1].trim() : text.trim()
-  try {
-    return JSON.parse(raw) as Record<string, unknown>
-  } catch {
-    return null
-  }
 }
 
 // ── Build the pipeline execution order from edges ──
@@ -130,20 +63,54 @@ async function runAgent(
   }
 
   try {
-    const skillPrompt = loadSkillPrompt(agentId)
-    log(`Loading skill prompt for ${cfg.label}`)
+    log(`Running ${cfg.label} via agent-runner (validated)`)
 
-    const userPrompt = JSON.stringify({
-      run_id: runId,
-      niche,
-      previous_agent_output: previousOutput,
-    })
+    const result = await runValidatedAgent(
+      agentId,
+      { niche, previous_agent_output: previousOutput },
+      runId,
+      {
+        model: cfg.model,
+        onLog: (level, message) => log(message, level),
+      },
+    )
 
-    log(`Calling DeepSeek ${cfg.model}...`)
-    const result = await callDeepSeek(cfg.model, skillPrompt, userPrompt)
     const durationMs = Date.now() - startTime
     const costEur = computeCost(cfg.model, result.inputTokens, result.outputTokens)
-    const outputJson = tryParseJson(result.content) ?? { raw_response: result.content }
+
+    if (!result.ok || !result.output) {
+      const reason = result.error ?? 'agent failed validation'
+      log(`Agent failed after ${result.attempts} attempt(s): ${reason}`, 'error')
+      store.updateAgent(runId, agentId, {
+        status: 'failed', completedAt: now(), durationMs,
+        tokenCount: result.inputTokens + result.outputTokens, costEur,
+        outputJson: { error: reason, validation_errors: result.validationErrors ?? [], raw: result.rawResponse.slice(0, 1000) },
+      })
+      // Escalate so a human can see the failure
+      store.setEscalation(runId, agentId, {
+        reason: `Agent ${agentId} failed: ${reason}`,
+        severity: 'HIGH',
+        createdAt: now(),
+        resolvedAt: null,
+        decision: null,
+        opmerking: null,
+      })
+      broadcast({
+        type: 'agent_escalation', runId, agentId,
+        payload: { reason, severity: 'HIGH', validationErrors: result.validationErrors ?? [] },
+        timestamp: now(),
+      })
+      // Wait for human to approve continuation or kill the pipeline
+      const approval = await new Promise<{ decision: string; opmerking?: string }>((resolve) => {
+        approvalWaiters.set(`${runId}:${agentId}`, resolve)
+      })
+      if (approval.decision === 'reject') return null
+    }
+
+    const outputJson = result.output ?? { raw_response: result.rawResponse }
+
+    // Persist output immediately so a server crash does not lose work
+    saveAgentOutput(runId, agentId, outputJson)
 
     log(`Completed in ${(durationMs / 1000).toFixed(1)}s — ${result.inputTokens + result.outputTokens} tokens, €${costEur.toFixed(4)}`)
 
@@ -232,12 +199,42 @@ export function startPipeline(
         return
       }
       previousOutput = result
+
+      // After brand-agent: generate product images via Flux 1.1 Pro (best-effort)
+      if (agentId === 'brand-agent' && previousOutput) {
+        try {
+          const productName = (previousOutput.product_name as string)
+            ?? (previousOutput.niche as string)
+            ?? niche
+          const imageUrls = await generateProductImages({ storeId: runId, productName, niche })
+          previousOutput = {
+            ...previousOutput,
+            image_urls: imageUrls,
+            product_image_1: imageUrls[0] ?? '',
+            product_image_2: imageUrls[1] ?? '',
+            product_image_3: imageUrls[2] ?? '',
+          }
+          store.addLog(runId, agentId, {
+            timestamp: new Date().toISOString(),
+            level: 'info',
+            message: `Productafbeeldingen gegenereerd: ${imageUrls.filter(Boolean).length}/3`,
+          })
+        } catch (err) {
+          console.error(`[coordinator] image-gen failed (non-fatal):`, err)
+        }
+      }
     }
 
     if (activeRuns.has(runId)) {
       store.completeRun(runId, 'completed')
       broadcast({ type: 'pipeline_completed', runId, payload: {}, timestamp: new Date().toISOString() })
       activeRuns.delete(runId)
+
+      // Mark niche as used in Trendscraper so it won't be re-suggested.
+      // Best-effort — never block or fail the pipeline on this.
+      trendscraper.markNicheUsed(niche).catch((err: unknown) => {
+        console.error(`[coordinator] markNicheUsed("${niche}") failed:`, err)
+      })
     }
   })().catch((err) => {
     console.error(`[coordinator] Pipeline ${runId} crashed:`, err)

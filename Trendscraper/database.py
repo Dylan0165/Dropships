@@ -56,6 +56,17 @@ def init_db() -> None:
                 created_at           TEXT NOT NULL,
                 FOREIGN KEY (niche_id) REFERENCES niches(id)
             );
+
+            CREATE TABLE IF NOT EXISTS orders (
+                id              INTEGER PRIMARY KEY AUTOINCREMENT,
+                cj_order_id     TEXT NOT NULL DEFAULT '',
+                order_number    TEXT NOT NULL UNIQUE,
+                status          TEXT NOT NULL DEFAULT 'pending',
+                payload_json    TEXT NOT NULL DEFAULT '{}',
+                response_json   TEXT NOT NULL DEFAULT '{}',
+                error_message   TEXT NOT NULL DEFAULT '',
+                created_at      TEXT NOT NULL
+            );
         """)
         conn.commit()
         logger.info("Database initialised at {}", config.DB_PATH)
@@ -221,6 +232,74 @@ def get_products(niche_id: int) -> list[dict]:
         rows = conn.execute(
             "SELECT * FROM products WHERE niche_id=? ORDER BY margin_percent DESC",
             (niche_id,),
+        ).fetchall()
+        return [dict(r) for r in rows]
+    finally:
+        conn.close()
+
+
+# ── Orders ────────────────────────────────────────────────────────────────────
+
+def insert_order(
+    order_number: str,
+    payload_json: str,
+    cj_order_id: str = "",
+    status: str = "pending",
+    response_json: str = "{}",
+    error_message: str = "",
+) -> int:
+    ts = datetime.now(timezone.utc).isoformat()
+    conn = _get_conn()
+    try:
+        cur = conn.execute(
+            """INSERT INTO orders
+               (cj_order_id, order_number, status, payload_json, response_json, error_message, created_at)
+               VALUES (?,?,?,?,?,?,?)""",
+            (cj_order_id, order_number, status, payload_json, response_json, error_message, ts),
+        )
+        conn.commit()
+        return cur.lastrowid  # type: ignore[return-value]
+    finally:
+        conn.close()
+
+
+def update_order(
+    order_number: str,
+    cj_order_id: str = "",
+    status: str = "",
+    response_json: str = "",
+    error_message: str = "",
+) -> dict | None:
+    conn = _get_conn()
+    try:
+        sets, params = [], []
+        if cj_order_id:
+            sets.append("cj_order_id=?")
+            params.append(cj_order_id)
+        if status:
+            sets.append("status=?")
+            params.append(status)
+        if response_json:
+            sets.append("response_json=?")
+            params.append(response_json)
+        if error_message:
+            sets.append("error_message=?")
+            params.append(error_message)
+        if sets:
+            params.append(order_number)
+            conn.execute(f"UPDATE orders SET {', '.join(sets)} WHERE order_number=?", params)
+            conn.commit()
+        row = conn.execute("SELECT * FROM orders WHERE order_number=?", (order_number,)).fetchone()
+        return dict(row) if row else None
+    finally:
+        conn.close()
+
+
+def get_orders(limit: int = 50) -> list[dict]:
+    conn = _get_conn()
+    try:
+        rows = conn.execute(
+            "SELECT * FROM orders ORDER BY id DESC LIMIT ?", (limit,)
         ).fetchall()
         return [dict(r) for r in rows]
     finally:

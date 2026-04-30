@@ -22,8 +22,8 @@ interface DeepSeekCostEstimate {
 }
 
 const PRICING: Record<string, { input: number; output: number }> = {
-  'deepseek-chat': { input: 0.27, output: 1.10 },
-  'deepseek-reasoner': { input: 0.55, output: 2.19 },
+  'deepseek-v4-flash': { input: 0.14, output: 0.28 },
+  'deepseek-v4-pro':   { input: 0.435, output: 0.87 },
 }
 
 const USD_TO_EUR = 0.92
@@ -31,7 +31,7 @@ const USD_TO_EUR = 0.92
 /**
  * Check if the DeepSeek API is reachable and responding.
  */
-export async function checkHealth(model = 'deepseek-chat'): Promise<DeepSeekHealthStatus> {
+export async function checkHealth(model = 'deepseek-v4-flash'): Promise<DeepSeekHealthStatus> {
   const apiKey = process.env.DEEPSEEK_API_KEY
   if (!apiKey) {
     return { status: 'down', latencyMs: 0, model, error: 'DEEPSEEK_API_KEY not set' }
@@ -79,7 +79,7 @@ export function estimateCost(
   inputTokens: number,
   outputTokens: number,
 ): DeepSeekCostEstimate {
-  const pricing = PRICING[model] || PRICING['deepseek-chat']
+  const pricing = PRICING[model] || PRICING['deepseek-v4-flash']
   const costUsd =
     (inputTokens / 1_000_000) * pricing.input +
     (outputTokens / 1_000_000) * pricing.output
@@ -99,24 +99,24 @@ export function estimateCost(
 export function getAvailableModels() {
   return [
     {
-      id: 'deepseek-chat',
-      name: 'DeepSeek V3',
+      id: 'deepseek-v4-flash',
+      name: 'DeepSeek V4 Flash',
       description: 'Fast executor — tool calling, code generation, store building',
-      contextWindow: 64_000,
+      contextWindow: 1_000_000,
       maxOutput: 8_192,
       supportsTools: true,
       role: 'executor',
-      pricing: PRICING['deepseek-chat'],
+      pricing: PRICING['deepseek-v4-flash'],
     },
     {
-      id: 'deepseek-reasoner',
-      name: 'DeepSeek R1',
+      id: 'deepseek-v4-pro',
+      name: 'DeepSeek V4 Pro',
       description: 'Deep thinker — reviews, analytics, strategic analysis',
-      contextWindow: 64_000,
+      contextWindow: 1_000_000,
       maxOutput: 8_192,
-      supportsTools: false,
+      supportsTools: true,
       role: 'reviewer',
-      pricing: PRICING['deepseek-reasoner'],
+      pricing: PRICING['deepseek-v4-pro'],
     },
   ]
 }

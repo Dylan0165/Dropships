@@ -64,7 +64,7 @@ export function AgentNode({ data }: NodeProps) {
               'text-[9px] px-1.5 py-0.5 rounded-md border border-white/[0.08] bg-white/[0.04] font-medium',
               cat.accent,
             )}>
-              {d.model === 'deepseek-chat' ? 'chat' : 'R1'}
+              {d.model === 'deepseek-v4-flash' ? 'flash' : 'pro'}
             </span>
           </div>
 

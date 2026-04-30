@@ -33,7 +33,7 @@ export interface AgentConfig {
   id: AgentId
   label: string
   category: AgentCategory
-  model: 'deepseek-chat' | 'deepseek-reasoner'
+  model: 'deepseek-v4-flash' | 'deepseek-v4-pro'
   description: string
   position: { x: number; y: number }
 }

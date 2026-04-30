@@ -10,7 +10,15 @@ import type { AgentId, WsEvent } from '../types/index.js'
 import * as store from './store.js'
 import * as coordinator from './coordinator.js'
 import * as deepseek from './deepseek.js'
-import db from './db.js'
+import * as trendscraper from './trendscraper.js'
+import { createPayment, handleWebhook, getCheckoutOrders } from './mollie.js'
+import { launchCampaign, activateCampaign } from './meta-ads.js'
+import { generateStoreImages, generateAdCreatives, listStoreImages } from './image-gen.js'
+import { runLifecycleCycle, analyzeStoreHealth, getAllHealthReports, pauseStore, killProduct, getLifecycleEvents } from './store-lifecycle.js'
+import { runSkillsUpdate, recordSkillPerformance, getSkillsStats } from './skills-updater.js'
+import { createExperiment, assignComponentVariant, recordComponentConversion, declareWinner, getExperiments, getWinners, getExperimentStats } from './component-lab.js'
+import { runSeasonalCheck, getActiveSeasons } from './seasonal.js'
+import db, { getAgentOutput, getResumableRuns } from './db.js'
 import { notifyApprovalNeeded } from './whatsapp.js'
 
 const APPROVAL_PIN = process.env.APPROVAL_PIN ?? '1234'
@@ -20,6 +28,7 @@ const PORT = parseInt(process.env.PORT ?? '3001', 10)
 
 const app = express()
 app.use(express.json())
+app.use(express.urlencoded({ extended: false }))
 
 const server = createServer(app)
 const wss = new WebSocketServer({ noServer: true })
@@ -189,11 +198,38 @@ app.get('/api/runs/:runId/agents/:agentId/output', (req, res) => {
     return
   }
   const agent = run.agents[req.params.agentId as AgentId]
-  if (!agent?.outputJson) {
-    res.status(404).json({ error: 'No output available' })
+  if (agent?.outputJson) {
+    res.json(agent.outputJson)
     return
   }
-  res.json(agent.outputJson)
+  // Fallback to persisted agent_outputs (in case of resume after restart)
+  const persisted = getAgentOutput(req.params.runId, req.params.agentId)
+  if (persisted) {
+    res.json(persisted)
+    return
+  }
+  res.status(404).json({ error: 'No output available' })
+})
+
+app.get('/api/runs/:runId/resume', (req, res) => {
+  const run = store.getRun(req.params.runId)
+  if (!run) {
+    res.status(404).json({ error: 'Run not found' })
+    return
+  }
+  if (run.status !== 'running') {
+    res.status(409).json({ error: `Run is ${run.status} — only running runs can be resumed` })
+    return
+  }
+  // Restart pipeline from where it left off
+  coordinator.startPipeline(run.runId, run.niche, broadcast)
+  broadcast({
+    type: 'pipeline_started',
+    runId: run.runId,
+    payload: { niche: run.niche, resumed: true },
+    timestamp: new Date().toISOString(),
+  })
+  res.json({ resumed: true, runId: run.runId, niche: run.niche })
 })
 
 app.get('/api/stores', (_req, res) => {
@@ -305,6 +341,55 @@ app.get('/api/niches', (_req, res) => {
   res.json(rows)
 })
 
+// ── Trendscraper proxy: live suggestions from the Python service ──
+app.get('/api/niches/suggestions', async (_req, res) => {
+  try {
+    const niches = await trendscraper.getNiches('pending')
+    res.json(niches)
+  } catch (err) {
+    console.error('[server] /api/niches/suggestions failed:', err)
+    res.json([])
+  }
+})
+
+app.post('/api/niches/:id/approve', async (req, res) => {
+  const id = parseInt(req.params.id, 10)
+  if (Number.isNaN(id)) {
+    res.status(400).json({ error: 'id must be numeric' })
+    return
+  }
+  try {
+    const result = await trendscraper.approveNiche(id)
+    if (!result) {
+      res.status(502).json({ error: 'Trendscraper unreachable or niche not found' })
+      return
+    }
+    res.json(result)
+  } catch (err) {
+    console.error('[server] /api/niches/:id/approve failed:', err)
+    res.status(500).json({ error: err instanceof Error ? err.message : 'Approve failed' })
+  }
+})
+
+app.post('/api/niches/:id/reject', async (req, res) => {
+  const id = parseInt(req.params.id, 10)
+  if (Number.isNaN(id)) {
+    res.status(400).json({ error: 'id must be numeric' })
+    return
+  }
+  try {
+    const result = await trendscraper.rejectNiche(id)
+    if (!result) {
+      res.status(502).json({ error: 'Trendscraper unreachable or niche not found' })
+      return
+    }
+    res.json(result)
+  } catch (err) {
+    console.error('[server] /api/niches/:id/reject failed:', err)
+    res.status(500).json({ error: err instanceof Error ? err.message : 'Reject failed' })
+  }
+})
+
 app.post('/api/niches/rescrape', async (_req, res) => {
   const apiKey = process.env.DEEPSEEK_API_KEY
   if (!apiKey) {
@@ -321,7 +406,7 @@ app.post('/api/niches/rescrape', async (_req, res) => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
       body: JSON.stringify({
-        model: 'deepseek-chat',
+        model: 'deepseek-v4-flash',
         messages: [{
           role: 'system',
           content: 'You are a European dropshipping trend analyst. Return ONLY valid JSON, no markdown.',
@@ -379,7 +464,7 @@ app.get('/api/settings', (_req, res) => {
   settings.deepseek_api_key = process.env.DEEPSEEK_API_KEY
     ? `sk-...${process.env.DEEPSEEK_API_KEY.slice(-6)}`
     : ''
-  settings.deepseek_model = settings.deepseek_model ?? 'deepseek-chat'
+  settings.deepseek_model = settings.deepseek_model ?? 'deepseek-v4-flash'
   settings.budget_limit_eur = settings.budget_limit_eur ?? '10.00'
   res.json(settings)
 })
@@ -510,6 +595,268 @@ app.post('/api/cost-estimate', (req, res) => {
   res.json(deepseek.estimateCost(model, inputTokens, outputTokens))
 })
 
+// ═══════ Mollie Checkout ═══════
+
+app.post('/api/checkout/session', async (req, res) => {
+  try {
+    const { storeId, subdomain, runId, amountEur, description, items } = req.body as {
+      storeId: string; subdomain: string; runId?: string
+      amountEur: number; description: string; items?: unknown[]
+    }
+    if (!storeId || !subdomain || !amountEur) {
+      res.status(400).json({ error: 'storeId, subdomain en amountEur zijn verplicht' })
+      return
+    }
+    const origin = `${req.protocol}://${req.get('host')}`
+    const checkoutUrl = await createPayment({
+      storeId,
+      subdomain,
+      runId,
+      amountEur: Number(amountEur),
+      description: description ?? `Bestelling ${subdomain}`,
+      redirectUrl: `${origin}/bedankt?store=${subdomain}`,
+      webhookUrl: `${origin}/api/webhooks/mollie`,
+      items,
+    })
+    res.json({ checkoutUrl })
+  } catch (err) {
+    console.error('[server] /api/checkout/session failed:', err)
+    res.status(500).json({ error: err instanceof Error ? err.message : 'Checkout aanmaken mislukt' })
+  }
+})
+
+// Mollie sends URLEncoded POST; always respond 200 regardless of outcome
+app.post('/api/webhooks/mollie', async (req, res) => {
+  res.sendStatus(200)
+  try {
+    await handleWebhook(new URLSearchParams(req.body as Record<string, string>))
+  } catch (err) {
+    console.error('[server] mollie webhook verwerking mislukt:', err)
+  }
+})
+
+app.get('/api/checkout/orders', (_req, res) => {
+  res.json(getCheckoutOrders(100))
+})
+
+// ═══════ Meta Ads ═══════
+
+app.post('/api/ads/launch', async (req, res) => {
+  try {
+    const {
+      runId, brandName, niche, dailyBudgetEur,
+      adCopy, targetingCountries, imageUrl, productUrl,
+    } = req.body as {
+      runId: string; brandName: string; niche: string; dailyBudgetEur: number
+      adCopy: { primaryText: string; headline: string; hooks: string[] }
+      targetingCountries?: string[]; imageUrl?: string; productUrl: string
+    }
+    if (!brandName || !niche || !adCopy || !productUrl) {
+      res.status(400).json({ error: 'brandName, niche, adCopy en productUrl zijn verplicht' })
+      return
+    }
+    const result = await launchCampaign({
+      runId: runId ?? '',
+      brandName,
+      niche,
+      dailyBudgetEur: Number(dailyBudgetEur) || 10,
+      adCopy,
+      targetingCountries,
+      imageUrl,
+      productUrl,
+    })
+    res.json(result)
+  } catch (err) {
+    console.error('[server] /api/ads/launch mislukt:', err)
+    res.status(500).json({ error: err instanceof Error ? err.message : 'Ads lanceren mislukt' })
+  }
+})
+
+app.post('/api/ads/activate', async (req, res) => {
+  try {
+    const { campaignId, adSetId } = req.body as { campaignId: string; adSetId: string }
+    if (!campaignId || !adSetId) {
+      res.status(400).json({ error: 'campaignId en adSetId zijn verplicht' })
+      return
+    }
+    await activateCampaign(campaignId, adSetId)
+    res.json({ activated: true, campaignId, adSetId })
+  } catch (err) {
+    console.error('[server] /api/ads/activate mislukt:', err)
+    res.status(500).json({ error: err instanceof Error ? err.message : 'Activatie mislukt' })
+  }
+})
+
+// ═══════ Image Generation ═══════
+
+app.post('/api/images/store', async (req, res) => {
+  try {
+    const { storeId, productName, niche, brandName, primaryColor } = req.body as {
+      storeId: string; productName: string; niche: string; brandName: string; primaryColor?: string
+    }
+    if (!storeId || !productName || !niche || !brandName) {
+      res.status(400).json({ error: 'storeId, productName, niche en brandName zijn verplicht' })
+      return
+    }
+    const result = await generateStoreImages({ storeId, productName, niche, brandName, primaryColor })
+    res.json(result)
+  } catch (err) {
+    res.status(500).json({ error: err instanceof Error ? err.message : 'Store images genereren mislukt' })
+  }
+})
+
+app.post('/api/images/ads', async (req, res) => {
+  try {
+    const { storeId, productName, niche, adHooks } = req.body as {
+      storeId: string; productName: string; niche: string; adHooks: string[]
+    }
+    if (!storeId || !productName || !niche) {
+      res.status(400).json({ error: 'storeId, productName en niche zijn verplicht' })
+      return
+    }
+    const result = await generateAdCreatives({ storeId, productName, niche, adHooks: adHooks ?? [] })
+    res.json(result)
+  } catch (err) {
+    res.status(500).json({ error: err instanceof Error ? err.message : 'Ad creatives genereren mislukt' })
+  }
+})
+
+app.get('/api/images/:storeId', (req, res) => {
+  res.json(listStoreImages(req.params.storeId))
+})
+
+// ═══════ Store Lifecycle ═══════
+
+app.get('/api/stores/:storeId/health', (req, res) => {
+  const report = analyzeStoreHealth(req.params.storeId)
+  if (!report) {
+    res.status(404).json({ error: 'Store niet gevonden' })
+    return
+  }
+  res.json(report)
+})
+
+app.get('/api/lifecycle/health', (_req, res) => {
+  res.json(getAllHealthReports())
+})
+
+app.get('/api/lifecycle/events/:storeId', (req, res) => {
+  res.json(getLifecycleEvents(req.params.storeId))
+})
+
+app.post('/api/stores/:storeId/pause', (req, res) => {
+  const { reason } = req.body as { reason?: string }
+  pauseStore(req.params.storeId, reason ?? 'Handmatig gepauzeerd')
+  res.json({ success: true })
+})
+
+app.post('/api/stores/:storeId/kill-product', (req, res) => {
+  const { productId } = req.body as { productId: string }
+  if (!productId) {
+    res.status(400).json({ error: 'productId is verplicht' })
+    return
+  }
+  const ok = killProduct(req.params.storeId, productId)
+  res.json({ success: ok })
+})
+
+app.post('/lifecycle/run', async (_req, res) => {
+  try {
+    await runLifecycleCycle()
+    res.json({ success: true })
+  } catch (err) {
+    res.status(500).json({ error: err instanceof Error ? err.message : 'Lifecycle cyclus mislukt' })
+  }
+})
+
+// ═══════ Skills Updater ═══════
+
+app.get('/api/skills/stats', (_req, res) => {
+  res.json(getSkillsStats())
+})
+
+app.post('/api/skills/record', (req, res) => {
+  const params = req.body as Parameters<typeof recordSkillPerformance>[0]
+  if (!params.runId || !params.agentId) {
+    res.status(400).json({ error: 'runId en agentId zijn verplicht' })
+    return
+  }
+  recordSkillPerformance(params)
+  res.json({ success: true })
+})
+
+app.post('/api/skills/update', async (_req, res) => {
+  try {
+    await runSkillsUpdate()
+    res.json({ success: true })
+  } catch (err) {
+    res.status(500).json({ error: err instanceof Error ? err.message : 'Skills update mislukt' })
+  }
+})
+
+// ═══════ Component Lab ═══════
+
+app.get('/api/experiments', (req, res) => {
+  const { storeId } = req.query as { storeId?: string }
+  res.json(getExperiments(storeId))
+})
+
+app.get('/api/experiments/winners', (_req, res) => {
+  res.json(getWinners())
+})
+
+app.get('/api/experiments/:experimentId/stats', (req, res) => {
+  res.json(getExperimentStats(req.params.experimentId))
+})
+
+app.post('/api/experiments', (req, res) => {
+  const { componentName, variantA, variantB, storeId } = req.body as {
+    componentName: string; variantA: string; variantB: string; storeId?: string
+  }
+  if (!componentName || !variantA || !variantB) {
+    res.status(400).json({ error: 'componentName, variantA en variantB zijn verplicht' })
+    return
+  }
+  const experimentId = createExperiment({ componentName, variantA, variantB, storeId })
+  res.json({ experimentId })
+})
+
+app.post('/api/experiments/:experimentId/impression', (req, res) => {
+  const { sessionId } = req.body as { sessionId: string }
+  if (!sessionId) {
+    res.status(400).json({ error: 'sessionId is verplicht' })
+    return
+  }
+  const variant = assignComponentVariant(req.params.experimentId, sessionId)
+  res.json({ variant })
+})
+
+app.post('/api/experiments/:experimentId/conversion', (req, res) => {
+  const { variant } = req.body as { variant: 'A' | 'B' }
+  if (!variant || !['A', 'B'].includes(variant)) {
+    res.status(400).json({ error: 'variant moet A of B zijn' })
+    return
+  }
+  recordComponentConversion(req.params.experimentId, variant)
+  res.json({ success: true })
+})
+
+app.post('/api/experiments/:experimentId/winner', (req, res) => {
+  const { winner } = req.body as { winner: 'A' | 'B' }
+  if (!winner || !['A', 'B'].includes(winner)) {
+    res.status(400).json({ error: 'winner moet A of B zijn' })
+    return
+  }
+  const ok = declareWinner(req.params.experimentId, winner)
+  res.json({ success: ok })
+})
+
+// ═══════ Seasonal ═══════
+
+app.get('/api/seasonal', (_req, res) => {
+  res.json(getActiveSeasons())
+})
+
 // Global error handler — returns JSON instead of HTML for all thrown errors
 app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error('[server] Unhandled error:', err.message)
@@ -518,7 +865,64 @@ app.use((err: Error, _req: express.Request, res: express.Response, _next: expres
   }
 })
 
+// ── Resume any in-flight runs that were interrupted by a server restart ──
+function resumeInterruptedRuns(): void {
+  try {
+    const runs = getResumableRuns()
+    if (runs.length === 0) return
+    console.log(`[server] resuming ${runs.length} interrupted run(s):`, runs.map(r => r.runId.slice(0, 8)).join(', '))
+    for (const r of runs) {
+      coordinator.startPipeline(r.runId, r.niche, broadcast)
+    }
+  } catch (err) {
+    console.error('[server] resumeInterruptedRuns failed:', err)
+  }
+}
+
+// ── Scheduled jobs ─────────────────────────────────────────────────────────────
+
+function scheduleDaily(hour: number, task: () => Promise<void>, name: string): void {
+  function tick(): void {
+    const now = new Date()
+    const nextRun = new Date()
+    nextRun.setHours(hour, 0, 0, 0)
+    if (nextRun <= now) nextRun.setDate(nextRun.getDate() + 1)
+    const delay = nextRun.getTime() - now.getTime()
+    setTimeout(() => {
+      task().catch(err => console.error(`[scheduler] ${name} failed:`, err))
+      tick()  // reschedule
+    }, delay)
+  }
+  tick()
+  console.log(`[scheduler] ${name} gepland — dagelijks om ${String(hour).padStart(2, '0')}:00`)
+}
+
+function scheduleWeekly(dayOfWeek: number, hour: number, task: () => Promise<void>, name: string): void {
+  function tick(): void {
+    const now = new Date()
+    const next = new Date()
+    next.setHours(hour, 0, 0, 0)
+    const daysUntil = (dayOfWeek - now.getDay() + 7) % 7 || 7
+    next.setDate(now.getDate() + (next <= now ? daysUntil : daysUntil === 7 ? 0 : daysUntil))
+    const delay = next.getTime() - now.getTime()
+    setTimeout(() => {
+      task().catch(err => console.error(`[scheduler] ${name} failed:`, err))
+      tick()
+    }, delay)
+  }
+  tick()
+  console.log(`[scheduler] ${name} gepland — wekelijks maandag om ${String(hour).padStart(2, '0')}:00`)
+}
+
 // ── Start ──
 server.listen(PORT, () => {
   console.log(`[server] API + WS on http://localhost:${PORT}`)
+  resumeInterruptedRuns()
+
+  // Daily lifecycle check at 02:00
+  scheduleDaily(2, runLifecycleCycle, 'lifecycle-cycle')
+  // Weekly skills update — Monday 03:00
+  scheduleWeekly(1, 3, runSkillsUpdate, 'skills-update')
+  // Daily seasonal check at 07:00
+  scheduleDaily(7, runSeasonalCheck, 'seasonal-check')
 })

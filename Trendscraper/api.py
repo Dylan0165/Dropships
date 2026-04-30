@@ -1,5 +1,6 @@
 """FastAPI REST API for Trendscraper — port 8001"""
 import asyncio
+import json
 from datetime import datetime, timezone
 from typing import Optional
 from fastapi import FastAPI, HTTPException, BackgroundTasks
@@ -9,7 +10,9 @@ from loguru import logger
 import config
 import database
 import scheduler as sched
+from models import CJOrder
 from runner import run_pipeline
+from scrapers import cj_products as cj
 
 app = FastAPI(
     title="Trendscraper API",
@@ -100,3 +103,47 @@ async def _run_in_background() -> None:
 @app.get("/products")
 async def get_products(niche_id: int):
     return database.get_products(niche_id)
+
+
+# ── CJ Orders ─────────────────────────────────────────────────────────────────
+
+@app.post("/orders")
+async def create_order(order: CJOrder):
+    """Place a real order at CJ Dropshipping and persist the result."""
+    payload_json = order.model_dump_json()
+
+    # Pre-insert in 'pending' state so we always have an audit trail
+    try:
+        database.insert_order(
+            order_number=order.order_number,
+            payload_json=payload_json,
+            status="pending",
+        )
+    except Exception as exc:
+        # Likely UNIQUE constraint — order_number already exists
+        logger.warning("Order {} already exists or insert failed: {}", order.order_number, exc)
+        raise HTTPException(status_code=409, detail=f"order_number '{order.order_number}' already exists")
+
+    try:
+        cj_order_id = await cj.place_order(order)
+    except Exception as exc:
+        database.update_order(
+            order.order_number,
+            status="failed",
+            error_message=str(exc)[:500],
+        )
+        logger.error("place_order failed for {}: {}", order.order_number, exc)
+        raise HTTPException(status_code=502, detail=f"CJ order failed: {exc}")
+
+    updated = database.update_order(
+        order.order_number,
+        cj_order_id=cj_order_id,
+        status="placed",
+        response_json=json.dumps({"orderId": cj_order_id}),
+    )
+    return updated
+
+
+@app.get("/orders")
+async def list_orders(limit: int = 50):
+    return database.get_orders(limit=limit)

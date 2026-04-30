@@ -153,20 +153,20 @@ export function SettingsView() {
             <div>
               <label className="block text-xs text-slate-500 mb-1.5">Executor Model</label>
               <select
-                value={settings.deepseek_model ?? 'deepseek-chat'}
+                value={settings.deepseek_model ?? 'deepseek-v4-flash'}
                 onChange={(e) => save('deepseek_model', e.target.value)}
                 className="w-full bg-[#030712] border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-violet-500/50"
               >
-                <option value="deepseek-chat">deepseek-chat (V3) — €0.27/1.10 per M</option>
-                <option value="deepseek-reasoner">deepseek-reasoner (R1) — €0.55/2.19 per M</option>
+                <option value="deepseek-v4-flash">deepseek-v4-flash — $0.14/$0.28 per M</option>
+                <option value="deepseek-v4-pro">deepseek-v4-pro — $0.435/$0.87 per M</option>
               </select>
             </div>
             <div>
               <label className="block text-xs text-slate-500 mb-1.5">Reviewer Model</label>
               <div className="bg-[#030712] border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-slate-400">
-                deepseek-reasoner (R1) — vast
+                deepseek-v4-pro — vast
               </div>
-              <p className="text-xs text-slate-600 mt-1">Reviewers gebruiken altijd R1 voor diepere analyse</p>
+              <p className="text-xs text-slate-600 mt-1">Reviewers gebruiken altijd V4 Pro voor diepere analyse</p>
             </div>
           </div>
         </section>
@@ -204,7 +204,7 @@ export function SettingsView() {
           <h3 className="text-sm text-slate-400 font-medium mb-2">Over het systeem</h3>
           <div className="grid grid-cols-2 gap-2 text-xs text-slate-500">
             <div>Pipeline agents: <span className="text-slate-400">11</span></div>
-            <div>Modellen: <span className="text-slate-400">V3 + R1</span></div>
+            <div>Modellen: <span className="text-slate-400">V4 Flash + V4 Pro</span></div>
             <div>Database: <span className="text-slate-400">SQLite (better-sqlite3)</span></div>
             <div>Architecture: <span className="text-slate-400">Direct DeepSeek API</span></div>
           </div>
