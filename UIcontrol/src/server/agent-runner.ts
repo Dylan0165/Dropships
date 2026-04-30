@@ -157,10 +157,10 @@ async function callLLM(
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt },
       ],
-      max_tokens: 4096,
+      max_tokens: 2048,
       temperature: 0.7,
     }),
-    signal: AbortSignal.timeout(180_000),
+    signal: AbortSignal.timeout(600_000),
   })
 
   if (!response.ok) {
