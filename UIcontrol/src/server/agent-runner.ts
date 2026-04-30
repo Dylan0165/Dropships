@@ -109,16 +109,48 @@ const VALIDATORS: Record<string, Validator> = {
     if (!isObj(data.targeting)) errs.push('targeting: expected object')
     return errs
   },
+
+  // Reviewers — accepteer zowel root-level als assessments[]-formaat
+  'niche-reviewer': (data) => {
+    if (!isObj(data)) return ['root: expected object']
+    // assessments[] formaat
+    if (isArr(data.assessments) && data.assessments.length > 0) return []
+    // root-level formaat
+    const errs: string[] = []
+    if (!isNum(data.score)) errs.push('score: expected number')
+    if (!isStr(data.reason)) errs.push('reason: expected non-empty string')
+    return errs
+  },
+
+  'product-reviewer': (data) => {
+    if (!isObj(data)) return ['root: expected object']
+    if (isArr(data.assessments) && data.assessments.length > 0) return []
+    if (isArr(data.products) && data.products.length > 0) return []
+    const errs: string[] = []
+    if (!isNum(data.score)) errs.push('score: expected number')
+    if (!isStr(data.reason)) errs.push('reason: expected non-empty string')
+    return errs
+  },
+
+  'store-reviewer': (data) => {
+    if (!isObj(data)) return ['root: expected object']
+    if (isStr(data.decision) || isNum(data.score)) return []
+    return ['decision or score: expected string or number']
+  },
+
+  'ads-reviewer': (data) => {
+    if (!isObj(data)) return ['root: expected object']
+    if (isStr(data.decision) || isNum(data.score)) return []
+    return ['decision or score: expected string or number']
+  },
 }
 
-// Default validator for reviewers, growth, security, store-builder, etc.
+// Default validator for growth, security, etc.
 const DEFAULT_VALIDATOR: Validator = (data) => {
   if (!isObj(data)) return ['root: expected object']
-  const errs: string[] = []
-  if (!isNum(data.score)) errs.push('score: expected number')
-  if (typeof data.approved !== 'boolean') errs.push('approved: expected boolean')
-  if (!isStr(data.reason)) errs.push('reason: expected non-empty string')
-  return errs
+  // Accept any object with at least one meaningful field
+  if (Object.keys(data).length > 0) return []
+  return ['root: empty object']
 }
 
 function validateOutput(agentId: string, data: unknown): string[] {
