@@ -204,7 +204,7 @@ async function callLLM(
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt },
       ],
-      max_tokens: 2048,
+      max_tokens: 4096,
       temperature: 0.7,
     }),
     signal: AbortSignal.timeout(600_000),
@@ -258,7 +258,8 @@ export async function runAgent(
   const model = options.model ?? LLM_MODEL_DEFAULT
   const log = options.onLog ?? (() => { /* noop */ })
 
-  const skillPrompt = loadSkillPrompt(agentId)
+  const skillPrompt = loadSkillPrompt(agentId) +
+    '\n\n## CRITICAL OUTPUT RULE\nReturn ONLY a single valid JSON object. No markdown code fences, no explanation text before or after. Start your response with `{` and end with `}`.'
   const baseUserMessage = JSON.stringify({ run_id: runId, ...input }, null, 2)
 
   let inputTokens = 0
