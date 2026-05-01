@@ -22,7 +22,7 @@ REDDIT_USER_AGENT: str = os.getenv("REDDIT_USER_AGENT", "trendscraper/1.0 by dro
 PORT: int = int(os.getenv("PORT", "8001"))
 
 # ── Scheduler ────────────────────────────────────────────────────
-SCRAPE_INTERVAL_HOURS: int = 6
+SCRAPE_INTERVAL_HOURS: int = int(os.getenv("SCRAPE_INTERVAL_HOURS", "1"))
 HEALTH_CHECK_INTERVAL_SECONDS: int = 60
 
 # ── Filters ──────────────────────────────────────────────────────
