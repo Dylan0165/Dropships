@@ -94,8 +94,18 @@ const VALIDATORS: Record<string, Validator> = {
 
   'brand-agent': (data) => {
     if (!isObj(data)) return ['root: expected object']
+    // Accepteer brand.name (SKILL.md formaat) OF legacy brand_name op root
+    const brand = data.brand
+    if (isObj(brand)) {
+      const errs: string[] = []
+      if (!isStr(brand.name) && !isStr(brand.brand_name)) errs.push('brand.name: expected non-empty string')
+      if (!isStr(brand.slogan)) errs.push('brand.slogan: expected non-empty string')
+      if (!isObj(brand.colors)) errs.push('brand.colors: expected object')
+      return errs
+    }
+    // Fallback: root-level formaat
     const errs: string[] = []
-    if (!isStr(data.brand_name)) errs.push('brand_name: expected non-empty string')
+    if (!isStr(data.brand_name) && !isStr(data.name)) errs.push('brand_name/name: expected non-empty string')
     if (!isStr(data.slogan)) errs.push('slogan: expected non-empty string')
     if (!isObj(data.colors)) errs.push('colors: expected object')
     return errs
@@ -104,9 +114,13 @@ const VALIDATORS: Record<string, Validator> = {
   'ads-agent': (data) => {
     if (!isObj(data)) return ['root: expected object']
     const errs: string[] = []
+    // hooks is verplicht (array van hook-objecten of strings)
     if (!isArr(data.hooks)) errs.push('hooks: expected array')
-    if (!isStr(data.primary_text)) errs.push('primary_text: expected non-empty string')
-    if (!isObj(data.targeting)) errs.push('targeting: expected object')
+    // primary_text kan op root zitten OF in ad_copy_variants[]
+    const hasPrimaryText = isStr(data.primary_text)
+    const hasVariants = isArr(data.ad_copy_variants) && (data.ad_copy_variants as unknown[]).length > 0
+    if (!hasPrimaryText && !hasVariants) errs.push('primary_text or ad_copy_variants: expected at least one')
+    // targeting is optioneel (niet in alle SKILL.md versies)
     return errs
   },
 
