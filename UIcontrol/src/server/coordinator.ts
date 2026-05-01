@@ -200,6 +200,62 @@ export function startPipeline(
       }
       previousOutput = result
 
+      // After store-builder: deploy the store via store-platform API (best-effort)
+      if (agentId === 'store-builder' && previousOutput) {
+        try {
+          const brandRaw = previousOutput.brand as Record<string, unknown> | undefined
+          const storeConfig = previousOutput.store_config as Record<string, unknown> | undefined
+          const tailwind = storeConfig?.tailwind_theme as Record<string, unknown> | undefined
+          const colors = (tailwind?.colors ?? brandRaw?.colors ?? {}) as Record<string, string>
+
+          const storeData = {
+            brand_name: (brandRaw?.name ?? brandRaw?.brand_name ?? niche) as string,
+            slogan: (brandRaw?.slogan ?? '') as string,
+            niche,
+            colors,
+            products: [],   // product-reviewer output is in previousOutput chain; platform fills products from DB
+            subdomain: (previousOutput.subdomain as string | undefined),
+          }
+
+          const PLATFORM_URL = process.env.PLATFORM_API_URL ?? 'http://localhost:3002'
+          const deployRes = await fetch(`${PLATFORM_URL}/api/stores/deploy`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ run_id: runId, ...storeData }),
+            signal: AbortSignal.timeout(300_000),
+          })
+
+          if (deployRes.ok) {
+            const deployed = await deployRes.json() as { store_id: string; preview_url: string; subdomain: string }
+            store.addLog(runId, agentId, {
+              timestamp: new Date().toISOString(),
+              level: 'info',
+              message: `Store deployed: ${deployed.preview_url}`,
+            })
+            broadcast({
+              type: 'agent_log', runId, agentId,
+              payload: { level: 'info', message: `✅ Store live: ${deployed.preview_url}` },
+              timestamp: new Date().toISOString(),
+            })
+            previousOutput = { ...previousOutput, deployed_store: deployed }
+          } else {
+            const errText = await deployRes.text()
+            store.addLog(runId, agentId, {
+              timestamp: new Date().toISOString(),
+              level: 'warn',
+              message: `Store deploy mislukt (non-fatal): ${errText.slice(0, 200)}`,
+            })
+          }
+        } catch (err) {
+          console.error(`[coordinator] store deploy failed (non-fatal):`, err)
+          store.addLog(runId, agentId, {
+            timestamp: new Date().toISOString(),
+            level: 'warn',
+            message: `Store deploy overgeslagen: ${err instanceof Error ? err.message : String(err)}`,
+          })
+        }
+      }
+
       // After brand-agent: generate product images via Flux 1.1 Pro (best-effort)
       if (agentId === 'brand-agent' && previousOutput) {
         try {
