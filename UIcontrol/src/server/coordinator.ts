@@ -186,6 +186,8 @@ export function startPipeline(
   // Run pipeline async — don't block the request
   ;(async () => {
     let previousOutput: Record<string, unknown> | null = null
+    // Bijhouden van alle agent outputs voor cross-agent data ophalen
+    const allOutputs = new Map<string, Record<string, unknown>>()
 
     for (const agentId of order) {
       if (!activeRuns.has(runId)) break
@@ -199,21 +201,39 @@ export function startPipeline(
         return
       }
       previousOutput = result
+      allOutputs.set(agentId, result)
 
       // After store-builder: deploy the store via store-platform API (best-effort)
       if (agentId === 'store-builder' && previousOutput) {
         try {
-          const brandRaw = previousOutput.brand as Record<string, unknown> | undefined
+          // Brand data zit in brand-agent output, niet in store-builder output
+          const brandAgentOut = allOutputs.get('brand-agent') ?? {}
+          const brandRaw = (brandAgentOut.brand ?? brandAgentOut) as Record<string, unknown>
           const storeConfig = previousOutput.store_config as Record<string, unknown> | undefined
           const tailwind = storeConfig?.tailwind_theme as Record<string, unknown> | undefined
           const colors = (tailwind?.colors ?? brandRaw?.colors ?? {}) as Record<string, string>
 
+          // Producten uit product-agent output halen
+          const productAgentOut = allOutputs.get('product-agent') ?? {}
+          const productReviewerOut = allOutputs.get('product-reviewer') ?? {}
+          const rawProducts = (productAgentOut.products ?? productAgentOut.top_3 ?? productReviewerOut.products ?? []) as Record<string, unknown>[]
+          const products = rawProducts.map((p, i) => ({
+            id: (p.cj_id ?? p.product_id ?? p.id ?? `product-${i}`) as string,
+            title: (p.name ?? p.product_name ?? p.title ?? niche) as string,
+            price: (p.sell_price ?? p.recommended_retail_price ?? p.price ?? 29.99) as number,
+            compareAtPrice: (p.compare_at_price ?? undefined) as number | undefined,
+            image: (p.image_url ?? p.image ?? '') as string,
+            description: (p.description ?? '') as string,
+          }))
+
+          const brandName = (brandRaw?.name ?? brandRaw?.brand_name ?? previousOutput?.subdomain ?? niche) as string
+
           const storeData = {
-            brand_name: (brandRaw?.name ?? brandRaw?.brand_name ?? niche) as string,
+            brand_name: brandName,
             slogan: (brandRaw?.slogan ?? '') as string,
             niche,
             colors,
-            products: [],   // product-reviewer output is in previousOutput chain; platform fills products from DB
+            products,
             subdomain: (previousOutput.subdomain as string | undefined),
           }
 
