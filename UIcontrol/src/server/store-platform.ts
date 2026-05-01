@@ -162,6 +162,35 @@ function writeNextScaffold(targetDir: string, data: StoreData): void {
     private: true,
     scripts: { build: 'next build', start: 'next start', dev: 'next dev' },
     dependencies: { next: '^14.2.0', react: '^18.3.0', 'react-dom': '^18.3.0' },
+    devDependencies: {
+      typescript: '^5.4.0',
+      '@types/react': '^18.3.0',
+      '@types/react-dom': '^18.3.0',
+      '@types/node': '^20.0.0',
+    },
+  }, null, 2), 'utf-8')
+
+  // tsconfig.json voor TypeScript + Next.js App Router
+  fs.writeFileSync(path.join(targetDir, 'tsconfig.json'), JSON.stringify({
+    compilerOptions: {
+      target: 'es2017',
+      lib: ['dom', 'dom.iterable', 'esnext'],
+      allowJs: true,
+      skipLibCheck: true,
+      strict: false,
+      noEmit: true,
+      esModuleInterop: true,
+      module: 'esnext',
+      moduleResolution: 'bundler',
+      resolveJsonModule: true,
+      isolatedModules: true,
+      jsx: 'preserve',
+      incremental: true,
+      plugins: [{ name: 'next' }],
+      paths: { '@/*': ['./*'] },
+    },
+    include: ['next-env.d.ts', '**/*.ts', '**/*.tsx', '.next/types/**/*.ts'],
+    exclude: ['node_modules'],
   }, null, 2), 'utf-8')
 
   fs.writeFileSync(path.join(targetDir, 'next.config.js'),
