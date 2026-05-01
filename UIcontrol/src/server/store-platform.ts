@@ -167,8 +167,43 @@ function writeNextScaffold(targetDir: string, data: StoreData): void {
       '@types/react': '^18.3.0',
       '@types/react-dom': '^18.3.0',
       '@types/node': '^20.0.0',
+      tailwindcss: '^3.4.0',
+      autoprefixer: '^10.4.0',
+      postcss: '^8.4.0',
     },
   }, null, 2), 'utf-8')
+
+  // PostCSS config voor Tailwind
+  fs.writeFileSync(path.join(targetDir, 'postcss.config.js'),
+    `module.exports = { plugins: { tailwindcss: {}, autoprefixer: {} } };\n`, 'utf-8')
+
+  // Tailwind config met brand kleuren
+  const primary = (data.colors as Record<string, string>)?.primary ?? '#7c3aed'
+  const secondary = (data.colors as Record<string, string>)?.secondary ?? '#1e1b4b'
+  const accent = (data.colors as Record<string, string>)?.accent ?? '#f59e0b'
+  fs.writeFileSync(path.join(targetDir, 'tailwind.config.js'),
+    `/** @type {import('tailwindcss').Config} */\n` +
+    `module.exports = {\n` +
+    `  content: ['./app/**/*.{js,ts,jsx,tsx}', './components/**/*.{js,ts,jsx,tsx}'],\n` +
+    `  theme: { extend: { colors: {\n` +
+    `    primary: '${primary}',\n` +
+    `    secondary: '${secondary}',\n` +
+    `    accent: '${accent}',\n` +
+    `  } } },\n` +
+    `  plugins: [],\n` +
+    `};\n`, 'utf-8')
+
+  // Globals CSS met Tailwind directives en brand CSS vars
+  fs.writeFileSync(path.join(targetDir, 'app/globals.css'),
+    `@tailwind base;\n@tailwind components;\n@tailwind utilities;\n\n` +
+    `:root {\n` +
+    `  --brand-primary: ${primary};\n` +
+    `  --brand-secondary: ${secondary};\n` +
+    `  --brand-accent: ${accent};\n` +
+    `}\n\n` +
+    `body { font-family: system-ui, sans-serif; margin: 0; background: #fff; color: #111; }\n`,
+    'utf-8'
+  )
 
   // tsconfig.json voor TypeScript + Next.js App Router
   fs.writeFileSync(path.join(targetDir, 'tsconfig.json'), JSON.stringify({
@@ -199,9 +234,10 @@ function writeNextScaffold(targetDir: string, data: StoreData): void {
   )
 
   fs.writeFileSync(path.join(targetDir, 'app/layout.tsx'),
+    `import './globals.css';\n` +
     `export const metadata = { title: ${JSON.stringify(data.brand_name)}, description: ${JSON.stringify(data.slogan)} };\n` +
     `export default function RootLayout({ children }: { children: React.ReactNode }) {\n` +
-    `  return (<html lang="nl"><body>{children}</body></html>);\n}\n`,
+    `  return (<html lang="nl"><body className="min-h-screen">{children}</body></html>);\n}\n`,
     'utf-8',
   )
 
