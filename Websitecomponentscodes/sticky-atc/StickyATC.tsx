@@ -8,8 +8,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { initiateCheckout } from '../shared/checkout.js'
-import type { CartItem } from '../shared/types.js'
+import { initiateCheckout } from '../shared/checkout'
+import type { CartItem } from '../shared/types'
 
 interface StickyATCProps {
   productId: string
