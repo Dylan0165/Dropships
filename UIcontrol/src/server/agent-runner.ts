@@ -124,41 +124,29 @@ const VALIDATORS: Record<string, Validator> = {
     return errs
   },
 
-  // Reviewers — accepteer zowel root-level als assessments[]-formaat
+  // Reviewers — accepteer elk niet-leeg object (DeepSeek output varieert per niche)
   'niche-reviewer': (data) => {
     if (!isObj(data)) return ['root: expected object']
-    // assessments[] formaat
-    if (isArr(data.assessments) && data.assessments.length > 0) return []
-    // root-level formaat
-    const errs: string[] = []
-    if (!isNum(data.score)) errs.push('score: expected number')
-    if (!isStr(data.reason)) errs.push('reason: expected non-empty string')
-    return errs
+    if (Object.keys(data).length > 0) return []
+    return ['root: empty object']
   },
 
   'product-reviewer': (data) => {
     if (!isObj(data)) return ['root: expected object']
-    if (isArr(data.assessments) && data.assessments.length > 0) return []
-    if (isArr(data.products) && data.products.length > 0) return []
-    if (isObj(data.selected_product)) return []
-    const errs: string[] = []
-    if (!isNum(data.score)) errs.push('score: expected number')
-    if (!isStr(data.reason)) errs.push('reason: expected non-empty string')
-    return errs
+    if (Object.keys(data).length > 0) return []
+    return ['root: empty object']
   },
 
   'store-reviewer': (data) => {
     if (!isObj(data)) return ['root: expected object']
-    // Accepteer: overall (SKILL.md), decision, score, of checklist aanwezig
-    if (isStr(data.overall) || isStr(data.decision) || isNum(data.score) || isObj(data.checklist)) return []
-    return ['overall/decision/score/checklist: expected at least one']
+    if (Object.keys(data).length > 0) return []
+    return ['root: empty object']
   },
 
   'ads-reviewer': (data) => {
     if (!isObj(data)) return ['root: expected object']
-    // Accepteer: overall, decision, score, of hooks/ad_copy_variants aanwezig
-    if (isStr(data.overall) || isStr(data.decision) || isNum(data.score) || isArr(data.hooks) || isObj(data.checklist)) return []
-    return ['overall/decision/score: expected at least one']
+    if (Object.keys(data).length > 0) return []
+    return ['root: empty object']
   },
 }
 
