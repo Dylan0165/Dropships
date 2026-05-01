@@ -206,22 +206,38 @@ function writeNextScaffold(targetDir: string, data: StoreData): void {
   )
 
   // Build a single-page app combining all components.
+  const navLinks = JSON.stringify([
+    { label: 'Home', href: '/' },
+    { label: 'Shop', href: '#products' },
+  ])
+  const uspItems = JSON.stringify([
+    { icon: '🚚', title: 'Gratis verzending', description: 'Gratis verzending naar NL, BE en DE.' },
+    { icon: '↩️', title: '30 dagen retour', description: 'Niet tevreden? Geld terug garantie.' },
+    { icon: '⭐', title: 'Top kwaliteit', description: 'Zorgvuldig geselecteerde producten.' },
+  ])
+  const footerColumns = JSON.stringify([
+    { title: 'Informatie', links: [{ label: 'Over ons', href: '/over' }, { label: 'Contact', href: '/contact' }] },
+    { title: 'Service', links: [{ label: 'Retourneren', href: '/retour' }, { label: 'FAQ', href: '/faq' }] },
+  ])
+
   fs.writeFileSync(path.join(targetDir, 'app/page.tsx'),
+    `'use client';\n` +
     `import HeroBanner from '../components/hero-banner/HeroBanner';\n` +
     `import ProductGrid from '../components/product-grid/ProductGrid';\n` +
     `import UspSection from '../components/usp-section/UspSection';\n` +
-    `import SocialProof from '../components/social-proof/SocialProof';\n` +
     `import NavBar from '../components/navigation/NavBar';\n` +
     `import Footer from '../components/footer/Footer';\n\n` +
-    `const products = ${JSON.stringify(data.products, null, 2)};\n\n` +
+    `const products = ${JSON.stringify(data.products, null, 2)};\n` +
+    `const navLinks = ${navLinks};\n` +
+    `const uspItems = ${uspItems};\n` +
+    `const footerColumns = ${footerColumns};\n\n` +
     `export default function Home() {\n` +
     `  return (<>\n` +
-    `    <NavBar brand={${JSON.stringify(data.brand_name)}} />\n` +
+    `    <NavBar brandName={${JSON.stringify(data.brand_name)}} links={navLinks} />\n` +
     `    <HeroBanner headline={${JSON.stringify(data.brand_name)}} subheadline={${JSON.stringify(data.slogan)}} ctaText="Shop nu" ctaHref="#products" />\n` +
-    `    <UspSection />\n` +
+    `    <UspSection items={uspItems} />\n` +
     `    <section id="products"><ProductGrid products={products} /></section>\n` +
-    `    <SocialProof />\n` +
-    `    <Footer brand={${JSON.stringify(data.brand_name)}} />\n` +
+    `    <Footer brandName={${JSON.stringify(data.brand_name)}} columns={footerColumns} />\n` +
     `  </>);\n}\n`,
     'utf-8',
   )
