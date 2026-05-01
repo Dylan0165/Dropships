@@ -1,4 +1,4 @@
-name: Deploy to Tool Server
+name: Deploy
 
 on:
   push:
@@ -9,63 +9,67 @@ jobs:
     runs-on: self-hosted
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          path: /home/student/Dropships
-          clean: false
-
       - name: Pull latest code
         run: |
           cd /home/student/Dropships
-          git pull origin main
+          git fetch origin main
+          git reset --hard origin/main
 
       - name: Install UIcontrol dependencies
         run: |
           cd /home/student/Dropships/UIcontrol
           npm install
 
+      - name: Build frontend
+        run: |
+          cd /home/student/Dropships/UIcontrol
+          npm run build
+
       - name: Install ApprovalApp dependencies
         run: |
           cd /home/student/Dropships/ApprovalApp
           npm install
 
+      - name: Build ApprovalApp
+        run: |
+          cd /home/student/Dropships/ApprovalApp
+          npm run build
+
       - name: Install Trendscraper dependencies
         run: |
           cd /home/student/Dropships/Trendscraper
-          source venv/bin/activate
-          pip install -r requirements.txt --break-system-packages
-          deactivate
+          source venv/bin/activate && pip install -r requirements.txt -q && deactivate
 
       - name: Install WebsiteInspector dependencies
         run: |
           cd /home/student/Dropships/WebsiteInspector
-          source venv/bin/activate
-          pip install -r requirements.txt --break-system-packages
-          deactivate
+          source venv/bin/activate && pip install -r requirements.txt -q && deactivate
 
-      - name: Restart UIcontrol
+      - name: Restore .env files (not in git on server)
         run: |
-          pm2 restart uicontrol || pm2 start /home/student/Dropships/UIcontrol/dist/server/index.js --name uicontrol
+          # UIcontrol .env bewaard buiten git
+          if [ -f /home/student/.dropship-envs/uicontrol.env ]; then
+            cp /home/student/.dropship-envs/uicontrol.env /home/student/Dropships/UIcontrol/.env
+          fi
+          if [ -f /home/student/.dropship-envs/inspector.env ]; then
+            cp /home/student/.dropship-envs/inspector.env /home/student/Dropships/WebsiteInspector/.env
+          fi
+
+      - name: Restart backend services
+        run: |
+          pm2 restart uicontrol --update-env
+          pm2 restart store-platform --update-env
+          pm2 restart trendscraper --update-env
+          pm2 restart inspector --update-env
+          pm2 restart approvalapp --update-env
           pm2 save
 
-      - name: Restart ApprovalApp
-        run: |
-          pm2 restart approvalapp || pm2 start npm --name approvalapp -- --prefix /home/student/Dropships/ApprovalApp run preview
-          pm2 save
-
-      - name: Restart Trendscraper
-        run: |
-          pm2 restart trendscraper || pm2 start /home/student/Dropships/Trendscraper/main.py --name trendscraper --interpreter /home/student/Dropships/Trendscraper/venv/bin/python
-          pm2 save
-
-      - name: Restart WebsiteInspector
-        run: |
-          pm2 restart inspector || pm2 start /home/student/Dropships/WebsiteInspector/main.py --name inspector --interpreter /home/student/Dropships/WebsiteInspector/venv/bin/python
-          pm2 save
+      - name: Reload nginx (nieuwe UI build)
+        run: sudo systemctl reload nginx
 
       - name: Health check
         run: |
-          sleep 5
-          curl -f http://localhost:3001/api/health && echo "UIcontrol OK"
-          curl -f http://localhost:8001/health && echo "Trendscraper OK"
+          sleep 8
+          curl -f http://localhost:3001/api/health && echo " UIcontrol OK"
+          curl -f http://localhost:8001/health && echo " Trendscraper OK"
+          curl -f http://localhost:8002/health && echo " Inspector OK"

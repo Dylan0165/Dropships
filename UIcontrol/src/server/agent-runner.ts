@@ -126,6 +126,7 @@ const VALIDATORS: Record<string, Validator> = {
     if (!isObj(data)) return ['root: expected object']
     if (isArr(data.assessments) && data.assessments.length > 0) return []
     if (isArr(data.products) && data.products.length > 0) return []
+    if (isObj(data.selected_product)) return []
     const errs: string[] = []
     if (!isNum(data.score)) errs.push('score: expected number')
     if (!isStr(data.reason)) errs.push('reason: expected non-empty string')
