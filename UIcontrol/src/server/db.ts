@@ -40,8 +40,18 @@ db.exec(`
     created_at TEXT NOT NULL,
     roas REAL,
     status TEXT NOT NULL DEFAULT 'building',
+    port INTEGER,
+    health_status TEXT NOT NULL DEFAULT 'unknown',
+    health_checked_at TEXT,
+    health_response_ms INTEGER,
+    health_error TEXT,
+    ai_diagnosis TEXT,
+    ai_diagnosed_at TEXT,
     FOREIGN KEY (run_id) REFERENCES runs(run_id)
   );
+
+  -- Voeg kolommen toe aan bestaande DB (idempotent via ALTER TABLE)
+  CREATE TABLE IF NOT EXISTS _migrations (key TEXT PRIMARY KEY);
 
   CREATE INDEX IF NOT EXISTS idx_stores_run_id ON stores(run_id);
   CREATE INDEX IF NOT EXISTS idx_runs_status ON runs(status);
@@ -139,6 +149,23 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_experiments_store ON component_experiments(store_id);
   CREATE INDEX IF NOT EXISTS idx_experiments_comp  ON component_experiments(component_name);
 `)
+
+// ── Idempotente migrations voor bestaande databases ──────────────────────────
+const storesCols = (db.prepare(`PRAGMA table_info(stores)`).all() as { name: string }[]).map(c => c.name)
+const storeMigrations: [string, string][] = [
+  ['port',              'ALTER TABLE stores ADD COLUMN port INTEGER'],
+  ['health_status',     "ALTER TABLE stores ADD COLUMN health_status TEXT NOT NULL DEFAULT 'unknown'"],
+  ['health_checked_at', 'ALTER TABLE stores ADD COLUMN health_checked_at TEXT'],
+  ['health_response_ms','ALTER TABLE stores ADD COLUMN health_response_ms INTEGER'],
+  ['health_error',      'ALTER TABLE stores ADD COLUMN health_error TEXT'],
+  ['ai_diagnosis',      'ALTER TABLE stores ADD COLUMN ai_diagnosis TEXT'],
+  ['ai_diagnosed_at',   'ALTER TABLE stores ADD COLUMN ai_diagnosed_at TEXT'],
+]
+for (const [col, sql] of storeMigrations) {
+  if (!storesCols.includes(col)) {
+    try { db.prepare(sql).run() } catch { /* already exists */ }
+  }
+}
 
 // Helper for the runner to persist agent outputs immediately on completion.
 export function saveAgentOutput(runId: string, agentId: string, output: Record<string, unknown>): void {

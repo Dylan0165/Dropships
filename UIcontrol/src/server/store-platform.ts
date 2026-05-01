@@ -383,7 +383,11 @@ async function sshExec(command: string): Promise<{ ok: boolean; output: string }
   return { ok: result.code === 0, output: result.stdout + result.stderr }
 }
 
-function nginxConfig(subdomain: string): string {
+function nginxConfig(subdomain: string, port?: number): string {
+  // Elke store luistert op:
+  //   - poort 80 via subdomain:  http://{subdomain}.stores.local
+  //   - eigen poort (indien toegewezen): http://192.168.121.8:{port}
+  const portBlock = port ? `\nserver {\n  listen ${port};\n  root /var/www/stores/${subdomain}/out;\n  index index.html;\n  location / { try_files $uri $uri.html $uri/index.html =404; }\n  gzip on;\n  gzip_types text/css application/javascript image/svg+xml;\n  add_header X-Store "${subdomain}";\n}\n` : ''
   return `server {
   listen 80;
   server_name ${subdomain}.${STORE_BASE_DOMAIN};
@@ -392,8 +396,9 @@ function nginxConfig(subdomain: string): string {
   location / { try_files $uri $uri.html $uri/index.html =404; }
   gzip on;
   gzip_types text/css application/javascript image/svg+xml;
+  add_header X-Store "${subdomain}";
 }
-`
+${portBlock}`
 }
 
 // ── WebsiteInspector integration ─────────────────────────────────────────────
@@ -549,9 +554,10 @@ export async function deployStore(storeData: StoreData): Promise<DeployedStore> 
       return fallback
     }
 
-    // Write nginx vhost remotely
+    // Write nginx vhost remotely (inclusief poort-block)
+    const assignedPort = assignPort(storeId)
     const nginxLocal = path.join(baseDir, 'nginx.conf')
-    fs.writeFileSync(nginxLocal, nginxConfig(subdomain), 'utf-8')
+    fs.writeFileSync(nginxLocal, nginxConfig(subdomain, assignedPort), 'utf-8')
     await scpToRemote(nginxLocal, `/tmp/${subdomain}.nginx.conf`)
     const nginxRes = await sshExec(
       `sudo mv /tmp/${subdomain}.nginx.conf /etc/nginx/sites-available/${subdomain} && ` +
@@ -604,6 +610,8 @@ function persistStore(s: DeployedStore, runId?: string): void {
 
 // ── Express service (port 3002) ──────────────────────────────────────────────
 
+import { startStoreMonitor, diagnoseStore, getAllStoreHealth, assignPort } from './store-monitor.js'
+
 const app = express()
 app.use(express.json())
 
@@ -615,10 +623,26 @@ app.post('/api/stores/deploy', async (req, res) => {
       return
     }
     const result = await deployStore(data)
+
+    // Wijs direct een poort toe aan de nieuwe store
+    if (result.storeId && result.status !== 'failed') {
+      const port = assignPort(result.storeId)
+      ;(result as Record<string, unknown>).port = port
+    }
+
     res.json(result)
   } catch (err) {
     console.error('[store-platform] /deploy failed:', err)
     res.status(500).json({ error: err instanceof Error ? err.message : 'deploy failed' })
+  }
+})
+
+// ── Store overzicht met health status ────────────────────────────────────────
+app.get('/api/stores', (_req, res) => {
+  try {
+    res.json(getAllStoreHealth())
+  } catch (err) {
+    res.status(500).json({ error: err instanceof Error ? err.message : 'lookup failed' })
   }
 })
 
@@ -632,6 +656,35 @@ app.get('/api/stores/:storeId', (req, res) => {
     res.json(row)
   } catch (err) {
     res.status(500).json({ error: err instanceof Error ? err.message : 'lookup failed' })
+  }
+})
+
+// ── AI diagnose endpoint ─────────────────────────────────────────────────────
+app.post('/api/stores/:storeId/diagnose', async (req, res) => {
+  try {
+    const result = await diagnoseStore(req.params.storeId)
+    res.json(result)
+  } catch (err) {
+    res.status(500).json({ error: err instanceof Error ? err.message : 'diagnose failed' })
+  }
+})
+
+// ── Handmatige health check trigger ─────────────────────────────────────────
+app.post('/api/stores/:storeId/health-check', async (req, res) => {
+  try {
+    const store = db.prepare(`
+      SELECT store_id, subdomein, niche, preview_url, status, port,
+             health_status, health_checked_at, health_response_ms, health_error
+      FROM stores WHERE store_id = ?
+    `).get(req.params.storeId) as Record<string, unknown> | undefined
+    if (!store) { res.status(404).json({ error: 'store not found' }); return }
+
+    // Importeer checkStore via diagnoseStore (die doet een health check intern)
+    await diagnoseStore(req.params.storeId)
+    const updated = db.prepare('SELECT health_status, health_response_ms, health_error FROM stores WHERE store_id = ?').get(req.params.storeId)
+    res.json(updated)
+  } catch (err) {
+    res.status(500).json({ error: err instanceof Error ? err.message : 'health check failed' })
   }
 })
 
@@ -657,5 +710,6 @@ app.get('/api/health', (_req, res) => {
 if (process.env.NODE_ENV !== 'test') {
   app.listen(PORT, () => {
     console.log(`[store-platform] listening on http://localhost:${PORT} (mode: ${STORE_SERVER_HOST ? 'remote' : 'local'})`)
+    startStoreMonitor()
   })
 }
