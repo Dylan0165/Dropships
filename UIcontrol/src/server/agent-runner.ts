@@ -149,14 +149,16 @@ const VALIDATORS: Record<string, Validator> = {
 
   'store-reviewer': (data) => {
     if (!isObj(data)) return ['root: expected object']
-    if (isStr(data.decision) || isNum(data.score)) return []
-    return ['decision or score: expected string or number']
+    // Accepteer: overall (SKILL.md), decision, score, of checklist aanwezig
+    if (isStr(data.overall) || isStr(data.decision) || isNum(data.score) || isObj(data.checklist)) return []
+    return ['overall/decision/score/checklist: expected at least one']
   },
 
   'ads-reviewer': (data) => {
     if (!isObj(data)) return ['root: expected object']
-    if (isStr(data.decision) || isNum(data.score)) return []
-    return ['decision or score: expected string or number']
+    // Accepteer: overall, decision, score, of hooks/ad_copy_variants aanwezig
+    if (isStr(data.overall) || isStr(data.decision) || isNum(data.score) || isArr(data.hooks) || isObj(data.checklist)) return []
+    return ['overall/decision/score: expected at least one']
   },
 }
 
