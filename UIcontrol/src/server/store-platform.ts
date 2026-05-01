@@ -119,6 +119,19 @@ function applyPlaceholders(content: string, data: StoreData & { _storeId?: strin
 function copyComponents(targetDir: string, data: StoreData & { _storeId?: string }): void {
   const componentsTarget = path.join(targetDir, 'components')
   ensureDir(componentsTarget)
+
+  // Kopieer de shared/ map (checkout.ts, types.ts, etc.) die door componenten wordt geïmporteerd
+  const sharedSrc = path.join(COMPONENTS_DIR, 'shared')
+  if (fs.existsSync(sharedSrc)) {
+    const sharedDest = path.join(componentsTarget, 'shared')
+    ensureDir(sharedDest)
+    for (const file of fs.readdirSync(sharedSrc)) {
+      const srcFile = path.join(sharedSrc, file)
+      if (!fs.statSync(srcFile).isFile()) continue
+      fs.copyFileSync(srcFile, path.join(sharedDest, file))
+    }
+  }
+
   for (const compName of COMPONENT_NAMES) {
     const src = path.join(COMPONENTS_DIR, compName)
     if (!fs.existsSync(src)) {
