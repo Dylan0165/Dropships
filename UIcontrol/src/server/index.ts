@@ -233,9 +233,26 @@ app.get('/api/runs/:runId/resume', (req, res) => {
 })
 
 app.get('/api/stores', (_req, res) => {
+  // Primair: lees uit de stores tabel in de DB (survives restarts)
+  try {
+    const dbStores = db.prepare(`
+      SELECT store_id as storeId, subdomein, niche, preview_url as previewUrl,
+             created_at as createdAt, roas, status, port,
+             health_status as healthStatus, health_checked_at as healthCheckedAt,
+             health_response_ms as healthResponseMs, health_error as healthError
+      FROM stores ORDER BY created_at DESC
+    `).all()
+    if (dbStores && (dbStores as unknown[]).length > 0) {
+      res.json(dbStores)
+      return
+    }
+  } catch {
+    // DB query failed — fall through to in-memory fallback
+  }
+  // Fallback: in-memory storesLive (voor als DB leeg is)
   const allRuns = store.getAllRuns()
   const seen = new Set<string>()
-  const stores = []
+  const stores: unknown[] = []
   for (const run of allRuns) {
     for (const s of run.storesLive) {
       if (!seen.has(s.storeId)) {
@@ -245,6 +262,21 @@ app.get('/api/stores', (_req, res) => {
     }
   }
   res.json(stores)
+})
+
+app.get('/api/ads', (_req, res) => {
+  try {
+    const ads = db.prepare(`
+      SELECT id, store_id as storeId, run_id as runId, platform, format, phase, status,
+             higgsfield_job_id as higgsfieldJobId, creative_url as creativeUrl,
+             hook, primary_text as primaryText, headline, performance_score as performanceScore,
+             created_at as createdAt
+      FROM ads ORDER BY created_at DESC
+    `).all()
+    res.json(ads)
+  } catch {
+    res.json([])
+  }
 })
 
 app.get('/api/components', (_req, res) => {
@@ -398,25 +430,27 @@ app.post('/api/niches/rescrape', async (_req, res) => {
   }
 
   try {
-    // Get used niches to exclude
-    const usedRows = db.prepare(`SELECT name FROM niches WHERE status = 'used'`).all() as { name: string }[]
-    const usedNames = usedRows.map(r => r.name)
+    // Exclude ALLE bestaande niches (used, rejected, en huidige suggested)
+    // zodat de AI altijd vers, unieke niches teruggeeft
+    const excludeRows = db.prepare(`SELECT name FROM niches`).all() as { name: string }[]
+    const usedNames = excludeRows.map(r => r.name)
 
     const response = await fetch(`${process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com'}/chat/completions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
       body: JSON.stringify({
-        model: 'deepseek-v4-flash',
+        model: process.env.LLM_MODEL ?? 'deepseek-chat',
         messages: [{
           role: 'system',
-          content: 'You are a European dropshipping trend analyst. Return ONLY valid JSON, no markdown.',
+          content: 'You are a European dropshipping trend analyst. Return ONLY valid JSON — no markdown, no explanation, just the JSON array.',
         }, {
           role: 'user',
-          content: `Find 8 trending product niches for European dropshipping (NL/BE/DE/FR).
-Exclude these already-used niches: ${JSON.stringify(usedNames)}.
-Each niche must be unique and specific (e.g. "Portable Blender Bottles" not "Kitchen").
-Return JSON array:
-[{"name":"...","trending_score":0-100,"active_advertisers":number,"market_size_eu":"small|medium|large","viral_potential":0-100,"reasoning":"1-2 sentences in Dutch why this is good"}]`,
+          content: `Find 8 NEW trending product niches for European dropshipping (NL/BE/DE/FR).
+IMPORTANT: These niches have ALREADY been used or suggested — do NOT repeat any of them: ${JSON.stringify(usedNames)}.
+Each niche must be completely new, specific, and different (e.g. "Portable Blender Bottles" not just "Kitchen gadgets").
+Think outside the box — explore unexpected categories, seasonal trends, emerging sub-niches, viral TikTok products.
+Return ONLY a JSON array (no markdown):
+[{"name":"...","trending_score":0-100,"active_advertisers":number,"market_size_eu":"small|medium|large","viral_potential":0-100,"reasoning":"1-2 zinnen in het Nederlands waarom dit kansrijk is"}]`,
         }],
         max_tokens: 2048,
         temperature: 0.8,

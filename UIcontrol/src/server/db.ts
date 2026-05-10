@@ -148,6 +148,38 @@ db.exec(`
   );
   CREATE INDEX IF NOT EXISTS idx_experiments_store ON component_experiments(store_id);
   CREATE INDEX IF NOT EXISTS idx_experiments_comp  ON component_experiments(component_name);
+
+  CREATE TABLE IF NOT EXISTS ads (
+    id                 INTEGER PRIMARY KEY AUTOINCREMENT,
+    store_id           TEXT NOT NULL,
+    run_id             TEXT,
+    platform           TEXT NOT NULL DEFAULT 'meta',
+    format             TEXT NOT NULL DEFAULT 'image',
+    phase              TEXT NOT NULL DEFAULT 'static',
+    status             TEXT NOT NULL DEFAULT 'queued',
+    higgsfield_job_id  TEXT,
+    creative_url       TEXT,
+    hook               TEXT NOT NULL DEFAULT '',
+    primary_text       TEXT NOT NULL DEFAULT '',
+    headline           TEXT,
+    performance_score  REAL,
+    created_at         TEXT NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_ads_store  ON ads(store_id);
+  CREATE INDEX IF NOT EXISTS idx_ads_status ON ads(status);
+
+  CREATE TABLE IF NOT EXISTS higgsfield_jobs (
+    id               INTEGER PRIMARY KEY AUTOINCREMENT,
+    ad_id            INTEGER NOT NULL,
+    job_id           TEXT UNIQUE,
+    status           TEXT NOT NULL DEFAULT 'pending',
+    input_image_url  TEXT,
+    output_video_url TEXT,
+    prompt           TEXT,
+    created_at       TEXT NOT NULL,
+    completed_at     TEXT
+  );
+  CREATE INDEX IF NOT EXISTS idx_hf_ad_id ON higgsfield_jobs(ad_id);
 `)
 
 // ── Idempotente migrations voor bestaande databases ──────────────────────────

@@ -9,10 +9,11 @@ import { ComponentsView } from './components/views/ComponentsView'
 import { DashboardView } from './components/views/DashboardView'
 import { SettingsView } from './components/views/SettingsView'
 import { TrendScraperView } from './components/views/TrendScraperView'
+import { AdManagerView } from './components/views/AdManagerView'
 import { usePipeline } from './hooks/usePipeline'
 import type { AgentId } from './types'
 
-type View = 'pipeline' | 'stores' | 'components' | 'runs' | 'dashboard' | 'settings' | 'trendscraper'
+export type View = 'pipeline' | 'stores' | 'components' | 'runs' | 'dashboard' | 'settings' | 'trendscraper' | 'ads'
 
 export default function App() {
   const [view, setView] = useState<View>('pipeline')
@@ -47,14 +48,7 @@ export default function App() {
   )
 
   return (
-    <div className="h-screen w-screen flex flex-col bg-[#030712] text-slate-200 overflow-hidden relative selection:bg-violet-500/30">
-      {/* Ambient background glows */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-[-15%] left-[10%] w-[45%] h-[45%] bg-violet-900/10 rounded-full blur-[140px]" />
-        <div className="absolute bottom-[-15%] right-[10%] w-[35%] h-[35%] bg-teal-900/8 rounded-full blur-[120px]" />
-        <div className="absolute top-[40%] right-[25%] w-[15%] h-[15%] bg-blue-900/6 rounded-full blur-[80px]" />
-      </div>
-
+    <div className="h-screen w-screen flex flex-col bg-[#080808] text-white overflow-hidden relative selection:bg-white/20">
       <div className="relative z-10 flex flex-col h-full">
         <TopBar
           activeRun={activeRun}
@@ -65,7 +59,6 @@ export default function App() {
         <div className="flex flex-1 overflow-hidden">
           <Sidebar activeView={view} onViewChange={setView} />
 
-          {/* Main content */}
           <div className="flex-1 flex overflow-hidden">
             {view === 'pipeline' && (
               <>
@@ -88,12 +81,13 @@ export default function App() {
                 )}
               </>
             )}
-            {view === 'runs' && <RunsView onSelectRun={handleSelectRun} />}
-            {view === 'stores' && <StoresView />}
-            {view === 'components' && <ComponentsView />}
-            {view === 'dashboard' && <DashboardView />}
-            {view === 'trendscraper' && <TrendScraperView />}
-            {view === 'settings' && <SettingsView />}
+            {view === 'runs'        && <RunsView onSelectRun={handleSelectRun} />}
+            {view === 'stores'      && <StoresView />}
+            {view === 'ads'         && <AdManagerView />}
+            {view === 'components'  && <ComponentsView />}
+            {view === 'dashboard'   && <DashboardView />}
+            {view === 'trendscraper'&& <TrendScraperView />}
+            {view === 'settings'    && <SettingsView />}
           </div>
         </div>
       </div>

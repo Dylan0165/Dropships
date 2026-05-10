@@ -2,9 +2,17 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --bg: #080808;
+  --panel: #111111;
+  --card: #141414;
+  --border: rgba(255,255,255,0.07);
+  --border-hover: rgba(255,255,255,0.12);
+}
+
 * {
   scrollbar-width: thin;
-  scrollbar-color: #30363d transparent;
+  scrollbar-color: #2a2a2a transparent;
 }
 
 *::-webkit-scrollbar {
@@ -17,41 +25,41 @@
 }
 
 *::-webkit-scrollbar-thumb {
-  background: #30363d;
+  background: #2a2a2a;
   border-radius: 2px;
 }
 
 *::-webkit-scrollbar-thumb:hover {
-  background: #484f58;
+  background: #3a3a3a;
 }
 
-/* ReactFlow — premium dark theme */
+/* ReactFlow — clean monochrome */
 .react-flow__background {
-  background-color: #0d1117 !important;
+  background-color: #080808 !important;
 }
 
 .react-flow__minimap {
-  background-color: #161b22 !important;
+  background-color: #111 !important;
   border-radius: 10px !important;
-  border: 1px solid rgba(255, 255, 255, 0.07) !important;
+  border: 1px solid rgba(255,255,255,0.07) !important;
   overflow: hidden;
 }
 
 .react-flow__controls {
   border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.07) !important;
+  border: 1px solid rgba(255,255,255,0.07) !important;
   overflow: hidden;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5) !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.6) !important;
 }
 
 .react-flow__controls-button {
-  background-color: #161b22 !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
-  fill: #8b949e !important;
+  background-color: #111 !important;
+  border-bottom: 1px solid rgba(255,255,255,0.06) !important;
+  fill: #555 !important;
 }
 
 .react-flow__controls-button:hover {
-  background-color: #21262d !important;
+  background-color: #1a1a1a !important;
   fill: #e2e8f0 !important;
 }
 
@@ -63,3 +71,11 @@
   font-size: 9px;
 }
 
+@keyframes slide-in-right {
+  from { transform: translateX(100%); opacity: 0; }
+  to   { transform: translateX(0);   opacity: 1; }
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.18s ease-out;
+}
