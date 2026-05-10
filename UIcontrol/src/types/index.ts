@@ -8,8 +8,6 @@ export type AgentId =
   | 'brand-agent'
   | 'store-builder'
   | 'store-reviewer'
-  | 'ads-agent'
-  | 'ads-reviewer'
   | 'growth-agent'
   | 'security-agent'
 

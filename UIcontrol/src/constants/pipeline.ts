@@ -14,8 +14,6 @@ export const AGENT_CONFIGS: AgentConfig[] = [
   { id: 'brand-agent',      label: 'Brand Agent',       category: 'executor',   model: EXECUTOR_MODEL, description: 'Generates brand identity',        position: { x: 1040, y: 0   } },
   { id: 'store-builder',    label: 'Store Builder',     category: 'executor',   model: EXECUTOR_MODEL, description: 'Assembles Next.js store',         position: { x: 1300, y: 0   } },
   { id: 'store-reviewer',   label: 'Store Reviewer',    category: 'reviewer',   model: REVIEWER_MODEL, description: 'UI/UX quality check',             position: { x: 1560, y: 0   } },
-  { id: 'ads-agent',        label: 'Ads Agent',         category: 'executor',   model: EXECUTOR_MODEL, description: 'Creates ad content package',      position: { x: 1820, y: 0   } },
-  { id: 'ads-reviewer',     label: 'Ads Reviewer',      category: 'reviewer',   model: REVIEWER_MODEL, description: 'Validates ad compliance',         position: { x: 2080, y: 0   } },
   { id: 'growth-agent',     label: 'Growth Agent',      category: 'analytics',  model: REVIEWER_MODEL, description: 'Weekly performance analysis',     position: { x: 1300, y: 220 } },
   { id: 'security-agent',   label: 'Security Agent',    category: 'security',   model: REVIEWER_MODEL, description: 'Continuous security monitoring',  position: { x: 0,    y: 220 } },
 ]
@@ -27,8 +25,6 @@ export const PIPELINE_EDGES: { source: string; target: string; dashed?: boolean;
   { source: 'product-reviewer', target: 'brand-agent' },
   { source: 'brand-agent',      target: 'store-builder' },
   { source: 'store-builder',    target: 'store-reviewer' },
-  { source: 'store-reviewer',   target: 'ads-agent' },
-  { source: 'ads-agent',        target: 'ads-reviewer' },
   { source: 'store-builder',    target: 'growth-agent',   dashed: true, label: 'weekly' },
   { source: 'store-builder',    target: 'security-agent', dashed: true, label: 'continuous' },
 ]
