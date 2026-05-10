@@ -264,6 +264,18 @@ app.get('/api/stores', (_req, res) => {
   res.json(stores)
 })
 
+// Proxy to store-platform reconcile (runs on port 3002)
+app.post('/api/admin/reconcile-stores', async (_req, res) => {
+  try {
+    const PLATFORM_URL = process.env.PLATFORM_API_URL ?? 'http://localhost:3002'
+    const r = await fetch(`${PLATFORM_URL}/api/admin/reconcile-stores`, { method: 'POST' })
+    const data = await r.json()
+    res.json(data)
+  } catch (err) {
+    res.status(500).json({ error: err instanceof Error ? err.message : 'reconcile proxy failed' })
+  }
+})
+
 app.get('/api/ads', (_req, res) => {
   try {
     const ads = db.prepare(`

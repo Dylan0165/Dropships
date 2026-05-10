@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { RefreshCw, ExternalLink, Store, Activity, AlertCircle, CheckCircle, Clock } from 'lucide-react'
+import { RefreshCw, ExternalLink, Store, Activity, AlertCircle, CheckCircle, Clock, DownloadCloud } from 'lucide-react'
 import clsx from 'clsx'
 import { getStores } from '@/lib/api'
 import type { StoreInfo } from '@/types'
@@ -16,6 +16,8 @@ interface StoreInfoEx extends StoreInfo {
 export function StoresView() {
   const [stores, setStores] = useState<StoreInfoEx[]>([])
   const [loading, setLoading] = useState(true)
+  const [syncing, setSyncing] = useState(false)
+  const [syncResult, setSyncResult] = useState<string | null>(null)
   const [selected, setSelected] = useState<string | null>(null)
 
   const fetchStores = async () => {
@@ -25,6 +27,28 @@ export function StoresView() {
       setStores(data)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const syncStores = async () => {
+    setSyncing(true)
+    setSyncResult(null)
+    try {
+      const res = await fetch('/api/admin/reconcile-stores', { method: 'POST' })
+      const data = await res.json() as { added: number; stores: string[]; error?: string }
+      if (data.error) {
+        setSyncResult(`Fout: ${data.error}`)
+      } else {
+        setSyncResult(data.added > 0
+          ? `${data.added} store(s) hersteld: ${data.stores.join(', ')}`
+          : `Alles is al gesynchroniseerd (${data.stores.length} stores)`)
+        await fetchStores()
+      }
+    } catch {
+      setSyncResult('Sync mislukt — check of store-platform online is')
+    } finally {
+      setSyncing(false)
+      setTimeout(() => setSyncResult(null), 6000)
     }
   }
 
@@ -47,14 +71,37 @@ export function StoresView() {
             <h1 className="text-base font-semibold text-white">Deployed Stores</h1>
             <p className="text-xs text-zinc-600 mt-0.5">{stores.length} stores totaal</p>
           </div>
-          <button
-            onClick={fetchStores}
-            disabled={loading}
-            className="text-zinc-600 hover:text-zinc-300 disabled:opacity-40 p-2 rounded-lg hover:bg-white/[0.04] transition-all"
-          >
-            <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={syncStores}
+              disabled={syncing}
+              title="Herstel bestaande stores van de store server"
+              className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-white border border-white/[0.08] hover:border-white/[0.2] px-2.5 py-1.5 rounded-lg disabled:opacity-40 transition-all"
+            >
+              <DownloadCloud size={13} className={syncing ? 'animate-pulse' : ''} />
+              {syncing ? 'Syncing...' : 'Sync'}
+            </button>
+            <button
+              onClick={fetchStores}
+              disabled={loading}
+              className="text-zinc-600 hover:text-zinc-300 disabled:opacity-40 p-2 rounded-lg hover:bg-white/[0.04] transition-all"
+            >
+              <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+            </button>
+          </div>
         </div>
+
+        {/* Sync result toast */}
+        {syncResult && (
+          <div className={clsx(
+            'mb-3 px-3 py-2 rounded-lg text-xs border',
+            syncResult.startsWith('Fout') || syncResult.startsWith('Sync')
+              ? 'bg-red-900/40 border-red-700/40 text-red-300'
+              : 'bg-emerald-900/30 border-emerald-700/30 text-emerald-300',
+          )}>
+            {syncResult}
+          </div>
+        )}
 
         {/* Stats */}
         <div className="grid grid-cols-3 gap-3">
@@ -74,10 +121,22 @@ export function StoresView() {
       {/* Stores grid */}
       <div className="flex-1 overflow-y-auto p-4">
         {stores.length === 0 && !loading ? (
-          <div className="flex flex-col items-center justify-center mt-24 gap-2 text-zinc-700">
-            <Store size={32} className="opacity-30" />
-            <p className="text-sm">Nog geen stores</p>
-            <p className="text-xs">Draai een pipeline om je eerste store te deployen</p>
+          <div className="flex flex-col items-center justify-center mt-24 gap-3 text-center">
+            <Store size={36} className="text-zinc-700 opacity-30" />
+            <div>
+              <p className="text-zinc-400 text-sm font-medium">Geen stores gevonden</p>
+              <p className="text-zinc-600 text-xs mt-1 max-w-xs">
+                Heb je al stores gedeployed? Klik "Sync" om ze te herstellen vanuit de store server.
+              </p>
+            </div>
+            <button
+              onClick={syncStores}
+              disabled={syncing}
+              className="flex items-center gap-2 text-sm bg-white text-black px-4 py-2 rounded-lg font-medium hover:bg-zinc-200 transition-all disabled:opacity-50 mt-1"
+            >
+              <DownloadCloud size={14} />
+              {syncing ? 'Bezig met synchroniseren...' : 'Herstel stores van server'}
+            </button>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">

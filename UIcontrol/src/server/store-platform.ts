@@ -702,6 +702,83 @@ function persistStore(s: DeployedStore, runId?: string): void {
   }
 }
 
+// ── Store reconciliation ──────────────────────────────────────────────────────
+// Reads existing stores from the store server via SSH and populates the DB.
+// Safe to call multiple times — uses INSERT OR IGNORE.
+
+export async function reconcileStores(): Promise<{ added: number; stores: string[]; error?: string }> {
+  if (!STORE_SERVER_HOST) {
+    return { added: 0, stores: [], error: 'STORE_SERVER_HOST not configured (local mode)' }
+  }
+
+  // 1 — list store directories on the store server
+  const listRes = await sshExec(`ls /var/www/stores/`)
+  if (!listRes.ok) {
+    return { added: 0, stores: [], error: `SSH ls failed: ${listRes.output}` }
+  }
+
+  const dirs = listRes.output
+    .split('\n')
+    .map(d => d.trim())
+    .filter(d => d && d !== 'testshop')
+
+  const PORT_START = 4001
+  let added = 0
+  const storeNames: string[] = []
+
+  for (const dir of dirs) {
+    // 2 — try to read store.json for metadata
+    const jsonRes = await sshExec(`cat /var/www/stores/${dir}/store.json 2>/dev/null || echo '{}'`)
+    let storeJson: Record<string, unknown> = {}
+    try { storeJson = JSON.parse(jsonRes.output.trim()) } catch { /* use empty */ }
+
+    const storeId   = (storeJson.storeId   as string) || `${dir.split('.')[0]}-recovered`
+    const niche     = (storeJson.niche     as string) || dir.split('.')[0]
+    const createdAt = (storeJson.createdAt as string) || new Date().toISOString()
+
+    // 3 — find or assign a port
+    const portRow = db.prepare('SELECT port FROM stores WHERE subdomein = ?').get(dir) as { port: number | null } | undefined
+    let port = portRow?.port
+    if (!port) {
+      const maxRow = db.prepare('SELECT MAX(port) as m FROM stores WHERE port IS NOT NULL').get() as { m: number | null } | undefined
+      port = (maxRow?.m ?? PORT_START - 1) + 1
+    }
+
+    // 4 — find best run_id to link to (use most recent completed run)
+    const runRow = db.prepare(
+      `SELECT run_id FROM runs WHERE status IN ('completed','running') ORDER BY started_at DESC LIMIT 1`,
+    ).get() as { run_id: string } | undefined
+    const runId = runRow?.run_id
+
+    // 5 — INSERT (skip if already exists)
+    const existing = db.prepare('SELECT store_id FROM stores WHERE subdomein = ?').get(dir)
+    if (existing) {
+      storeNames.push(dir)
+      continue
+    }
+
+    if (runId) {
+      db.prepare(
+        `INSERT OR IGNORE INTO stores (store_id, run_id, subdomein, niche, preview_url, created_at, status, port, health_status)
+         VALUES (?, ?, ?, ?, ?, ?, 'live', ?, 'unknown')`,
+      ).run(storeId, runId, dir, niche, `https://${dir}`, createdAt, port)
+    } else {
+      // No run to link to — insert without FK
+      db.exec(`PRAGMA foreign_keys = OFF`)
+      db.prepare(
+        `INSERT OR IGNORE INTO stores (store_id, run_id, subdomein, niche, preview_url, created_at, status, port, health_status)
+         VALUES (?, 'recovered', ?, ?, ?, ?, 'live', ?, 'unknown')`,
+      ).run(storeId, dir, niche, `https://${dir}`, createdAt, port)
+      db.exec(`PRAGMA foreign_keys = ON`)
+    }
+
+    added++
+    storeNames.push(dir)
+  }
+
+  return { added, stores: storeNames }
+}
+
 // ── Express service (port 3002) ──────────────────────────────────────────────
 
 import { startStoreMonitor, diagnoseStore, getAllStoreHealth, assignPort } from './store-monitor.js'
@@ -711,7 +788,9 @@ app.use(express.json())
 
 app.post('/api/stores/deploy', async (req, res) => {
   try {
-    const data = req.body as StoreData
+    const body = req.body as StoreData & { run_id?: string }
+    // Zorg dat run_id als runId wordt doorgegeven aan deployStore
+    const data: StoreData = { ...body, runId: body.runId ?? body.run_id }
     if (!data?.brand_name || !data?.niche || !Array.isArray(data?.products)) {
       res.status(400).json({ error: 'brand_name, niche and products[] are required' })
       return
@@ -794,6 +873,15 @@ app.get('/preview/:subdomain', (req, res) => {
     res.send(fs.readFileSync(file, 'utf-8'))
   } catch (err) {
     res.status(500).send(`preview failed: ${err instanceof Error ? err.message : err}`)
+  }
+})
+
+app.post('/api/admin/reconcile-stores', async (_req, res) => {
+  try {
+    const result = await reconcileStores()
+    res.json(result)
+  } catch (err) {
+    res.status(500).json({ error: err instanceof Error ? err.message : 'reconcile failed' })
   }
 })
 
