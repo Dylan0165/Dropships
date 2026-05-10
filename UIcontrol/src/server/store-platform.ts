@@ -151,17 +151,325 @@ function copyComponents(targetDir: string, data: StoreData & { _storeId?: string
   }
 }
 
+// ── Layout + Font System ──────────────────────────────────────────────────────
+// Each niche deterministically maps to a layout so the same niche always
+// produces the same visual identity, but different niches look distinct.
+
+function selectLayout(niche: string): number {
+  return niche.split('').reduce((a, c) => a + c.charCodeAt(0), 0) % 5
+}
+
+const FONT_PAIRINGS = [
+  { // 0 Studio — geometric, bold, modern
+    url: 'https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap',
+    heading: "'Space Grotesk', sans-serif", body: "'DM Sans', system-ui, sans-serif",
+  },
+  { // 1 Maison — editorial, luxury, serif
+    url: 'https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Lato:wght@300;400;700&display=swap',
+    heading: "'Playfair Display', Georgia, serif", body: "'Lato', system-ui, sans-serif",
+  },
+  { // 2 Volt — high energy, sport
+    url: 'https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=Outfit:wght@300;400;500;600&display=swap',
+    heading: "'Syne', sans-serif", body: "'Outfit', system-ui, sans-serif",
+  },
+  { // 3 Pure — minimal, Scandinavian clean
+    url: 'https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400&display=swap',
+    heading: "'DM Serif Display', Georgia, serif", body: "'DM Sans', system-ui, sans-serif",
+  },
+  { // 4 Origin — warm, organic, lifestyle
+    url: 'https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;1,9..144,400&family=Figtree:wght@300;400;600&display=swap',
+    heading: "'Fraunces', Georgia, serif", body: "'Figtree', system-ui, sans-serif",
+  },
+]
+
+function nicheUsps(niche: string): Array<{title: string; desc: string}> {
+  const n = niche.toLowerCase()
+  if (/fit|sport|gym|yoga|train|workout|muscle|run/.test(n)) return [
+    { title: '30-daagse garantie', desc: 'Geen resultaat? Volledig terugbetaald.' },
+    { title: '10.000+ sporters', desc: 'Getest en goedgekeurd door actieve atleten.' },
+    { title: 'Morgen in huis', desc: 'Besteld voor 23:00, geleverd in NL & BE.' },
+  ]
+  if (/blend|juice|food|drink|nutri|coffee|tea|protein/.test(n)) return [
+    { title: 'BPA-vrij materiaal', desc: 'Gecertificeerd levensmiddelenveilig.' },
+    { title: 'Overal mee naartoe', desc: 'Thuis, kantoor of onderweg.' },
+    { title: 'Gratis receptenboek', desc: 'Exclusief bij elke bestelling.' },
+  ]
+  if (/beauty|skin|hair|face|glow|serum|cosmetic/.test(n)) return [
+    { title: 'Dermatologisch getest', desc: 'Veilig voor alle huidtypes.' },
+    { title: 'Clean formula', desc: 'Vrij van parabenen en sulfaten.' },
+    { title: '60 dagen zichtbaar resultaat', desc: 'Of we betalen je terug.' },
+  ]
+  if (/tech|gadget|smart|device|cable|charge|phone/.test(n)) return [
+    { title: '2 jaar garantie', desc: 'Volledige fabrieksgarantie inbegrepen.' },
+    { title: 'Plug & play', desc: 'Direct klaar voor gebruik.' },
+    { title: 'Support binnen 24u', desc: 'Ons team staat altijd klaar.' },
+  ]
+  if (/home|kitchen|house|living|decor|garden/.test(n)) return [
+    { title: 'Premium kwaliteit', desc: 'Materialen die jaren meegaan.' },
+    { title: 'Tijloos design', desc: 'Past bij elke interieurstijl.' },
+    { title: 'Gratis retour', desc: '30 dagen bedenktijd.' },
+  ]
+  return [
+    { title: 'Gratis verzending', desc: 'Op alle bestellingen in NL & BE.' },
+    { title: '30 dagen retour', desc: 'Geen gedoe, geld terug.' },
+    { title: 'Veilig betalen', desc: 'iDEAL, Visa, Mastercard, PayPal.' },
+  ]
+}
+
+// SVG icons for inline USP sections (no emoji)
+const SVG_TRUCK = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 0 1-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 0 0-3.213-9.193 2.056 2.056 0 0 0-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 0 0-10.026 0 1.106 1.106 0 0 0-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" /></svg>`
+const SVG_RETURN = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" /></svg>`
+const SVG_SHIELD = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" /></svg>`
+
+function generatePageTsx(layout: number, data: StoreData, usps: Array<{title: string; desc: string}>, primary: string): string {
+  const bn     = JSON.stringify(data.brand_name)
+  const sl     = JSON.stringify(data.slogan)
+  const prods  = JSON.stringify(data.products, null, 2)
+  const nav    = JSON.stringify([{ label: 'Home', href: '/' }, { label: 'Shop', href: '#products' }])
+  const footer = JSON.stringify([
+    { title: 'Informatie', links: [{ label: 'Over ons', href: '/over' }, { label: 'Contact', href: '/contact' }] },
+    { title: 'Service', links: [{ label: 'Retourneren', href: '/retour' }, { label: 'FAQ', href: '/faq' }] },
+  ])
+  const reviews = JSON.stringify([
+    { id: '1', name: 'Sanne V.', stars: 5, date: '2025-04-12', text: 'Geweldig product, exact wat ik zocht. Snelle levering en nette verpakking!', verified: true },
+    { id: '2', name: 'Thomas B.', stars: 5, date: '2025-04-08', text: 'Topkwaliteit. Mijn verwachtingen volledig overtroffen — zeker een aanrader.', verified: true },
+    { id: '3', name: 'Lena M.', stars: 4, date: '2025-03-28', text: 'Blij mee! Zou graag meer kleuropties zien, maar voor de rest prima.', verified: false },
+  ])
+  const uspJsx = usps.map((u, i) => {
+    const icons = [SVG_TRUCK, SVG_RETURN, SVG_SHIELD]
+    return `
+        <div key={${i}} className="flex flex-col items-center text-center gap-3 p-6 rounded-2xl bg-white border border-gray-100 hover:border-gray-200 hover:shadow-sm transition-all duration-300">
+          <div className="w-12 h-12 rounded-xl flex items-center justify-center text-white" style={{backgroundColor: 'var(--brand-primary)'}}>
+            ${icons[i] ?? SVG_SHIELD}
+          </div>
+          <h3 className="font-bold text-gray-900 text-base">${u.title}</h3>
+          <p className="text-sm text-gray-500 leading-relaxed">${u.desc}</p>
+        </div>`
+  }).join('')
+
+  // Layout 0: Studio — bold, dark hero, Space Grotesk, announcement bar + social proof
+  if (layout === 0) return `'use client';
+import NavBar from '../components/navigation/NavBar';
+import HeroBanner from '../components/hero-banner/HeroBanner';
+import TrustBadges from '../components/trust-badges/TrustBadges';
+import ProductGrid from '../components/product-grid/ProductGrid';
+import SocialProof from '../components/social-proof/SocialProof';
+import Footer from '../components/footer/Footer';
+import AnnouncementBar from '../components/announcement-bar/AnnouncementBar';
+
+const products = ${prods};
+const navLinks = ${nav};
+const footerCols = ${footer};
+const reviews = ${reviews};
+
+export default function Home() {
+  return (
+    <div className="bg-white text-gray-900">
+      <AnnouncementBar message="Gratis verzending op alle bestellingen — Levering in 1-3 werkdagen" dismissable />
+      <NavBar brandName={${bn}} links={navLinks} />
+      <HeroBanner headline={${bn}} subheadline={${sl}} ctaText="Ontdek de collectie" ctaHref="#products" theme="dark" eyebrow="Nieuw Binnen" />
+      <TrustBadges />
+      <section id="products" className="py-20 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-center text-gray-900 mb-3">Onze producten</h2>
+          <p className="text-center text-gray-500 mb-10 max-w-xl mx-auto">Zorgvuldig geselecteerd voor de beste kwaliteit</p>
+          <ProductGrid products={products} columns={3} />
+        </div>
+      </section>
+      <SocialProof reviews={reviews} showSummary title="Wat onze klanten zeggen" />
+      <Footer brandName={${bn}} columns={footerCols} />
+    </div>
+  );
+}
+`
+
+  // Layout 1: Maison — editorial, light, serif, 2-col products + review cards
+  if (layout === 1) return `'use client';
+import NavBar from '../components/navigation/NavBar';
+import HeroBanner from '../components/hero-banner/HeroBanner';
+import ProductGrid from '../components/product-grid/ProductGrid';
+import ReviewCard from '../components/review-card/ReviewCard';
+import Footer from '../components/footer/Footer';
+
+const products = ${prods};
+const navLinks = ${nav};
+const footerCols = ${footer};
+const reviews = ${reviews};
+
+export default function Home() {
+  return (
+    <div className="bg-white text-gray-900">
+      <NavBar brandName={${bn}} links={navLinks} />
+      <HeroBanner headline={${bn}} subheadline={${sl}} ctaText="Shop de collectie" ctaHref="#products" theme="light" eyebrow="Selectie ${new Date().getFullYear()}" />
+      <section className="py-16 bg-white border-b border-gray-100">
+        <div className="max-w-5xl mx-auto px-6 grid grid-cols-1 sm:grid-cols-3 gap-6">
+          ${uspJsx}
+        </div>
+      </section>
+      <section id="products" className="py-20 px-4 sm:px-6 bg-gray-50">
+        <div className="max-w-5xl mx-auto">
+          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-10">De collectie</h2>
+          <ProductGrid products={products} columns={2} />
+        </div>
+      </section>
+      <section className="py-16 px-4 sm:px-6 bg-white">
+        <div className="max-w-5xl mx-auto">
+          <ReviewCard reviews={reviews} title="Klantbeoordelingen" showSummary />
+        </div>
+      </section>
+      <Footer brandName={${bn}} columns={footerCols} />
+    </div>
+  );
+}
+`
+
+  // Layout 2: Volt — high energy, countdown timer, dark hero, trust badges
+  if (layout === 2) return `'use client';
+import NavBar from '../components/navigation/NavBar';
+import HeroBanner from '../components/hero-banner/HeroBanner';
+import CountdownTimer from '../components/countdown-timer/CountdownTimer';
+import ProductGrid from '../components/product-grid/ProductGrid';
+import TrustBadges from '../components/trust-badges/TrustBadges';
+import Footer from '../components/footer/Footer';
+import AnnouncementBar from '../components/announcement-bar/AnnouncementBar';
+
+const products = ${prods};
+const navLinks = ${nav};
+const footerCols = ${footer};
+
+export default function Home() {
+  return (
+    <div className="bg-white text-gray-900">
+      <AnnouncementBar message="Tijdelijk aanbod — Profiteer nu van gratis verzending!" dismissable />
+      <NavBar brandName={${bn}} links={navLinks} />
+      <HeroBanner headline={${bn}} subheadline={${sl}} ctaText="Shop nu" ctaHref="#products" theme="dark" />
+      <div className="bg-gray-950 py-12 flex flex-col items-center gap-3">
+        <p className="text-white/60 text-sm font-medium tracking-widest uppercase">Aanbieding verloopt over</p>
+        <CountdownTimer hours={23} minutes={59} label="Actie loopt af" />
+      </div>
+      <section id="products" className="py-20 px-4 sm:px-6">
+        <div className="max-w-6xl mx-auto">
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-10 text-center">Bestel vandaag nog</h2>
+          <ProductGrid products={products} columns={2} />
+        </div>
+      </section>
+      <TrustBadges />
+      <Footer brandName={${bn}} columns={footerCols} />
+    </div>
+  );
+}
+`
+
+  // Layout 3: Pure — minimal, Scandinavian, DM Serif, inline USP row, spacious
+  if (layout === 3) return `'use client';
+import NavBar from '../components/navigation/NavBar';
+import HeroBanner from '../components/hero-banner/HeroBanner';
+import ProductGrid from '../components/product-grid/ProductGrid';
+import TrustBadges from '../components/trust-badges/TrustBadges';
+import Footer from '../components/footer/Footer';
+
+const products = ${prods};
+const navLinks = ${nav};
+const footerCols = ${footer};
+
+export default function Home() {
+  return (
+    <div className="bg-white text-gray-900">
+      <NavBar brandName={${bn}} links={navLinks} />
+      <HeroBanner headline={${bn}} subheadline={${sl}} ctaText="Bekijk de collectie" ctaHref="#products" theme="light" />
+      <section className="py-20 px-6 border-y border-gray-100">
+        <div className="max-w-4xl mx-auto grid grid-cols-3 divide-x divide-gray-100">
+          ${usps.map((u, i) => `
+          <div key={${i}} className="px-8 first:pl-0 last:pr-0">
+            <div className="text-xs font-bold tracking-widest text-gray-400 uppercase mb-2">0${i + 1}</div>
+            <h3 className="text-gray-900 font-semibold mb-1">${u.title}</h3>
+            <p className="text-sm text-gray-400 leading-relaxed">${u.desc}</p>
+          </div>`).join('')}
+        </div>
+      </section>
+      <section id="products" className="py-24 px-4 sm:px-6 bg-gray-50">
+        <div className="max-w-7xl mx-auto">
+          <h2 className="text-4xl font-bold text-gray-900 mb-12">Collectie</h2>
+          <ProductGrid products={products} columns={3} />
+        </div>
+      </section>
+      <TrustBadges />
+      <Footer brandName={${bn}} columns={footerCols} />
+    </div>
+  );
+}
+`
+
+  // Layout 4: Origin — warm, organic, social proof first, Fraunces serif
+  return `'use client';
+import NavBar from '../components/navigation/NavBar';
+import HeroBanner from '../components/hero-banner/HeroBanner';
+import SocialProof from '../components/social-proof/SocialProof';
+import ProductGrid from '../components/product-grid/ProductGrid';
+import ReviewCard from '../components/review-card/ReviewCard';
+import Footer from '../components/footer/Footer';
+
+const products = ${prods};
+const navLinks = ${nav};
+const footerCols = ${footer};
+const reviews = ${reviews};
+
+export default function Home() {
+  return (
+    <div className="bg-white text-gray-900">
+      <NavBar brandName={${bn}} links={navLinks} />
+      <HeroBanner headline={${bn}} subheadline={${sl}} ctaText="Ontdek nu" ctaHref="#products" theme="dark" eyebrow="Handgeselecteerd" />
+      <section className="py-16 px-6 bg-amber-50 border-y border-amber-100">
+        <div className="max-w-5xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-8">
+          ${uspJsx}
+        </div>
+      </section>
+      <section id="products" className="py-20 px-4 sm:px-6">
+        <div className="max-w-7xl mx-auto">
+          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">Onze producten</h2>
+          <p className="text-gray-500 mb-10">Gekozen met zorg, voor jou samengesteld.</p>
+          <ProductGrid products={products} columns={3} />
+        </div>
+      </section>
+      <SocialProof reviews={reviews} showSummary title="Wat anderen zeggen" />
+      <section className="py-16 px-4 sm:px-6 bg-gray-50">
+        <div className="max-w-5xl mx-auto">
+          <ReviewCard reviews={reviews} title="Klantervaringen" />
+        </div>
+      </section>
+      <Footer brandName={${bn}} columns={footerCols} />
+    </div>
+  );
+}
+`
+}
+
 function writeNextScaffold(targetDir: string, data: StoreData): void {
   const subdomain = data.subdomain ?? slugify(data.brand_name)
   ensureDir(path.join(targetDir, 'app'))
   ensureDir(path.join(targetDir, 'public'))
 
+  // Resolve brand colors — brand-agent may pass them as data.colors or data.primary_color
+  const d = data as StoreData & { colors?: Record<string, string> }
+  const primary   = d.colors?.primary   ?? d.primary_color ?? '#2563eb'
+  const secondary = d.colors?.secondary ?? '#1e293b'
+  const accent    = d.colors?.accent    ?? '#f59e0b'
+
+  const layoutIdx = selectLayout(data.niche)
+  const font      = FONT_PAIRINGS[layoutIdx]
+  const usps      = nicheUsps(data.niche)
+
+  // package.json
   fs.writeFileSync(path.join(targetDir, 'package.json'), JSON.stringify({
     name: `store-${subdomain}`,
     version: '0.1.0',
     private: true,
     scripts: { build: 'next build', start: 'next start', dev: 'next dev' },
-    dependencies: { next: '^14.2.0', react: '^18.3.0', 'react-dom': '^18.3.0' },
+    dependencies: {
+      next: '^14.2.0',
+      react: '^18.3.0',
+      'react-dom': '^18.3.0',
+    },
     devDependencies: {
       typescript: '^5.4.0',
       '@types/react': '^18.3.0',
@@ -173,27 +481,22 @@ function writeNextScaffold(targetDir: string, data: StoreData): void {
     },
   }, null, 2), 'utf-8')
 
-  // PostCSS config voor Tailwind
   fs.writeFileSync(path.join(targetDir, 'postcss.config.js'),
     `module.exports = { plugins: { tailwindcss: {}, autoprefixer: {} } };\n`, 'utf-8')
 
-  // Tailwind config met brand kleuren
-  const primary = (data.colors as Record<string, string>)?.primary ?? '#7c3aed'
-  const secondary = (data.colors as Record<string, string>)?.secondary ?? '#1e1b4b'
-  const accent = (data.colors as Record<string, string>)?.accent ?? '#f59e0b'
   fs.writeFileSync(path.join(targetDir, 'tailwind.config.js'),
     `/** @type {import('tailwindcss').Config} */\n` +
     `module.exports = {\n` +
     `  content: ['./app/**/*.{js,ts,jsx,tsx}', './components/**/*.{js,ts,jsx,tsx}'],\n` +
     `  theme: { extend: { colors: {\n` +
-    `    primary: '${primary}',\n` +
-    `    secondary: '${secondary}',\n` +
-    `    accent: '${accent}',\n` +
+    `    primary: '${primary}', secondary: '${secondary}', accent: '${accent}',\n` +
+    `  }, fontFamily: {\n` +
+    `    heading: [${JSON.stringify(font.heading)}],\n` +
+    `    body: [${JSON.stringify(font.body)}],\n` +
     `  } } },\n` +
     `  plugins: [],\n` +
     `};\n`, 'utf-8')
 
-  // Globals CSS met Tailwind directives en brand CSS vars
   fs.writeFileSync(path.join(targetDir, 'app/globals.css'),
     `@tailwind base;\n@tailwind components;\n@tailwind utilities;\n\n` +
     `:root {\n` +
@@ -201,82 +504,56 @@ function writeNextScaffold(targetDir: string, data: StoreData): void {
     `  --brand-secondary: ${secondary};\n` +
     `  --brand-accent: ${accent};\n` +
     `}\n\n` +
-    `body { font-family: system-ui, sans-serif; margin: 0; background: #fff; color: #111; }\n`,
-    'utf-8'
-  )
+    `*, *::before, *::after { box-sizing: border-box; }\n` +
+    `body {\n` +
+    `  font-family: ${font.body};\n` +
+    `  margin: 0;\n` +
+    `  background: #fff;\n` +
+    `  color: #111;\n` +
+    `  -webkit-font-smoothing: antialiased;\n` +
+    `}\n` +
+    `h1, h2, h3, h4, h5, h6 { font-family: ${font.heading}; }\n` +
+    `@keyframes fadeUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }\n` +
+    `.animate-fade-up { animation: fadeUp 0.7s cubic-bezier(0.16,1,0.3,1) both; }\n` +
+    `.delay-100 { animation-delay: 0.1s; } .delay-200 { animation-delay: 0.2s; } .delay-300 { animation-delay: 0.3s; }\n`,
+    'utf-8')
 
-  // tsconfig.json voor TypeScript + Next.js App Router
   fs.writeFileSync(path.join(targetDir, 'tsconfig.json'), JSON.stringify({
     compilerOptions: {
-      target: 'es2017',
-      lib: ['dom', 'dom.iterable', 'esnext'],
-      allowJs: true,
-      skipLibCheck: true,
-      strict: false,
-      noEmit: true,
-      esModuleInterop: true,
-      module: 'esnext',
-      moduleResolution: 'bundler',
-      resolveJsonModule: true,
-      isolatedModules: true,
-      jsx: 'preserve',
-      incremental: true,
-      plugins: [{ name: 'next' }],
-      paths: { '@/*': ['./*'] },
+      target: 'es2017', lib: ['dom', 'dom.iterable', 'esnext'], allowJs: true,
+      skipLibCheck: true, strict: false, noEmit: true, esModuleInterop: true,
+      module: 'esnext', moduleResolution: 'bundler', resolveJsonModule: true,
+      isolatedModules: true, jsx: 'preserve', incremental: true,
+      plugins: [{ name: 'next' }], paths: { '@/*': ['./*'] },
     },
     include: ['next-env.d.ts', '**/*.ts', '**/*.tsx', '.next/types/**/*.ts'],
     exclude: ['node_modules'],
   }, null, 2), 'utf-8')
 
   fs.writeFileSync(path.join(targetDir, 'next.config.js'),
-    `module.exports = { output: 'export', images: { unoptimized: true } };\n`,
-    'utf-8',
-  )
+    `module.exports = { output: 'export', images: { unoptimized: true } };\n`, 'utf-8')
 
+  // layout.tsx — Google Fonts injected via <link>
   fs.writeFileSync(path.join(targetDir, 'app/layout.tsx'),
     `import './globals.css';\n` +
-    `export const metadata = { title: ${JSON.stringify(data.brand_name)}, description: ${JSON.stringify(data.slogan)} };\n` +
+    `import type { Metadata } from 'next';\n\n` +
+    `export const metadata: Metadata = { title: ${JSON.stringify(data.brand_name)}, description: ${JSON.stringify(data.slogan)} };\n\n` +
     `export default function RootLayout({ children }: { children: React.ReactNode }) {\n` +
-    `  return (<html lang="nl"><body className="min-h-screen">{children}</body></html>);\n}\n`,
-    'utf-8',
-  )
+    `  return (\n` +
+    `    <html lang="nl">\n` +
+    `      <head>\n` +
+    `        <link rel="preconnect" href="https://fonts.googleapis.com" />\n` +
+    `        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />\n` +
+    `        <link href="${font.url}" rel="stylesheet" />\n` +
+    `      </head>\n` +
+    `      <body className="min-h-screen antialiased">{children}</body>\n` +
+    `    </html>\n` +
+    `  );\n` +
+    `}\n`, 'utf-8')
 
-  // Build a single-page app combining all components.
-  const navLinks = JSON.stringify([
-    { label: 'Home', href: '/' },
-    { label: 'Shop', href: '#products' },
-  ])
-  const uspItems = JSON.stringify([
-    { icon: '🚚', title: 'Gratis verzending', description: 'Gratis verzending naar NL, BE en DE.' },
-    { icon: '↩️', title: '30 dagen retour', description: 'Niet tevreden? Geld terug garantie.' },
-    { icon: '⭐', title: 'Top kwaliteit', description: 'Zorgvuldig geselecteerde producten.' },
-  ])
-  const footerColumns = JSON.stringify([
-    { title: 'Informatie', links: [{ label: 'Over ons', href: '/over' }, { label: 'Contact', href: '/contact' }] },
-    { title: 'Service', links: [{ label: 'Retourneren', href: '/retour' }, { label: 'FAQ', href: '/faq' }] },
-  ])
-
+  // page.tsx — layout-specific
   fs.writeFileSync(path.join(targetDir, 'app/page.tsx'),
-    `'use client';\n` +
-    `import HeroBanner from '../components/hero-banner/HeroBanner';\n` +
-    `import ProductGrid from '../components/product-grid/ProductGrid';\n` +
-    `import UspSection from '../components/usp-section/UspSection';\n` +
-    `import NavBar from '../components/navigation/NavBar';\n` +
-    `import Footer from '../components/footer/Footer';\n\n` +
-    `const products = ${JSON.stringify(data.products, null, 2)};\n` +
-    `const navLinks = ${navLinks};\n` +
-    `const uspItems = ${uspItems};\n` +
-    `const footerColumns = ${footerColumns};\n\n` +
-    `export default function Home() {\n` +
-    `  return (<>\n` +
-    `    <NavBar brandName={${JSON.stringify(data.brand_name)}} links={navLinks} />\n` +
-    `    <HeroBanner headline={${JSON.stringify(data.brand_name)}} subheadline={${JSON.stringify(data.slogan)}} ctaText="Shop nu" ctaHref="#products" />\n` +
-    `    <UspSection items={uspItems} />\n` +
-    `    <section id="products"><ProductGrid products={products} /></section>\n` +
-    `    <Footer brandName={${JSON.stringify(data.brand_name)}} columns={footerColumns} />\n` +
-    `  </>);\n}\n`,
-    'utf-8',
-  )
+    generatePageTsx(layoutIdx, data, usps, primary), 'utf-8')
 }
 
 // ── SEO assets ───────────────────────────────────────────────────────────────

@@ -356,3 +356,42 @@ De store-builder retourneert een uitgebreid JSON-object. Naast het bestaande sch
   "generated_at": "2026-04-02T11:00:00.000Z"
 }
 ```
+
+## Design Quality Standards (taste-skill)
+
+The store-builder must produce brands that feel **premium, specific, and trustworthy** — not generic AI output.
+These rules override vague defaults every time.
+
+### Brand Identity Rules
+
+**Brand name**: Never generic (no "ShopX", "BestStore", "QuickBuy"). Must reflect the niche.
+Good: `BlendJet`, `GripKick`, `FloatHome` — Bad: `FitnessShop`, `MyStore`, `BestProducts`
+
+**Slogan**: Specific benefit + emotional hook. Max 6 words. No filler words ("quality", "premium", "best").
+Good: `"Blend anywhere. Fuel your day."` — Bad: `"Premium quality products for you."`
+
+**Colors**: Never use `#7c3aed` (default purple) or `#f59e0b` (default amber) unless truly on-brand.
+Pick a deliberate palette:
+- Fitness → bold primary (electric blue, signal red, forest green)
+- Beauty → soft pastel or deep jewel tone
+- Tech → dark navy, slate, or electric accent
+- Food/drink → warm earth tones, citrus, or deep espresso
+- Home → sage, terracotta, cream, linen
+
+**Primary color** must be intentional. Provide `colors.primary`, `colors.secondary`, `colors.accent` in the output.
+
+### Copy Rules
+
+**Hero headline**: The brand name. Short. Punchy.
+**Hero subheadline (slogan)**: Why someone should care in one breath. No adjectives without proof.
+**USP titles**: Max 3-4 words. Action-oriented.
+**CTA text**: Not "Klik hier" or "Meer info". Verb + benefit: `"Ontdek de collectie"`, `"Shop nu"`, `"Probeer vandaag"`.
+
+### What to Avoid
+
+- Generic emoji icons (🚚, ⭐, 💪) — the scaffold replaces these with SVG
+- Lorem ipsum or placeholder copy
+- Overly long slogans (>8 words)
+- Duplicate words in brand name and slogan
+- Colors that clash with the product photos
+- The word "premium", "kwaliteit", "beste" without a specific reason
