@@ -26,17 +26,19 @@ const LLM_MODEL    = process.env.LLM_MODEL ?? 'deepseek-chat'
 
 // ── Poort toewijzing ──────────────────────────────────────────────────────────
 
-export function assignPort(storeId: string): number {
+export function assignPort(storeId: string, serverMaxPort = 0): number {
   // Controleer of store al een poort heeft
   const existing = db.prepare('SELECT port FROM stores WHERE store_id = ?').get(storeId) as { port: number | null } | undefined
   if (existing?.port) return existing.port
 
-  // Vind de hoogste gebruikte poort
+  // Vind de hoogste gebruikte poort — neem het maximum van DB én de store server
+  // serverMaxPort komt van de nginx configs op de store server (voorkomt port-conflicten bij lege DB)
   const maxRow = db.prepare('SELECT MAX(port) as max_port FROM stores WHERE port IS NOT NULL').get() as { max_port: number | null } | undefined
-  const nextPort = (maxRow?.max_port ?? PORT_START - 1) + 1
+  const dbMax = maxRow?.max_port ?? PORT_START - 1
+  const nextPort = Math.max(dbMax, serverMaxPort) + 1
 
   db.prepare('UPDATE stores SET port = ? WHERE store_id = ?').run(nextPort, storeId)
-  console.log(`[store-monitor] poort ${nextPort} toegewezen aan store ${storeId.slice(0, 8)}`)
+  console.log(`[store-monitor] poort ${nextPort} toegewezen aan store ${storeId.slice(0, 8)} (db max: ${dbMax}, server max: ${serverMaxPort})`)
   return nextPort
 }
 

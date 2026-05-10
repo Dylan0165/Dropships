@@ -35,13 +35,16 @@ export function StoresView() {
     setSyncResult(null)
     try {
       const res = await fetch('/api/admin/reconcile-stores', { method: 'POST' })
-      const data = await res.json() as { added: number; stores: string[]; error?: string }
+      const data = await res.json() as { added: number; updated: number; stores: string[]; error?: string }
       if (data.error) {
         setSyncResult(`Fout: ${data.error}`)
       } else {
-        setSyncResult(data.added > 0
-          ? `${data.added} store(s) hersteld: ${data.stores.join(', ')}`
-          : `Alles is al gesynchroniseerd (${data.stores.length} stores)`)
+        const parts = []
+        if (data.added > 0) parts.push(`${data.added} nieuw hersteld`)
+        if (data.updated > 0) parts.push(`${data.updated} poorten gecorrigeerd`)
+        setSyncResult(parts.length > 0
+          ? `${parts.join(', ')}: ${data.stores.join(', ')}`
+          : `Alles gesynchroniseerd (${data.stores.length} stores)`)
         await fetchStores()
       }
     } catch {

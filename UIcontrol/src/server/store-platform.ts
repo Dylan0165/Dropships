@@ -930,8 +930,19 @@ export async function deployStore(storeData: StoreData): Promise<DeployedStore> 
       return fallback
     }
 
+    // Vraag de store server naar de hoogste nginx-poort in gebruik
+    // Dit voorkomt port-conflicten als de DB leeg/uit-sync is met de store server
+    const maxNginxRes = await sshExec(
+      `grep -rh "listen" /etc/nginx/sites-available/ 2>/dev/null | grep -v "listen 80" | grep -oE "[0-9]{4,}" | sort -n | tail -1`
+    )
+    const maxNginxPort = parseInt(maxNginxRes.output.trim(), 10) || 0
+    if (maxNginxPort > 0) {
+      console.log(`[store-platform] hoogste nginx poort op store server: ${maxNginxPort}`)
+    }
+
     // Write nginx vhost remotely (inclusief poort-block)
-    const assignedPort = assignPort(storeId)
+    // Geef maxNginxPort mee als vloer zodat de nieuwe store altijd een vrije poort krijgt
+    const assignedPort = assignPort(storeId, maxNginxPort)
     const nginxLocal = path.join(baseDir, 'nginx.conf')
     fs.writeFileSync(nginxLocal, nginxConfig(subdomain, assignedPort), 'utf-8')
     await scpToRemote(nginxLocal, `/tmp/${subdomain}.nginx.conf`)
@@ -988,15 +999,15 @@ function persistStore(s: DeployedStore, runId?: string): void {
 // Reads existing stores from the store server via SSH and populates the DB.
 // Safe to call multiple times — uses INSERT OR IGNORE.
 
-export async function reconcileStores(): Promise<{ added: number; stores: string[]; error?: string }> {
+export async function reconcileStores(): Promise<{ added: number; updated: number; stores: string[]; error?: string }> {
   if (!STORE_SERVER_HOST) {
-    return { added: 0, stores: [], error: 'STORE_SERVER_HOST not configured (local mode)' }
+    return { added: 0, updated: 0, stores: [], error: 'STORE_SERVER_HOST not configured (local mode)' }
   }
 
   // 1 — list store directories on the store server
   const listRes = await sshExec(`ls /var/www/stores/`)
   if (!listRes.ok) {
-    return { added: 0, stores: [], error: `SSH ls failed: ${listRes.output}` }
+    return { added: 0, updated: 0, stores: [], error: `SSH ls failed: ${listRes.output}` }
   }
 
   const dirs = listRes.output
@@ -1004,12 +1015,34 @@ export async function reconcileStores(): Promise<{ added: number; stores: string
     .map(d => d.trim())
     .filter(d => d && d !== 'testshop')
 
-  const PORT_START = 4001
+  // 2 — lees de ECHTE poorten uit nginx configs op de store server
+  // Commando: voor elke store lezen we de nginx config en extraheren we de listen-poort (niet 80)
+  const portsRes = await sshExec(
+    `for d in ${dirs.join(' ')}; do ` +
+    `p=$(grep -h "listen" /etc/nginx/sites-available/$d 2>/dev/null | grep -v "listen 80" | grep -oE "[0-9]{4,}" | head -1); ` +
+    `echo "$d:$p"; ` +
+    `done`
+  )
+
+  // Parse port map: { "blendjet.dropship.nl": 4001, "floathome.dropship.nl": 4002, ... }
+  const nginxPorts: Record<string, number> = {}
+  if (portsRes.ok) {
+    for (const line of portsRes.output.split('\n')) {
+      const [subdomain, portStr] = line.split(':')
+      const p = parseInt(portStr?.trim() ?? '', 10)
+      if (subdomain?.trim() && p > 0) {
+        nginxPorts[subdomain.trim()] = p
+      }
+    }
+  }
+  console.log('[reconcile] nginx poorten gevonden:', nginxPorts)
+
   let added = 0
+  let updated = 0
   const storeNames: string[] = []
 
   for (const dir of dirs) {
-    // 2 — try to read store.json for metadata
+    // 3 — try to read store.json for metadata
     const jsonRes = await sshExec(`cat /var/www/stores/${dir}/store.json 2>/dev/null || echo '{}'`)
     let storeJson: Record<string, unknown> = {}
     try { storeJson = JSON.parse(jsonRes.output.trim()) } catch { /* use empty */ }
@@ -1018,34 +1051,38 @@ export async function reconcileStores(): Promise<{ added: number; stores: string
     const niche     = (storeJson.niche     as string) || dir.split('.')[0]
     const createdAt = (storeJson.createdAt as string) || new Date().toISOString()
 
-    // 3 — find or assign a port
+    // 4 — poort: gebruik de echte nginx poort (betrouwbaar), anders fallback naar DB
+    const nginxPort = nginxPorts[dir]
     const portRow = db.prepare('SELECT port FROM stores WHERE subdomein = ?').get(dir) as { port: number | null } | undefined
-    let port = portRow?.port
-    if (!port) {
-      const maxRow = db.prepare('SELECT MAX(port) as m FROM stores WHERE port IS NOT NULL').get() as { m: number | null } | undefined
-      port = (maxRow?.m ?? PORT_START - 1) + 1
-    }
+    const port = nginxPort || portRow?.port || null
 
-    // 4 — find best run_id to link to (use most recent completed run)
+    // 5 — find best run_id to link to (use most recent completed run)
     const runRow = db.prepare(
       `SELECT run_id FROM runs WHERE status IN ('completed','running') ORDER BY started_at DESC LIMIT 1`,
     ).get() as { run_id: string } | undefined
     const runId = runRow?.run_id
 
-    // 5 — INSERT (skip if already exists)
-    const existing = db.prepare('SELECT store_id FROM stores WHERE subdomein = ?').get(dir)
+    // 6 — INSERT or UPDATE port if nginx had the real port
+    const existing = db.prepare('SELECT store_id, port FROM stores WHERE subdomein = ?').get(dir) as { store_id: string; port: number | null } | undefined
+
     if (existing) {
+      // Store bestaat al — update poort als nginx een andere poort heeft
+      if (nginxPort && existing.port !== nginxPort) {
+        db.prepare(`UPDATE stores SET port = ? WHERE subdomein = ?`).run(nginxPort, dir)
+        console.log(`[reconcile] poort bijgewerkt voor ${dir}: ${existing.port} → ${nginxPort}`)
+        updated++
+      }
       storeNames.push(dir)
       continue
     }
 
+    // Nieuwe store invoegen
     if (runId) {
       db.prepare(
         `INSERT OR IGNORE INTO stores (store_id, run_id, subdomein, niche, preview_url, created_at, status, port, health_status)
          VALUES (?, ?, ?, ?, ?, ?, 'live', ?, 'unknown')`,
       ).run(storeId, runId, dir, niche, `https://${dir}`, createdAt, port)
     } else {
-      // No run to link to — insert without FK
       db.exec(`PRAGMA foreign_keys = OFF`)
       db.prepare(
         `INSERT OR IGNORE INTO stores (store_id, run_id, subdomein, niche, preview_url, created_at, status, port, health_status)
@@ -1058,7 +1095,7 @@ export async function reconcileStores(): Promise<{ added: number; stores: string
     storeNames.push(dir)
   }
 
-  return { added, stores: storeNames }
+  return { added, updated, stores: storeNames }
 }
 
 // ── Express service (port 3002) ──────────────────────────────────────────────
