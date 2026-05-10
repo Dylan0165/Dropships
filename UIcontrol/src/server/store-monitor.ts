@@ -16,6 +16,9 @@ const HEALTH_TIMEOUT_MS   = 8_000            // 8 seconden per store
 const PORT_START          = 4001             // eerste store poort
 const AI_DIAGNOSE_AFTER   = 2               // diagnose na N opeenvolgende failures
 
+// Store server host — voor poortgebaseerde health checks (bereikbaar vanuit tool server)
+const STORE_SERVER_HOST = process.env.STORE_SERVER_HOST || '192.168.121.8'
+
 // ── LLM config (zelfde als agent-runner) ─────────────────────────────────────
 const LLM_BASE_URL = process.env.LLM_BASE_URL ?? 'https://api.deepseek.com'
 const LLM_API_KEY  = process.env.LLM_API_KEY ?? process.env.DEEPSEEK_API_KEY ?? ''
@@ -54,7 +57,11 @@ interface StoreRow {
 
 async function checkStore(store: StoreRow): Promise<void> {
   const now = new Date().toISOString()
-  const url = store.preview_url || `http://localhost:3002/preview/${store.subdomein}`
+  // Gebruik poort-gebaseerde URL wanneer beschikbaar (bereikbaar van tool server)
+  // Domein-gebaseerde preview_url is alleen voor eindgebruikers, niet intern
+  const url = store.port
+    ? `http://${STORE_SERVER_HOST}:${store.port}`
+    : store.preview_url || `http://localhost:3002/preview/${store.subdomein}`
 
   const start = Date.now()
   let healthStatus: 'up' | 'down' | 'slow' = 'down'

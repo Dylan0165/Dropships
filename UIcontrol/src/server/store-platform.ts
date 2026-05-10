@@ -50,6 +50,10 @@ const COMPONENT_NAMES = [
   'social-proof',
   'checkout-flow',
   'footer',
+  'announcement-bar',
+  'countdown-timer',
+  'trust-badges',
+  'review-card',
 ] as const
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -230,10 +234,11 @@ function generatePageTsx(layout: number, data: StoreData, usps: Array<{title: st
     { title: 'Informatie', links: [{ label: 'Over ons', href: '/over' }, { label: 'Contact', href: '/contact' }] },
     { title: 'Service', links: [{ label: 'Retourneren', href: '/retour' }, { label: 'FAQ', href: '/faq' }] },
   ])
+  // Both `stars` (ReviewCard) and `rating` (SocialProof) included so both components work
   const reviews = JSON.stringify([
-    { id: '1', name: 'Sanne V.', stars: 5, date: '2025-04-12', text: 'Geweldig product, exact wat ik zocht. Snelle levering en nette verpakking!', verified: true },
-    { id: '2', name: 'Thomas B.', stars: 5, date: '2025-04-08', text: 'Topkwaliteit. Mijn verwachtingen volledig overtroffen — zeker een aanrader.', verified: true },
-    { id: '3', name: 'Lena M.', stars: 4, date: '2025-03-28', text: 'Blij mee! Zou graag meer kleuropties zien, maar voor de rest prima.', verified: false },
+    { id: '1', name: 'Sanne V.', stars: 5, rating: 5, date: '2025-04-12', text: 'Geweldig product, exact wat ik zocht. Snelle levering en nette verpakking!', verified: true },
+    { id: '2', name: 'Thomas B.', stars: 5, rating: 5, date: '2025-04-08', text: 'Topkwaliteit. Mijn verwachtingen volledig overtroffen — zeker een aanrader.', verified: true },
+    { id: '3', name: 'Lena M.', stars: 4, rating: 4, date: '2025-03-28', text: 'Blij mee! Zou graag meer kleuropties zien, maar voor de rest prima.', verified: false },
   ])
   const uspJsx = usps.map((u, i) => {
     const icons = [SVG_TRUCK, SVG_RETURN, SVG_SHIELD]
