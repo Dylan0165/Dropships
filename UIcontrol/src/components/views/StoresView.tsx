@@ -152,6 +152,7 @@ export function StoresView() {
                 store={store}
                 expanded={selected === store.storeId}
                 onToggle={() => setSelected(selected === store.storeId ? null : store.storeId)}
+                onEdit={() => setEditingStore(store)}
               />
             ))}
           </div>
@@ -172,10 +173,11 @@ export function StoresView() {
   )
 }
 
-function StoreCard({ store, expanded, onToggle }: {
+function StoreCard({ store, expanded, onToggle, onEdit }: {
   store: StoreInfoEx
   expanded: boolean
   onToggle: () => void
+  onEdit: () => void
 }) {
   const health = store.healthStatus ?? 'unknown'
   const isUp     = health === 'up'
@@ -215,7 +217,7 @@ function StoreCard({ store, expanded, onToggle }: {
               <h3 className="text-white font-semibold text-sm truncate">{store.subdomein}</h3>
               <div className="flex items-center gap-2 flex-shrink-0">
                 <button
-                  onClick={e => { e.stopPropagation(); setEditingStore(store) }}
+                  onClick={e => { e.stopPropagation(); onEdit() }}
                   className="text-zinc-600 hover:text-white transition-colors"
                   title="Store bewerken"
                 >
