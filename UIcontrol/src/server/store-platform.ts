@@ -225,7 +225,7 @@ const SVG_TRUCK = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="
 const SVG_RETURN = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" /></svg>`
 const SVG_SHIELD = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" /></svg>`
 
-function generatePageTsx(layout: number, data: StoreData, usps: Array<{title: string; desc: string}>, primary: string): string {
+function generatePageTsx(layout: number, data: StoreData, usps: Array<{title: string; desc: string}>, primary: string, secondary = '#1e293b', accent = '#f59e0b'): string {
   const bn     = JSON.stringify(data.brand_name)
   const sl     = JSON.stringify(data.slogan)
   const prods  = JSON.stringify(data.products, null, 2)
@@ -234,215 +234,504 @@ function generatePageTsx(layout: number, data: StoreData, usps: Array<{title: st
     { title: 'Informatie', links: [{ label: 'Over ons', href: '/over' }, { label: 'Contact', href: '/contact' }] },
     { title: 'Service', links: [{ label: 'Retourneren', href: '/retour' }, { label: 'FAQ', href: '/faq' }] },
   ])
-  // Both `stars` (ReviewCard) and `rating` (SocialProof) included so both components work
   const reviews = JSON.stringify([
     { id: '1', name: 'Sanne V.', stars: 5, rating: 5, date: '2025-04-12', text: 'Geweldig product, exact wat ik zocht. Snelle levering en nette verpakking!', verified: true },
     { id: '2', name: 'Thomas B.', stars: 5, rating: 5, date: '2025-04-08', text: 'Topkwaliteit. Mijn verwachtingen volledig overtroffen — zeker een aanrader.', verified: true },
     { id: '3', name: 'Lena M.', stars: 4, rating: 4, date: '2025-03-28', text: 'Blij mee! Zou graag meer kleuropties zien, maar voor de rest prima.', verified: false },
   ])
-  const uspJsx = usps.map((u, i) => {
-    const icons = [SVG_TRUCK, SVG_RETURN, SVG_SHIELD]
-    return `
-        <div key={${i}} className="flex flex-col items-center text-center gap-3 p-6 rounded-2xl bg-white border border-gray-100 hover:border-gray-200 hover:shadow-sm transition-all duration-300">
-          <div className="w-12 h-12 rounded-xl flex items-center justify-center text-white" style={{backgroundColor: 'var(--brand-primary)'}}>
-            ${icons[i] ?? SVG_SHIELD}
-          </div>
-          <h3 className="font-bold text-gray-900 text-base">${u.title}</h3>
-          <p className="text-sm text-gray-500 leading-relaxed">${u.desc}</p>
-        </div>`
-  }).join('')
+  const year = new Date().getFullYear()
 
-  // Layout 0: Studio — bold, dark hero, Space Grotesk, announcement bar + social proof
+  // ─────────────────────────────────────────────────────────────────────────────
+  // LAYOUT 0 — NOIR
+  // Pure black editorial. Giant vw-based headline. Inline dark product cards.
+  // Inspired by Nike SNKRS / Apple dark mode product pages.
+  // ─────────────────────────────────────────────────────────────────────────────
   if (layout === 0) return `'use client';
-import NavBar from '../components/navigation/NavBar';
-import HeroBanner from '../components/hero-banner/HeroBanner';
-import TrustBadges from '../components/trust-badges/TrustBadges';
-import ProductGrid from '../components/product-grid/ProductGrid';
-import SocialProof from '../components/social-proof/SocialProof';
-import Footer from '../components/footer/Footer';
-import AnnouncementBar from '../components/announcement-bar/AnnouncementBar';
+import { initiateCheckout } from '../components/shared/checkout';
 
-const products = ${prods};
-const navLinks = ${nav};
-const footerCols = ${footer};
-const reviews = ${reviews};
+interface Product { id: string; title: string; image: string; price: number; compareAtPrice?: number; badge?: string }
+const products: Product[] = ${prods};
 
 export default function Home() {
+  const buy = async (p: Product) => {
+    await initiateCheckout([{ id: p.id, title: p.title, price: p.price, quantity: 1, image: p.image }]);
+  };
   return (
-    <div className="bg-white text-gray-900">
-      <AnnouncementBar message="Gratis verzending op alle bestellingen — Levering in 1-3 werkdagen" dismissable />
-      <NavBar brandName={${bn}} links={navLinks} />
-      <HeroBanner headline={${bn}} subheadline={${sl}} ctaText="Ontdek de collectie" ctaHref="#products" theme="dark" eyebrow="Nieuw Binnen" />
-      <TrustBadges />
-      <section id="products" className="py-20 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-center text-gray-900 mb-3">Onze producten</h2>
-          <p className="text-center text-gray-500 mb-10 max-w-xl mx-auto">Zorgvuldig geselecteerd voor de beste kwaliteit</p>
-          <ProductGrid products={products} columns={3} />
+    <div style={{ background: '#000', color: '#fff', minHeight: '100vh', fontFamily: 'inherit' }}>
+
+      {/* ── Nav ── */}
+      <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.5rem 2.5rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+        <span style={{ fontWeight: 900, fontSize: '1.1rem', letterSpacing: '-0.03em' }}>${data.brand_name.toUpperCase()}</span>
+        <div style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
+          <a href="#products" style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.7rem', letterSpacing: '0.2em', textTransform: 'uppercase', textDecoration: 'none' }}>Shop</a>
+          <a href="/contact" style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.7rem', letterSpacing: '0.2em', textTransform: 'uppercase', textDecoration: 'none' }}>Contact</a>
+        </div>
+      </nav>
+
+      {/* ── Hero ── */}
+      <section style={{ minHeight: '90vh', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', padding: '0 2.5rem 5rem' }}>
+        <p style={{ color: 'rgba(255,255,255,0.25)', fontSize: '0.65rem', letterSpacing: '0.4em', textTransform: 'uppercase', marginBottom: '2rem' }}>Nieuw Binnen — ${year}</p>
+        <h1 style={{ fontSize: 'clamp(3.5rem,11vw,9rem)', fontWeight: 900, lineHeight: 0.88, letterSpacing: '-0.04em', margin: '0 0 3rem', maxWidth: '14ch' }}>
+          ${data.brand_name}
+        </h1>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '3rem', flexWrap: 'wrap' }}>
+          <a href="#products" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.75rem', background: '${primary}', color: '#fff', fontWeight: 700, padding: '1rem 2.5rem', fontSize: '0.75rem', letterSpacing: '0.15em', textTransform: 'uppercase', textDecoration: 'none' }}>
+            Shop Nu <span>→</span>
+          </a>
+          <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.9rem', maxWidth: '28ch', lineHeight: 1.6, margin: 0 }}>${data.slogan}</p>
         </div>
       </section>
-      <SocialProof reviews={reviews} showSummary title="Wat onze klanten zeggen" />
-      <Footer brandName={${bn}} columns={footerCols} />
+
+      {/* ── USP ticker ── */}
+      <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', borderBottom: '1px solid rgba(255,255,255,0.08)', padding: '1rem 2.5rem', display: 'flex', gap: '4rem', overflowX: 'auto' }}>
+        ${usps.map(u => `<span style={{ color: 'rgba(255,255,255,0.28)', fontSize: '0.65rem', letterSpacing: '0.2em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>${u.title}</span>`).join('')}
+      </div>
+
+      {/* ── Products ── */}
+      <section id="products" style={{ padding: '5rem 2.5rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '3rem' }}>
+          <h2 style={{ fontSize: '2.5rem', fontWeight: 900, margin: 0 }}>Collectie</h2>
+          <span style={{ color: 'rgba(255,255,255,0.25)', fontSize: '0.75rem', letterSpacing: '0.15em' }}>{products.length} ITEMS</span>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(260px,1fr))', gap: '1.5rem' }}>
+          {products.map((p, i) => (
+            <div key={i} onClick={() => buy(p)} style={{ cursor: 'pointer' }}>
+              <div style={{ aspectRatio: '1/1', background: '#111', overflow: 'hidden', position: 'relative', marginBottom: '1rem' }}>
+                {p.image && <img src={p.image} alt={p.title} style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.5s ease' }}
+                  onMouseEnter={e => (e.currentTarget.style.transform='scale(1.06)')}
+                  onMouseLeave={e => (e.currentTarget.style.transform='scale(1)')} />}
+                {p.badge && <span style={{ position: 'absolute', top: '0.75rem', left: '0.75rem', background: '${primary}', color: '#fff', fontSize: '0.65rem', fontWeight: 700, padding: '0.25rem 0.6rem', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{p.badge}</span>}
+              </div>
+              <p style={{ margin: '0 0 0.5rem', fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)', letterSpacing: '0.05em' }}>{p.title}</p>
+              <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                <span style={{ fontWeight: 700, fontSize: '1rem' }}>€{p.price.toFixed(2)}</span>
+                {p.compareAtPrice && <span style={{ color: 'rgba(255,255,255,0.25)', fontSize: '0.85rem', textDecoration: 'line-through' }}>€{p.compareAtPrice.toFixed(2)}</span>}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── Reviews ── */}
+      <section style={{ borderTop: '1px solid rgba(255,255,255,0.06)', padding: '5rem 2.5rem', background: '#0a0a0a' }}>
+        <h2 style={{ fontSize: '1.5rem', fontWeight: 900, marginBottom: '3rem', letterSpacing: '-0.02em' }}>Wat klanten zeggen</h2>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(280px,1fr))', gap: '2rem' }}>
+          {[{n:'Sanne V.',s:5,t:'Geweldig product, exact wat ik zocht.',v:true},{n:'Thomas B.',s:5,t:'Topkwaliteit — zeker een aanrader.',v:true},{n:'Lena M.',s:4,t:'Blij mee! Snelle levering.',v:false}].map((r,i) => (
+            <div key={i} style={{ background: '#111', border: '1px solid rgba(255,255,255,0.06)', padding: '1.75rem' }}>
+              <div style={{ display: 'flex', gap: '0.25rem', marginBottom: '1rem' }}>
+                {Array.from({length: r.s}).map((_,j) => <span key={j} style={{ color: '${accent}', fontSize: '0.8rem' }}>★</span>)}
+              </div>
+              <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.9rem', lineHeight: 1.6, marginBottom: '1rem' }}>{r.t}</p>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontWeight: 700, fontSize: '0.8rem' }}>{r.n}</span>
+                {r.v && <span style={{ color: '${primary}', fontSize: '0.65rem', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Geverifieerd</span>}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── Footer ── */}
+      <footer style={{ borderTop: '1px solid rgba(255,255,255,0.06)', padding: '2rem 2.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+        <span style={{ fontWeight: 900, fontSize: '0.9rem', letterSpacing: '-0.02em' }}>${data.brand_name.toUpperCase()}</span>
+        <div style={{ display: 'flex', gap: '2rem' }}>
+          {[['Over ons','/over'],['Retour','/retour'],['Contact','/contact'],['FAQ','/faq']].map(([l,h]) => (
+            <a key={l} href={h} style={{ color: 'rgba(255,255,255,0.25)', fontSize: '0.7rem', letterSpacing: '0.1em', textTransform: 'uppercase', textDecoration: 'none' }}>{l}</a>
+          ))}
+        </div>
+        <span style={{ color: 'rgba(255,255,255,0.15)', fontSize: '0.7rem' }}>© ${year}</span>
+      </footer>
     </div>
   );
 }
 `
 
-  // Layout 1: Maison — editorial, light, serif, 2-col products + review cards
+  // ─────────────────────────────────────────────────────────────────────────────
+  // LAYOUT 1 — BLANC
+  // White luxury. Maximum whitespace. Scandinavian/Muji aesthetic.
+  // Thin borders, serif display font, editorial product grid.
+  // ─────────────────────────────────────────────────────────────────────────────
   if (layout === 1) return `'use client';
-import NavBar from '../components/navigation/NavBar';
-import HeroBanner from '../components/hero-banner/HeroBanner';
 import ProductGrid from '../components/product-grid/ProductGrid';
 import ReviewCard from '../components/review-card/ReviewCard';
-import Footer from '../components/footer/Footer';
 
-const products = ${prods};
-const navLinks = ${nav};
-const footerCols = ${footer};
+interface Product { id: string; title: string; image: string; price: number; compareAtPrice?: number; badge?: string }
+const products: Product[] = ${prods};
 const reviews = ${reviews};
 
 export default function Home() {
   return (
-    <div className="bg-white text-gray-900">
-      <NavBar brandName={${bn}} links={navLinks} />
-      <HeroBanner headline={${bn}} subheadline={${sl}} ctaText="Shop de collectie" ctaHref="#products" theme="light" eyebrow="Selectie ${new Date().getFullYear()}" />
-      <section className="py-16 bg-white border-b border-gray-100">
-        <div className="max-w-5xl mx-auto px-6 grid grid-cols-1 sm:grid-cols-3 gap-6">
-          ${uspJsx}
+    <div style={{ background: '#fafaf8', color: '#1a1a1a', minHeight: '100vh' }}>
+
+      {/* ── Nav ── */}
+      <nav style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', padding: '1.25rem 3rem', borderBottom: '1px solid #e8e8e4' }}>
+        <div style={{ display: 'flex', gap: '2rem' }}>
+          <a href="#products" style={{ color: '#888', fontSize: '0.75rem', letterSpacing: '0.12em', textTransform: 'uppercase', textDecoration: 'none' }}>Shop</a>
+          <a href="/over" style={{ color: '#888', fontSize: '0.75rem', letterSpacing: '0.12em', textTransform: 'uppercase', textDecoration: 'none' }}>Over ons</a>
+        </div>
+        <span style={{ fontWeight: 700, fontSize: '1rem', letterSpacing: '-0.02em', textAlign: 'center' }}>${data.brand_name}</span>
+        <div style={{ display: 'flex', gap: '2rem', justifyContent: 'flex-end' }}>
+          <a href="/contact" style={{ color: '#888', fontSize: '0.75rem', letterSpacing: '0.12em', textTransform: 'uppercase', textDecoration: 'none' }}>Contact</a>
+        </div>
+      </nav>
+
+      {/* ── Hero ── */}
+      <section style={{ padding: '8rem 3rem 6rem', maxWidth: '900px', margin: '0 auto' }}>
+        <p style={{ color: '#aaa', fontSize: '0.7rem', letterSpacing: '0.3em', textTransform: 'uppercase', marginBottom: '2rem' }}>Collectie ${year}</p>
+        <h1 style={{ fontSize: 'clamp(3rem,7vw,6rem)', fontWeight: 700, lineHeight: 1.05, letterSpacing: '-0.03em', margin: '0 0 2.5rem', maxWidth: '14ch' }}>
+          ${data.brand_name}
+        </h1>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '3rem', borderTop: '1px solid #e8e8e4', paddingTop: '2.5rem', flexWrap: 'wrap' }}>
+          <p style={{ color: '#666', fontSize: '1.05rem', lineHeight: 1.7, maxWidth: '36ch', margin: 0 }}>${data.slogan}</p>
+          <a href="#products" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', border: '1px solid #1a1a1a', color: '#1a1a1a', fontWeight: 600, padding: '0.875rem 2rem', fontSize: '0.8rem', letterSpacing: '0.1em', textTransform: 'uppercase', textDecoration: 'none', whiteSpace: 'nowrap' }}>
+            Bekijk collectie →
+          </a>
         </div>
       </section>
-      <section id="products" className="py-20 px-4 sm:px-6 bg-gray-50">
-        <div className="max-w-5xl mx-auto">
-          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-10">De collectie</h2>
-          <ProductGrid products={products} columns={2} />
+
+      {/* ── USP row ── */}
+      <div style={{ borderTop: '1px solid #e8e8e4', borderBottom: '1px solid #e8e8e4', display: 'grid', gridTemplateColumns: 'repeat(3,1fr)' }}>
+        ${usps.map((u, i) => `
+        <div style={{ padding: '2.5rem 3rem', borderRight: i < 2 ? '1px solid #e8e8e4' : 'none' }}>
+          <span style={{ display: 'block', color: '#bbb', fontSize: '0.65rem', letterSpacing: '0.25em', textTransform: 'uppercase', marginBottom: '0.75rem' }}>0${i + 1}</span>
+          <strong style={{ display: 'block', fontSize: '0.95rem', marginBottom: '0.4rem' }}>${u.title}</strong>
+          <span style={{ color: '#888', fontSize: '0.85rem', lineHeight: 1.5 }}>${u.desc}</span>
+        </div>`).join('')}
+      </div>
+
+      {/* ── Products ── */}
+      <section id="products" style={{ padding: '6rem 3rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '3rem', borderBottom: '1px solid #e8e8e4', paddingBottom: '1.5rem' }}>
+          <h2 style={{ fontSize: '1.75rem', fontWeight: 700, letterSpacing: '-0.03em', margin: 0 }}>De collectie</h2>
+          <span style={{ color: '#aaa', fontSize: '0.75rem', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{products.length} producten</span>
         </div>
+        <ProductGrid products={products} columns={2} ctaLabel="In winkelwagen" />
       </section>
-      <section className="py-16 px-4 sm:px-6 bg-white">
-        <div className="max-w-5xl mx-auto">
-          <ReviewCard reviews={reviews} title="Klantbeoordelingen" showSummary />
+
+      {/* ── Reviews ── */}
+      <section style={{ background: '#f2f1ee', padding: '6rem 3rem', borderTop: '1px solid #e8e8e4' }}>
+        <ReviewCard reviews={reviews} title="Wat onze klanten zeggen" showSummary />
+      </section>
+
+      {/* ── Footer ── */}
+      <footer style={{ borderTop: '1px solid #e8e8e4', padding: '3rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', background: '#fafaf8' }}>
+        <span style={{ fontWeight: 700, fontSize: '0.9rem' }}>${data.brand_name}</span>
+        <div style={{ display: 'flex', gap: '2.5rem' }}>
+          {[['Over ons','/over'],['Retour','/retour'],['Contact','/contact'],['FAQ','/faq']].map(([l,h]) => (
+            <a key={l} href={h} style={{ color: '#999', fontSize: '0.75rem', letterSpacing: '0.08em', textTransform: 'uppercase', textDecoration: 'none' }}>{l}</a>
+          ))}
         </div>
-      </section>
-      <Footer brandName={${bn}} columns={footerCols} />
+        <span style={{ color: '#ccc', fontSize: '0.75rem' }}>© ${year} ${data.brand_name}</span>
+      </footer>
     </div>
   );
 }
 `
 
-  // Layout 2: Volt — high energy, countdown timer, dark hero, trust badges
+  // ─────────────────────────────────────────────────────────────────────────────
+  // LAYOUT 2 — BOLT
+  // Brand-color fills the entire hero. High urgency. Bold Syne typography.
+  // Countdown timer + announcement. Streetwear/sport energy.
+  // ─────────────────────────────────────────────────────────────────────────────
   if (layout === 2) return `'use client';
-import NavBar from '../components/navigation/NavBar';
-import HeroBanner from '../components/hero-banner/HeroBanner';
-import CountdownTimer from '../components/countdown-timer/CountdownTimer';
+import { useState, useEffect } from 'react';
 import ProductGrid from '../components/product-grid/ProductGrid';
 import TrustBadges from '../components/trust-badges/TrustBadges';
-import Footer from '../components/footer/Footer';
 import AnnouncementBar from '../components/announcement-bar/AnnouncementBar';
 
-const products = ${prods};
-const navLinks = ${nav};
-const footerCols = ${footer};
+interface Product { id: string; title: string; image: string; price: number; compareAtPrice?: number; badge?: string }
+const products: Product[] = ${prods};
+
+function Countdown() {
+  const end = new Date(Date.now() + 23 * 3600000 + 59 * 60000);
+  const [t, setT] = useState(Math.max(0, Math.floor((end.getTime() - Date.now()) / 1000)));
+  useEffect(() => { const i = setInterval(() => setT(s => Math.max(0, s - 1)), 1000); return () => clearInterval(i); }, []);
+  const h = String(Math.floor(t / 3600)).padStart(2,'0');
+  const m = String(Math.floor((t % 3600) / 60)).padStart(2,'0');
+  const s = String(t % 60).padStart(2,'0');
+  const box = (v: string, l: string) => (
+    <div style={{ textAlign: 'center' }}>
+      <div style={{ background: 'rgba(0,0,0,0.3)', color: '#fff', fontSize: 'clamp(2rem,5vw,3.5rem)', fontWeight: 900, padding: '1rem 1.5rem', minWidth: '90px', letterSpacing: '-0.03em' }}>{v}</div>
+      <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.65rem', letterSpacing: '0.2em', textTransform: 'uppercase', marginTop: '0.5rem' }}>{l}</div>
+    </div>
+  );
+  return (
+    <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
+      {box(h,'uur')}<span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '2.5rem', fontWeight: 900, paddingTop: '0.5rem' }}>:</span>
+      {box(m,'min')}<span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '2.5rem', fontWeight: 900, paddingTop: '0.5rem' }}>:</span>
+      {box(s,'sec')}
+    </div>
+  );
+}
 
 export default function Home() {
   return (
-    <div className="bg-white text-gray-900">
-      <AnnouncementBar message="Tijdelijk aanbod — Profiteer nu van gratis verzending!" dismissable />
-      <NavBar brandName={${bn}} links={navLinks} />
-      <HeroBanner headline={${bn}} subheadline={${sl}} ctaText="Shop nu" ctaHref="#products" theme="dark" />
-      <div className="bg-gray-950 py-12 flex flex-col items-center gap-3">
-        <p className="text-white/60 text-sm font-medium tracking-widest uppercase">Aanbieding verloopt over</p>
-        <CountdownTimer hours={23} minutes={59} label="Actie loopt af" />
-      </div>
-      <section id="products" className="py-20 px-4 sm:px-6">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-10 text-center">Bestel vandaag nog</h2>
-          <ProductGrid products={products} columns={2} />
+    <div style={{ background: '#fff', color: '#111', minHeight: '100vh' }}>
+      <AnnouncementBar message="Tijdelijk: Gratis verzending op alle bestellingen in NL & BE" dismissable />
+
+      {/* ── Hero — full brand color ── */}
+      <section style={{ background: '${primary}', minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 2.5rem', position: 'relative', overflow: 'hidden' }}>
+        {/* Nav inside hero */}
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.5rem 2.5rem' }}>
+          <span style={{ color: '#fff', fontWeight: 900, fontSize: '1.1rem', letterSpacing: '-0.02em' }}>${data.brand_name}</span>
+          <a href="#products" style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.75rem', letterSpacing: '0.15em', textTransform: 'uppercase', textDecoration: 'none' }}>Shop nu</a>
         </div>
+
+        {/* Big headline */}
+        <div style={{ maxWidth: '900px', marginTop: '4rem' }}>
+          <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.7rem', letterSpacing: '0.4em', textTransform: 'uppercase', marginBottom: '1.5rem' }}>Beperkt aanbod</p>
+          <h1 style={{ fontSize: 'clamp(4rem,12vw,10rem)', fontWeight: 900, lineHeight: 0.85, letterSpacing: '-0.05em', color: '#fff', margin: '0 0 2.5rem' }}>
+            ${data.brand_name}
+          </h1>
+          <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: 'clamp(1rem,2vw,1.4rem)', maxWidth: '38ch', lineHeight: 1.5, marginBottom: '3rem' }}>${data.slogan}</p>
+          <div style={{ display: 'flex', gap: '2rem', alignItems: 'center', flexWrap: 'wrap' }}>
+            <a href="#products" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.75rem', background: '#fff', color: '${primary}', fontWeight: 900, padding: '1.1rem 3rem', fontSize: '0.85rem', letterSpacing: '0.12em', textTransform: 'uppercase', textDecoration: 'none' }}>
+              Shop Nu →
+            </a>
+            <Countdown />
+          </div>
+        </div>
+
+        {/* Diagonal accent */}
+        <div style={{ position: 'absolute', bottom: 0, right: 0, width: '40%', height: '100%', background: 'rgba(0,0,0,0.12)', clipPath: 'polygon(100% 0,100% 100%,0% 100%)', pointerEvents: 'none' }} />
       </section>
+
+      {/* ── USPs ── */}
+      <section style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', borderBottom: '4px solid #111' }}>
+        ${usps.map((u, i) => `
+        <div style={{ padding: '2.5rem', borderRight: i < 2 ? '1px solid #eee' : 'none', background: i === 1 ? '#f5f5f5' : '#fff' }}>
+          <strong style={{ display: 'block', fontSize: '1rem', fontWeight: 900, marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '-0.01em' }}>${u.title}</strong>
+          <span style={{ color: '#666', fontSize: '0.85rem' }}>${u.desc}</span>
+        </div>`).join('')}
+      </section>
+
+      {/* ── Products ── */}
+      <section id="products" style={{ padding: '5rem 2.5rem' }}>
+        <h2 style={{ fontSize: 'clamp(2rem,5vw,3.5rem)', fontWeight: 900, letterSpacing: '-0.04em', textTransform: 'uppercase', marginBottom: '3rem' }}>
+          Bestel Nu
+        </h2>
+        <ProductGrid products={products} columns={2} ctaLabel="Voeg toe" />
+      </section>
+
       <TrustBadges />
-      <Footer brandName={${bn}} columns={footerCols} />
+
+      {/* ── Footer ── */}
+      <footer style={{ background: '#111', color: '#fff', padding: '2.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+        <span style={{ fontWeight: 900, fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '-0.01em' }}>${data.brand_name}</span>
+        <div style={{ display: 'flex', gap: '2rem' }}>
+          {[['Retour','/retour'],['Contact','/contact'],['FAQ','/faq']].map(([l,h]) => (
+            <a key={l} href={h} style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.75rem', letterSpacing: '0.08em', textTransform: 'uppercase', textDecoration: 'none' }}>{l}</a>
+          ))}
+        </div>
+        <span style={{ color: 'rgba(255,255,255,0.2)', fontSize: '0.75rem' }}>© ${year}</span>
+      </footer>
     </div>
   );
 }
 `
 
-  // Layout 3: Pure — minimal, Scandinavian, DM Serif, inline USP row, spacious
+  // ─────────────────────────────────────────────────────────────────────────────
+  // LAYOUT 3 — DUSK
+  // Warm earthy organic. Stone/cream background. Reviews-first layout.
+  // Rounded shapes, amber accents, soft shadows. Lifestyle/wellness aesthetic.
+  // ─────────────────────────────────────────────────────────────────────────────
   if (layout === 3) return `'use client';
-import NavBar from '../components/navigation/NavBar';
-import HeroBanner from '../components/hero-banner/HeroBanner';
 import ProductGrid from '../components/product-grid/ProductGrid';
-import TrustBadges from '../components/trust-badges/TrustBadges';
-import Footer from '../components/footer/Footer';
+import SocialProof from '../components/social-proof/SocialProof';
 
-const products = ${prods};
-const navLinks = ${nav};
-const footerCols = ${footer};
+interface Product { id: string; title: string; image: string; price: number; compareAtPrice?: number; badge?: string }
+const products: Product[] = ${prods};
+const reviews = ${reviews};
 
 export default function Home() {
   return (
-    <div className="bg-white text-gray-900">
-      <NavBar brandName={${bn}} links={navLinks} />
-      <HeroBanner headline={${bn}} subheadline={${sl}} ctaText="Bekijk de collectie" ctaHref="#products" theme="light" />
-      <section className="py-20 px-6 border-y border-gray-100">
-        <div className="max-w-4xl mx-auto grid grid-cols-3 divide-x divide-gray-100">
-          ${usps.map((u, i) => `
-          <div key={${i}} className="px-8 first:pl-0 last:pr-0">
-            <div className="text-xs font-bold tracking-widest text-gray-400 uppercase mb-2">0${i + 1}</div>
-            <h3 className="text-gray-900 font-semibold mb-1">${u.title}</h3>
-            <p className="text-sm text-gray-400 leading-relaxed">${u.desc}</p>
+    <div style={{ background: '#f6f3ee', color: '#2c2416', minHeight: '100vh' }}>
+
+      {/* ── Nav ── */}
+      <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.25rem 2.5rem', background: '#f6f3ee', borderBottom: '1px solid #e5ddd0' }}>
+        <div style={{ display: 'flex', gap: '2rem' }}>
+          <a href="#products" style={{ color: '#8c7355', fontSize: '0.8rem', letterSpacing: '0.1em', textTransform: 'uppercase', textDecoration: 'none' }}>Shop</a>
+          <a href="/over" style={{ color: '#8c7355', fontSize: '0.8rem', letterSpacing: '0.1em', textTransform: 'uppercase', textDecoration: 'none' }}>Over ons</a>
+        </div>
+        <span style={{ fontWeight: 700, fontSize: '1.1rem', letterSpacing: '-0.02em' }}>${data.brand_name}</span>
+        <a href="/contact" style={{ color: '#8c7355', fontSize: '0.8rem', letterSpacing: '0.1em', textTransform: 'uppercase', textDecoration: 'none' }}>Contact</a>
+      </nav>
+
+      {/* ── Hero ── */}
+      <section style={{ padding: '6rem 2.5rem', maxWidth: '1100px', margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4rem', alignItems: 'center' }}>
+        <div>
+          <span style={{ display: 'inline-block', background: '${accent}', color: '#fff', fontSize: '0.65rem', fontWeight: 700, padding: '0.35rem 1rem', letterSpacing: '0.15em', textTransform: 'uppercase', borderRadius: '100px', marginBottom: '1.5rem' }}>
+            Nieuw ${year}
+          </span>
+          <h1 style={{ fontSize: 'clamp(2.5rem,5vw,4.5rem)', fontWeight: 700, lineHeight: 1.1, letterSpacing: '-0.03em', margin: '0 0 1.5rem', color: '#1a120a' }}>
+            ${data.brand_name}
+          </h1>
+          <p style={{ color: '#7a6047', fontSize: '1.1rem', lineHeight: 1.7, maxWidth: '34ch', marginBottom: '2.5rem' }}>${data.slogan}</p>
+          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+            <a href="#products" style={{ background: '#2c2416', color: '#f6f3ee', fontWeight: 600, padding: '0.9rem 2.25rem', fontSize: '0.85rem', letterSpacing: '0.05em', textDecoration: 'none', borderRadius: '100px' }}>
+              Shop de collectie
+            </a>
+            <a href="/over" style={{ border: '1px solid #c8b99a', color: '#7a6047', fontWeight: 500, padding: '0.9rem 2.25rem', fontSize: '0.85rem', textDecoration: 'none', borderRadius: '100px' }}>
+              Ons verhaal
+            </a>
+          </div>
+        </div>
+        {/* Featured product preview */}
+        {products[0] && (
+          <div style={{ background: '#ede8df', borderRadius: '24px', aspectRatio: '1/1', overflow: 'hidden', boxShadow: '0 20px 60px rgba(44,36,22,0.12)' }}>
+            {products[0].image && <img src={products[0].image} alt={products[0].title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+          </div>
+        )}
+      </section>
+
+      {/* ── Reviews first (trust before products) ── */}
+      <section style={{ background: '#ede8df', borderTop: '1px solid #e0d5c4', borderBottom: '1px solid #e0d5c4', padding: '4rem 2.5rem' }}>
+        <SocialProof reviews={reviews} showSummary title="Wat klanten zeggen" />
+      </section>
+
+      {/* ── USPs ── */}
+      <section style={{ padding: '4rem 2.5rem', maxWidth: '1000px', margin: '0 auto' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: '2rem' }}>
+          ${usps.map(u => `
+          <div style={{ background: '#ede8df', borderRadius: '16px', padding: '2rem', border: '1px solid #e0d5c4' }}>
+            <strong style={{ display: 'block', fontSize: '1rem', fontWeight: 700, marginBottom: '0.5rem', color: '#1a120a' }}>${u.title}</strong>
+            <span style={{ color: '#7a6047', fontSize: '0.875rem', lineHeight: 1.6 }}>${u.desc}</span>
           </div>`).join('')}
         </div>
       </section>
-      <section id="products" className="py-24 px-4 sm:px-6 bg-gray-50">
-        <div className="max-w-7xl mx-auto">
-          <h2 className="text-4xl font-bold text-gray-900 mb-12">Collectie</h2>
-          <ProductGrid products={products} columns={3} />
+
+      {/* ── Products ── */}
+      <section id="products" style={{ padding: '3rem 2.5rem 6rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '2.5rem' }}>
+          <h2 style={{ fontSize: '2rem', fontWeight: 700, letterSpacing: '-0.03em', color: '#1a120a', margin: 0 }}>Onze producten</h2>
+          <span style={{ color: '#8c7355', fontSize: '0.8rem' }}>Zorgvuldig geselecteerd</span>
         </div>
+        <ProductGrid products={products} columns={3} ctaLabel="Bestellen" />
       </section>
-      <TrustBadges />
-      <Footer brandName={${bn}} columns={footerCols} />
+
+      {/* ── Footer ── */}
+      <footer style={{ background: '#2c2416', color: '#f6f3ee', padding: '3rem 2.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+        <span style={{ fontWeight: 700, fontSize: '1rem' }}>${data.brand_name}</span>
+        <div style={{ display: 'flex', gap: '2rem' }}>
+          {[['Over ons','/over'],['Retour','/retour'],['Contact','/contact']].map(([l,h]) => (
+            <a key={l} href={h} style={{ color: 'rgba(246,243,238,0.45)', fontSize: '0.8rem', letterSpacing: '0.08em', textTransform: 'uppercase', textDecoration: 'none' }}>{l}</a>
+          ))}
+        </div>
+        <span style={{ color: 'rgba(246,243,238,0.2)', fontSize: '0.8rem' }}>© ${year}</span>
+      </footer>
     </div>
   );
 }
 `
 
-  // Layout 4: Origin — warm, organic, social proof first, Fraunces serif
+  // ─────────────────────────────────────────────────────────────────────────────
+  // LAYOUT 4 — GRID
+  // Dark slate tech. Grid pattern background. Blue accents. Data-driven feel.
+  // Inline dark product cards. Clean, minimal, precise.
+  // ─────────────────────────────────────────────────────────────────────────────
   return `'use client';
-import NavBar from '../components/navigation/NavBar';
-import HeroBanner from '../components/hero-banner/HeroBanner';
-import SocialProof from '../components/social-proof/SocialProof';
-import ProductGrid from '../components/product-grid/ProductGrid';
-import ReviewCard from '../components/review-card/ReviewCard';
-import Footer from '../components/footer/Footer';
+import { initiateCheckout } from '../components/shared/checkout';
+import TrustBadges from '../components/trust-badges/TrustBadges';
 
-const products = ${prods};
-const navLinks = ${nav};
-const footerCols = ${footer};
-const reviews = ${reviews};
+interface Product { id: string; title: string; image: string; price: number; compareAtPrice?: number; badge?: string }
+const products: Product[] = ${prods};
 
 export default function Home() {
+  const buy = async (p: Product) => {
+    await initiateCheckout([{ id: p.id, title: p.title, price: p.price, quantity: 1, image: p.image }]);
+  };
   return (
-    <div className="bg-white text-gray-900">
-      <NavBar brandName={${bn}} links={navLinks} />
-      <HeroBanner headline={${bn}} subheadline={${sl}} ctaText="Ontdek nu" ctaHref="#products" theme="dark" eyebrow="Handgeselecteerd" />
-      <section className="py-16 px-6 bg-amber-50 border-y border-amber-100">
-        <div className="max-w-5xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-8">
-          ${uspJsx}
+    <div style={{ background: '#0d1117', color: '#e6edf3', minHeight: '100vh', backgroundImage: 'linear-gradient(rgba(48,54,61,0.4) 1px,transparent 1px),linear-gradient(90deg,rgba(48,54,61,0.4) 1px,transparent 1px)', backgroundSize: '40px 40px' }}>
+
+      {/* ── Nav ── */}
+      <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.25rem 2rem', borderBottom: '1px solid #30363d', background: 'rgba(13,17,23,0.95)', backdropFilter: 'blur(12px)', position: 'sticky', top: 0, zIndex: 50 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+          <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '${primary}', boxShadow: '0 0 8px ${primary}' }} />
+          <span style={{ fontWeight: 700, fontSize: '0.95rem', letterSpacing: '-0.01em' }}>${data.brand_name}</span>
+        </div>
+        <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
+          <a href="#products" style={{ color: '#8b949e', fontSize: '0.8rem', textDecoration: 'none' }}>Producten</a>
+          <a href="/contact" style={{ color: '#8b949e', fontSize: '0.8rem', textDecoration: 'none' }}>Contact</a>
+          <a href="#products" style={{ background: '${primary}', color: '#fff', fontWeight: 600, padding: '0.5rem 1.25rem', fontSize: '0.8rem', textDecoration: 'none', borderRadius: '6px' }}>Shop →</a>
+        </div>
+      </nav>
+
+      {/* ── Hero ── */}
+      <section style={{ padding: '6rem 2rem 4rem', maxWidth: '1100px', margin: '0 auto' }}>
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', border: '1px solid #30363d', padding: '0.35rem 1rem', borderRadius: '100px', marginBottom: '2rem', background: 'rgba(48,54,61,0.3)' }}>
+          <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#3fb950', display: 'inline-block' }} />
+          <span style={{ color: '#8b949e', fontSize: '0.72rem', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Live collectie ${year}</span>
+        </div>
+        <h1 style={{ fontSize: 'clamp(2.5rem,8vw,7rem)', fontWeight: 800, lineHeight: 0.9, letterSpacing: '-0.04em', margin: '0 0 1.5rem', background: 'linear-gradient(135deg,#e6edf3 0%,#8b949e 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+          ${data.brand_name}
+        </h1>
+        <p style={{ color: '#8b949e', fontSize: '1.15rem', lineHeight: 1.6, maxWidth: '44ch', marginBottom: '2.5rem' }}>${data.slogan}</p>
+        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+          <a href="#products" style={{ background: '${primary}', color: '#fff', fontWeight: 700, padding: '0.9rem 2.5rem', fontSize: '0.85rem', textDecoration: 'none', borderRadius: '8px', display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+            Bekijk collectie <span>→</span>
+          </a>
+          <a href="/over" style={{ border: '1px solid #30363d', color: '#8b949e', fontWeight: 500, padding: '0.9rem 2rem', fontSize: '0.85rem', textDecoration: 'none', borderRadius: '8px' }}>
+            Meer info
+          </a>
+        </div>
+
+        {/* Stats bar */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '1px', marginTop: '4rem', background: '#30363d', border: '1px solid #30363d', borderRadius: '12px', overflow: 'hidden' }}>
+          ${usps.map(u => `
+          <div style={{ background: 'rgba(22,27,34,0.9)', padding: '1.5rem 2rem' }}>
+            <strong style={{ display: 'block', color: '#e6edf3', fontSize: '0.95rem', marginBottom: '0.25rem' }}>${u.title}</strong>
+            <span style={{ color: '#8b949e', fontSize: '0.8rem' }}>${u.desc}</span>
+          </div>`).join('')}
         </div>
       </section>
-      <section id="products" className="py-20 px-4 sm:px-6">
-        <div className="max-w-7xl mx-auto">
-          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">Onze producten</h2>
-          <p className="text-gray-500 mb-10">Gekozen met zorg, voor jou samengesteld.</p>
-          <ProductGrid products={products} columns={3} />
+
+      {/* ── Products ── */}
+      <section id="products" style={{ padding: '3rem 2rem 5rem', maxWidth: '1100px', margin: '0 auto' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', paddingBottom: '1rem', borderBottom: '1px solid #30363d' }}>
+          <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#e6edf3', margin: 0 }}>Alle producten</h2>
+          <span style={{ color: '#8b949e', fontSize: '0.8rem', fontFamily: 'monospace' }}>{products.length} items</span>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(280px,1fr))', gap: '1px', background: '#30363d', border: '1px solid #30363d', borderRadius: '12px', overflow: 'hidden' }}>
+          {products.map((p, i) => (
+            <div key={i} onClick={() => buy(p)} style={{ background: '#161b22', padding: '1.5rem', cursor: 'pointer', transition: 'background 0.15s' }}
+              onMouseEnter={e => (e.currentTarget.style.background='#1c2128')}
+              onMouseLeave={e => (e.currentTarget.style.background='#161b22')}>
+              <div style={{ aspectRatio: '4/3', background: '#0d1117', borderRadius: '8px', overflow: 'hidden', marginBottom: '1.25rem', border: '1px solid #30363d', position: 'relative' }}>
+                {p.image && <img src={p.image} alt={p.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+                {p.badge && <span style={{ position: 'absolute', top: '0.6rem', right: '0.6rem', background: '${primary}', color: '#fff', fontSize: '0.65rem', fontWeight: 700, padding: '0.2rem 0.6rem', borderRadius: '4px' }}>{p.badge}</span>}
+              </div>
+              <p style={{ margin: '0 0 0.5rem', fontSize: '0.9rem', color: '#c9d1d9', fontWeight: 500 }}>{p.title}</p>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center' }}>
+                  <span style={{ fontWeight: 700, color: '#e6edf3' }}>€{p.price.toFixed(2)}</span>
+                  {p.compareAtPrice && <span style={{ color: '#8b949e', fontSize: '0.8rem', textDecoration: 'line-through' }}>€{p.compareAtPrice.toFixed(2)}</span>}
+                </div>
+                <button style={{ background: '${primary}', color: '#fff', border: 'none', padding: '0.4rem 1rem', fontSize: '0.75rem', fontWeight: 600, borderRadius: '6px', cursor: 'pointer' }}>
+                  + Toevoegen
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
       </section>
-      <SocialProof reviews={reviews} showSummary title="Wat anderen zeggen" />
-      <section className="py-16 px-4 sm:px-6 bg-gray-50">
-        <div className="max-w-5xl mx-auto">
-          <ReviewCard reviews={reviews} title="Klantervaringen" />
+
+      <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '0 2rem 4rem' }}>
+        <TrustBadges />
+      </div>
+
+      {/* ── Footer ── */}
+      <footer style={{ borderTop: '1px solid #30363d', padding: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', background: 'rgba(13,17,23,0.95)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '${primary}' }} />
+          <span style={{ fontWeight: 700, fontSize: '0.85rem' }}>${data.brand_name}</span>
         </div>
-      </section>
-      <Footer brandName={${bn}} columns={footerCols} />
+        <div style={{ display: 'flex', gap: '1.5rem' }}>
+          {[['Over ons','/over'],['Retour','/retour'],['Contact','/contact'],['FAQ','/faq']].map(([l,h]) => (
+            <a key={l} href={h} style={{ color: '#8b949e', fontSize: '0.75rem', textDecoration: 'none' }}>{l}</a>
+          ))}
+        </div>
+        <span style={{ color: '#484f58', fontSize: '0.75rem' }}>© ${year} ${data.brand_name}</span>
+      </footer>
     </div>
   );
 }
@@ -558,7 +847,7 @@ function writeNextScaffold(targetDir: string, data: StoreData): void {
 
   // page.tsx — layout-specific
   fs.writeFileSync(path.join(targetDir, 'app/page.tsx'),
-    generatePageTsx(layoutIdx, data, usps, primary), 'utf-8')
+    generatePageTsx(layoutIdx, data, usps, primary, secondary, accent), 'utf-8')
 }
 
 // ── SEO assets ───────────────────────────────────────────────────────────────
@@ -962,7 +1251,7 @@ export async function deployStore(storeData: StoreData): Promise<DeployedStore> 
     const previewUrl = `https://${subdomain}.${STORE_BASE_DOMAIN}`
     const live = { storeId, subdomain, niche: data.niche, status: 'live' as const,
       previewUrl, filesPath: baseDir, createdAt }
-    persistStore(live, storeData.runId)
+    persistStore(live, storeData.runId, data)
     console.log(`[store-platform] live store deployed: ${subdomain} → ${previewUrl}`)
     return live
   } catch (err) {
@@ -975,7 +1264,7 @@ export async function deployStore(storeData: StoreData): Promise<DeployedStore> 
   }
 }
 
-function persistStore(s: DeployedStore, runId?: string): void {
+function persistStore(s: DeployedStore, runId?: string, storeData?: StoreData): void {
   // Only persist when we have a real pipeline run to link to (FK constraint).
   // Standalone deploys (smoke tests, manual triggers) skip DB persistence.
   if (!runId) return
@@ -986,10 +1275,11 @@ function persistStore(s: DeployedStore, runId?: string): void {
   }
   try {
     db.prepare(
-      `INSERT OR REPLACE INTO stores (store_id, run_id, subdomein, niche, preview_url, created_at, roas, status)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT OR REPLACE INTO stores (store_id, run_id, subdomein, niche, preview_url, created_at, roas, status, store_data)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     ).run(s.storeId, runId, s.subdomain, s.niche, s.previewUrl, s.createdAt, null,
-      s.status === 'failed' ? 'killed' : (s.status === 'local' ? 'live' : s.status))
+      s.status === 'failed' ? 'killed' : (s.status === 'local' ? 'live' : s.status),
+      storeData ? JSON.stringify(storeData) : null)
   } catch (err) {
     console.error('[store-platform] persistStore failed:', err)
   }
@@ -1158,6 +1448,91 @@ app.post('/api/stores/:storeId/diagnose', async (req, res) => {
     res.json(result)
   } catch (err) {
     res.status(500).json({ error: err instanceof Error ? err.message : 'diagnose failed' })
+  }
+})
+
+// ── CMS: lees merged store data (origineel + overrides) ──────────────────────
+app.get('/api/stores/:storeId/cms-data', (req, res) => {
+  try {
+    const row = db.prepare('SELECT store_data, custom_data, subdomein, niche FROM stores WHERE store_id = ?')
+      .get(req.params.storeId) as { store_data: string | null; custom_data: string | null; subdomein: string; niche: string } | undefined
+    if (!row) { res.status(404).json({ error: 'store not found' }); return }
+
+    const base: Partial<StoreData> = row.store_data ? JSON.parse(row.store_data) : {}
+    const overrides: Partial<StoreData> = row.custom_data ? JSON.parse(row.custom_data) : {}
+
+    // Deep merge: overrides win, maar we merge products array item-by-item op id
+    const merged: StoreData = {
+      brand_name: overrides.brand_name ?? base.brand_name ?? row.subdomein.split('.')[0],
+      niche:       overrides.niche      ?? base.niche      ?? row.niche,
+      slogan:      overrides.slogan     ?? base.slogan      ?? '',
+      primary_color: overrides.primary_color ?? base.primary_color,
+      subdomain:   row.subdomein,
+      products: (base.products ?? []).map(p => {
+        const o = (overrides.products ?? []).find(op => op.id === p.id)
+        return o ? { ...p, ...o } : p
+      }),
+      ...(overrides.products && overrides.products.length > (base.products ?? []).length
+        ? { products: overrides.products } : {}),
+    }
+
+    res.json({ merged, base, overrides, hasStoreData: !!row.store_data })
+  } catch (err) {
+    res.status(500).json({ error: err instanceof Error ? err.message : 'cms-data failed' })
+  }
+})
+
+// ── CMS: sla overrides op ────────────────────────────────────────────────────
+app.put('/api/stores/:storeId/cms-data', (req, res) => {
+  try {
+    const row = db.prepare('SELECT store_id FROM stores WHERE store_id = ?').get(req.params.storeId)
+    if (!row) { res.status(404).json({ error: 'store not found' }); return }
+
+    db.prepare('UPDATE stores SET custom_data = ? WHERE store_id = ?')
+      .run(JSON.stringify(req.body), req.params.storeId)
+
+    res.json({ ok: true })
+  } catch (err) {
+    res.status(500).json({ error: err instanceof Error ? err.message : 'cms save failed' })
+  }
+})
+
+// ── CMS: rebuild + redeploy store met huidige (merged) data ──────────────────
+app.post('/api/stores/:storeId/rebuild', async (req, res) => {
+  try {
+    const row = db.prepare('SELECT store_data, custom_data, subdomein, niche, run_id FROM stores WHERE store_id = ?')
+      .get(req.params.storeId) as { store_data: string | null; custom_data: string | null; subdomein: string; niche: string; run_id: string } | undefined
+    if (!row) { res.status(404).json({ error: 'store not found' }); return }
+    if (!row.store_data) { res.status(400).json({ error: 'Geen originele store data beschikbaar voor rebuild. Start een nieuwe pipeline run.' }); return }
+
+    const base: StoreData = JSON.parse(row.store_data)
+    const overrides: Partial<StoreData> = row.custom_data ? JSON.parse(row.custom_data) : {}
+
+    // Merge overrides into base data
+    const merged: StoreData = {
+      ...base,
+      ...overrides,
+      subdomain: row.subdomein,
+      runId: row.run_id,
+      products: (base.products ?? []).map(p => {
+        const o = (overrides.products ?? []).find(op => op.id === p.id)
+        return o ? { ...p, ...o } : p
+      }),
+    }
+
+    // Rebuild in background — respond immediately
+    res.json({ ok: true, message: 'Rebuild gestart — dit duurt ca. 2-3 minuten' })
+
+    deployStore(merged).then(result => {
+      const status = result.status === 'live' ? 'live' : 'killed'
+      db.prepare('UPDATE stores SET status = ? WHERE store_id = ?').run(status, req.params.storeId)
+      console.log(`[cms-rebuild] ${row.subdomein} → ${status}`)
+    }).catch(err => {
+      console.error(`[cms-rebuild] ${row.subdomein} failed:`, err)
+      db.prepare('UPDATE stores SET status = ? WHERE store_id = ?').run('killed', req.params.storeId)
+    })
+  } catch (err) {
+    res.status(500).json({ error: err instanceof Error ? err.message : 'rebuild failed' })
   }
 })
 

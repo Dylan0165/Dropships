@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
-import { RefreshCw, ExternalLink, Store, Activity, AlertCircle, CheckCircle, Clock, DownloadCloud } from 'lucide-react'
+import { RefreshCw, ExternalLink, Store, Activity, AlertCircle, CheckCircle, Clock, DownloadCloud, Pencil } from 'lucide-react'
 import clsx from 'clsx'
 import { getStores } from '@/lib/api'
 import type { StoreInfo } from '@/types'
+import StoreEditor from './StoreEditor'
 
 // Uitgebreide StoreInfo met health data
 interface StoreInfoEx extends StoreInfo {
@@ -11,6 +12,7 @@ interface StoreInfoEx extends StoreInfo {
   healthError?: string
   healthCheckedAt?: string
   healthResponseMs?: number
+  subdomein?: string
 }
 
 export function StoresView() {
@@ -19,6 +21,7 @@ export function StoresView() {
   const [syncing, setSyncing] = useState(false)
   const [syncResult, setSyncResult] = useState<string | null>(null)
   const [selected, setSelected] = useState<string | null>(null)
+  const [editingStore, setEditingStore] = useState<StoreInfoEx | null>(null)
 
   const fetchStores = async () => {
     setLoading(true)
@@ -154,6 +157,17 @@ export function StoresView() {
           </div>
         )}
       </div>
+
+      {/* Store Editor panel */}
+      {editingStore && (
+        <StoreEditor
+          storeId={editingStore.storeId}
+          subdomain={editingStore.subdomein ?? editingStore.storeId}
+          niche={editingStore.niche}
+          onClose={() => setEditingStore(null)}
+          onSaved={() => fetchStores()}
+        />
+      )}
     </div>
   )
 }
@@ -199,17 +213,26 @@ function StoreCard({ store, expanded, onToggle }: {
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between gap-2">
               <h3 className="text-white font-semibold text-sm truncate">{store.subdomein}</h3>
-              {portUrl && (
-                <a
-                  href={portUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={e => e.stopPropagation()}
-                  className="text-zinc-600 hover:text-white transition-colors flex-shrink-0"
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <button
+                  onClick={e => { e.stopPropagation(); setEditingStore(store) }}
+                  className="text-zinc-600 hover:text-white transition-colors"
+                  title="Store bewerken"
                 >
-                  <ExternalLink size={12} />
-                </a>
-              )}
+                  <Pencil size={12} />
+                </button>
+                {portUrl && (
+                  <a
+                    href={portUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={e => e.stopPropagation()}
+                    className="text-zinc-600 hover:text-white transition-colors"
+                  >
+                    <ExternalLink size={12} />
+                  </a>
+                )}
+              </div>
             </div>
             <p className="text-[11px] text-zinc-500 mt-0.5 truncate">{store.niche}</p>
 

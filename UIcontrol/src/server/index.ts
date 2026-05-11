@@ -276,6 +276,32 @@ app.post('/api/admin/reconcile-stores', async (_req, res) => {
   }
 })
 
+// ── CMS proxy endpoints ───────────────────────────────────────────────────────
+const PLATFORM_URL = process.env.PLATFORM_API_URL ?? 'http://localhost:3002'
+
+app.get('/api/stores/:storeId/cms-data', async (req, res) => {
+  try {
+    const r = await fetch(`${PLATFORM_URL}/api/stores/${req.params.storeId}/cms-data`)
+    res.status(r.status).json(await r.json())
+  } catch (err) { res.status(500).json({ error: String(err) }) }
+})
+
+app.put('/api/stores/:storeId/cms-data', async (req, res) => {
+  try {
+    const r = await fetch(`${PLATFORM_URL}/api/stores/${req.params.storeId}/cms-data`, {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(req.body),
+    })
+    res.status(r.status).json(await r.json())
+  } catch (err) { res.status(500).json({ error: String(err) }) }
+})
+
+app.post('/api/stores/:storeId/rebuild', async (req, res) => {
+  try {
+    const r = await fetch(`${PLATFORM_URL}/api/stores/${req.params.storeId}/rebuild`, { method: 'POST' })
+    res.status(r.status).json(await r.json())
+  } catch (err) { res.status(500).json({ error: String(err) }) }
+})
+
 app.get('/api/ads', (_req, res) => {
   try {
     const ads = db.prepare(`

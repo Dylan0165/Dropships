@@ -192,6 +192,8 @@ const storeMigrations: [string, string][] = [
   ['health_error',      'ALTER TABLE stores ADD COLUMN health_error TEXT'],
   ['ai_diagnosis',      'ALTER TABLE stores ADD COLUMN ai_diagnosis TEXT'],
   ['ai_diagnosed_at',   'ALTER TABLE stores ADD COLUMN ai_diagnosed_at TEXT'],
+  ['store_data',        'ALTER TABLE stores ADD COLUMN store_data TEXT'],       // originele StoreData JSON (voor rebuild)
+  ['custom_data',       'ALTER TABLE stores ADD COLUMN custom_data TEXT'],      // CMS overrides JSON
 ]
 for (const [col, sql] of storeMigrations) {
   if (!storesCols.includes(col)) {
