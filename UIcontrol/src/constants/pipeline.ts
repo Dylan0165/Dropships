@@ -3,8 +3,8 @@ import type { AgentConfig, AgentId } from '@/types'
 // ═══════ Agent configuration (static, shared between client & server) ═══════
 // Model wordt gelezen uit env: LLM_MODEL_EXECUTOR en LLM_MODEL_REVIEWER
 // Standaard: qwen2.5:14b (Ollama lokaal) — voor productie: deepseek-v4-flash / deepseek-v4-pro
-const EXECUTOR_MODEL = (typeof process !== 'undefined' ? process.env.LLM_MODEL_EXECUTOR : undefined) ?? (typeof process !== 'undefined' ? process.env.LLM_MODEL : undefined) ?? 'qwen2.5:14b'
-const REVIEWER_MODEL = (typeof process !== 'undefined' ? process.env.LLM_MODEL_REVIEWER : undefined) ?? (typeof process !== 'undefined' ? process.env.LLM_MODEL : undefined) ?? 'qwen2.5:14b'
+const EXECUTOR_MODEL = (typeof process !== 'undefined' ? process.env.LLM_MODEL_EXECUTOR : undefined) ?? (typeof process !== 'undefined' ? process.env.LLM_MODEL : undefined) ?? 'deepseek-chat'
+const REVIEWER_MODEL = (typeof process !== 'undefined' ? process.env.LLM_MODEL_REVIEWER : undefined) ?? (typeof process !== 'undefined' ? process.env.LLM_MODEL : undefined) ?? 'deepseek-reasoner'
 
 export const AGENT_CONFIGS: AgentConfig[] = [
   { id: 'trend-agent',      label: 'Trend Agent',      category: 'executor',   model: EXECUTOR_MODEL, description: 'Scans trending niches',          position: { x: 0,    y: 0   } },
@@ -14,8 +14,8 @@ export const AGENT_CONFIGS: AgentConfig[] = [
   { id: 'brand-agent',      label: 'Brand Agent',       category: 'executor',   model: EXECUTOR_MODEL, description: 'Generates brand identity',        position: { x: 1040, y: 0   } },
   { id: 'store-builder',    label: 'Store Builder',     category: 'executor',   model: EXECUTOR_MODEL, description: 'Assembles Next.js store',         position: { x: 1300, y: 0   } },
   { id: 'store-reviewer',   label: 'Store Reviewer',    category: 'reviewer',   model: REVIEWER_MODEL, description: 'UI/UX quality check',             position: { x: 1560, y: 0   } },
-  { id: 'growth-agent',     label: 'Growth Agent',      category: 'analytics',  model: REVIEWER_MODEL, description: 'Weekly performance analysis',     position: { x: 1300, y: 220 } },
-  { id: 'security-agent',   label: 'Security Agent',    category: 'security',   model: REVIEWER_MODEL, description: 'Continuous security monitoring',  position: { x: 0,    y: 220 } },
+  { id: 'growth-agent',     label: 'Growth Agent',      category: 'analytics',  model: EXECUTOR_MODEL, description: 'Weekly performance analysis',     position: { x: 1300, y: 220 } },
+  { id: 'security-agent',   label: 'Security Agent',    category: 'security',   model: EXECUTOR_MODEL, description: 'Continuous security monitoring',  position: { x: 0,    y: 220 } },
 ]
 
 export const PIPELINE_EDGES: { source: string; target: string; dashed?: boolean; label?: string }[] = [

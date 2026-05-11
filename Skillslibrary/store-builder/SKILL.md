@@ -357,10 +357,88 @@ De store-builder retourneert een uitgebreid JSON-object. Naast het bestaande sch
 }
 ```
 
-## Design Quality Standards (taste-skill)
+## Design Quality Standards (taste-skill integration)
 
 The store-builder must produce brands that feel **premium, specific, and trustworthy** — not generic AI output.
-These rules override vague defaults every time.
+These rules override vague defaults every time. Derived from the taste-skill anti-slop framework.
+
+---
+
+### DESIGN_VARIANCE — Deterministic layout via niche hash
+
+The `selectLayout(niche)` function maps each niche to a layout index (0–4) using character sum modulo 5.
+This ensures:
+- **Same niche always produces the same visual identity** — reproducible, not random
+- **Different niches look genuinely distinct** — no one-size-fits-all template
+- Layout selection is invisible to users but encodes brand personality into the page structure
+
+Layouts: 0=NOIR (black editorial), 1=BLANC (Scandinavian luxury), 2=BOLT (high-energy sport),
+3=DUSK (warm organic lifestyle), 4=GRID (dark tech data-driven)
+
+Never override this with a random choice — the hash is the source of truth.
+
+---
+
+### VISUAL_DENSITY — Niche-matched information density
+
+- **Lifestyle niches** (beauty, home, wellness, food): Open layout. Generous whitespace. Single hero product. Emotion-first.
+- **Tech niches** (gadgets, electronics, devices): Dense info. Stats bar. Specs visible. Grid layout. Data earns trust.
+- **Sport/fitness**: High energy, bold type, urgency signals (countdown, stock counter), minimal copy.
+- **Fashion/accessories**: Editorial grid, large images, minimal text, serif/geometric pairing.
+
+Match density to how the buyer makes decisions — tech buyers compare specs, lifestyle buyers feel first.
+
+---
+
+### COLOR_HARMONY — Deliberate palette, never defaults
+
+The brand-agent MUST choose a palette that fits the niche. **Never default to `#7c3aed` (generic purple) or `#f59e0b` (generic amber).**
+
+Niche → deliberate palette guide:
+- Fitness → electric blue `#0066ff`, signal red `#e63946`, or forest green `#2d6a4f`
+- Beauty → deep rose `#c9184a`, dusty mauve `#9b5de5`, or champagne `#e9c46a`
+- Tech → slate navy `#1e3a5f`, electric cyan `#00b4d8`, or graphite `#2d3436`
+- Food/drink → espresso `#3d1e00`, citrus `#f4a261`, or sage `#6b9e7a`
+- Home/decor → terracotta `#c77b58`, linen `#f2e9d8`, or sage `#87a989`
+
+Always provide `primary`, `secondary`, and `accent`. The secondary sets the text/background relationship; the accent drives CTAs and badges.
+
+---
+
+### MOTION_INTENSITY — Functional animation only
+
+Animations must serve a purpose. No gratuitous movement.
+
+**Allowed:**
+- Product image scale on hover (transform: scale 1.04, 0.3s ease) — signals interactivity
+- CTA button subtle lift (translateY -1px, 0.15s) — confirms clickability
+- Countdown timer number flip — creates urgency
+
+**Forbidden:**
+- Page-load entrance animations that delay content visibility (hurts LCP)
+- Parallax scrolling on product images — causes CLS
+- Auto-playing carousels — kills user trust
+- Spinning loaders or skeleton shimmer beyond 300ms
+
+All CSS transitions must use `will-change: transform` and be hardware-accelerated.
+
+---
+
+### TYPOGRAPHY — Font pairing reflects brand personality
+
+Font pairings are deterministically assigned via the same niche hash as layouts. Each pair has a personality:
+
+| Index | Name | Heading | Body | Personality |
+|-------|------|---------|------|-------------|
+| 0 | Studio | Space Grotesk | DM Sans | Geometric, bold, modern (tech/sport) |
+| 1 | Maison | Playfair Display | Lato | Editorial, luxury, serif (beauty/fashion) |
+| 2 | Volt | Syne | Outfit | High energy, wide tracking (sport/streetwear) |
+| 3 | Pure | DM Serif Display | DM Sans | Minimal, Scandinavian (home/wellness) |
+| 4 | Origin | Fraunces | Figtree | Warm, organic, lifestyle (food/nature) |
+
+Never mix two serif fonts. Never use system-ui as a heading font. Font pairing must reinforce brand personality — a sport brand should never get a luxury serif.
+
+---
 
 ### Brand Identity Rules
 
@@ -369,14 +447,6 @@ Good: `BlendJet`, `GripKick`, `FloatHome` — Bad: `FitnessShop`, `MyStore`, `Be
 
 **Slogan**: Specific benefit + emotional hook. Max 6 words. No filler words ("quality", "premium", "best").
 Good: `"Blend anywhere. Fuel your day."` — Bad: `"Premium quality products for you."`
-
-**Colors**: Never use `#7c3aed` (default purple) or `#f59e0b` (default amber) unless truly on-brand.
-Pick a deliberate palette:
-- Fitness → bold primary (electric blue, signal red, forest green)
-- Beauty → soft pastel or deep jewel tone
-- Tech → dark navy, slate, or electric accent
-- Food/drink → warm earth tones, citrus, or deep espresso
-- Home → sage, terracotta, cream, linen
 
 **Primary color** must be intentional. Provide `colors.primary`, `colors.secondary`, `colors.accent` in the output.
 
@@ -395,3 +465,6 @@ Pick a deliberate palette:
 - Duplicate words in brand name and slogan
 - Colors that clash with the product photos
 - The word "premium", "kwaliteit", "beste" without a specific reason
+- Page-entry animations that block LCP
+- Two serif fonts in the same design
+- Random layout assignment — always use the niche hash

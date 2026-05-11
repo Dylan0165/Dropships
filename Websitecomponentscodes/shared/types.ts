@@ -8,7 +8,6 @@ export interface Product {
   compareAtPrice?: number
   badge?: string
   description?: string   // optioneel — product-agent kan dit meegeven
-  [key: string]: unknown // accepteer extra velden zonder TypeScript errors
 }
 
 export interface Variant {

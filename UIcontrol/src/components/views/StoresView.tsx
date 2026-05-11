@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { RefreshCw, ExternalLink, Store, Activity, AlertCircle, CheckCircle, Clock, DownloadCloud, Pencil } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { RefreshCw, ExternalLink, Store, Activity, AlertCircle, CheckCircle, Clock, DownloadCloud, Pencil, X } from 'lucide-react'
 import clsx from 'clsx'
 import { getStores } from '@/lib/api'
 import type { StoreInfo } from '@/types'
@@ -15,6 +15,14 @@ interface StoreInfoEx extends StoreInfo {
   subdomein?: string
 }
 
+interface DeployToast {
+  id: string
+  storeName: string
+  subdomain: string
+  port?: number
+  url: string
+}
+
 export function StoresView() {
   const [stores, setStores] = useState<StoreInfoEx[]>([])
   const [loading, setLoading] = useState(true)
@@ -22,11 +30,40 @@ export function StoresView() {
   const [syncResult, setSyncResult] = useState<string | null>(null)
   const [selected, setSelected] = useState<string | null>(null)
   const [editingStore, setEditingStore] = useState<StoreInfoEx | null>(null)
+  const [toasts, setToasts] = useState<DeployToast[]>([])
+  const prevStatusRef = useRef<Map<string, string>>(new Map())
+
+  const dismissToast = (id: string) => setToasts(t => t.filter(x => x.id !== id))
 
   const fetchStores = async () => {
     setLoading(true)
     try {
       const data = await getStores() as StoreInfoEx[]
+
+      // Detect building → live transitions
+      const newToasts: DeployToast[] = []
+      for (const store of data) {
+        const prev = prevStatusRef.current.get(store.storeId)
+        const curr = store.status
+        if (prev === 'building' && (curr === 'live' || curr === 'local')) {
+          const port = store.port
+          newToasts.push({
+            id: `${store.storeId}-${Date.now()}`,
+            storeName: store.subdomein ?? store.storeId,
+            subdomain: store.subdomein ?? store.storeId,
+            port,
+            url: port ? `http://192.168.121.8:${port}` : store.previewUrl,
+          })
+        }
+        prevStatusRef.current.set(store.storeId, curr)
+      }
+      if (newToasts.length > 0) {
+        setToasts(t => [...t, ...newToasts])
+        for (const toast of newToasts) {
+          setTimeout(() => dismissToast(toast.id), 8000)
+        }
+      }
+
       setStores(data)
     } finally {
       setLoading(false)
@@ -169,6 +206,70 @@ export function StoresView() {
           onSaved={() => fetchStores()}
         />
       )}
+
+      {/* Deploy success toasts */}
+      <style>{`
+        @keyframes slideInToast {
+          from { transform: translateX(110%); opacity: 0; }
+          to   { transform: translateX(0);    opacity: 1; }
+        }
+        .deploy-toast { animation: slideInToast 0.35s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+      `}</style>
+      <div style={{ position: 'fixed', bottom: '1.5rem', right: '1.5rem', zIndex: 9999, display: 'flex', flexDirection: 'column', gap: '0.75rem', alignItems: 'flex-end', pointerEvents: 'none' }}>
+        {toasts.map(toast => (
+          <div
+            key={toast.id}
+            className="deploy-toast"
+            style={{
+              background: '#0f1712',
+              border: '1px solid rgba(74,222,128,0.25)',
+              borderRadius: '14px',
+              padding: '1rem 1.25rem',
+              minWidth: '280px',
+              maxWidth: '340px',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(74,222,128,0.08)',
+              pointerEvents: 'auto',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.75rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.5rem' }}>
+                <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#4ade80', boxShadow: '0 0 6px #4ade80', flexShrink: 0, display: 'inline-block' }} />
+                <span style={{ color: '#4ade80', fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase' }}>Store Live</span>
+              </div>
+              <button
+                onClick={() => dismissToast(toast.id)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.3)', padding: '0', flexShrink: 0, lineHeight: 1 }}
+              >
+                <X size={13} />
+              </button>
+            </div>
+            <p style={{ color: '#fff', fontWeight: 700, fontSize: '0.9rem', margin: '0 0 0.25rem', letterSpacing: '-0.01em' }}>{toast.storeName}</p>
+            <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.75rem', margin: '0 0 0.875rem', fontFamily: 'monospace' }}>
+              {toast.subdomain}{toast.port ? ` · :${toast.port}` : ''}
+            </p>
+            <a
+              href={toast.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                background: '#4ade80',
+                color: '#0a0f09',
+                fontSize: '0.75rem',
+                fontWeight: 700,
+                padding: '0.45rem 1rem',
+                borderRadius: '8px',
+                textDecoration: 'none',
+                letterSpacing: '0.02em',
+              }}
+            >
+              Bekijk store <ExternalLink size={11} />
+            </a>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
