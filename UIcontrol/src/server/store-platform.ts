@@ -1297,7 +1297,11 @@ export async function reconcileStores(): Promise<{ added: number; updated: numbe
   // 1 — list store directories on the store server
   const listRes = await sshExec(`ls /var/www/stores/`)
   if (!listRes.ok) {
-    return { added: 0, updated: 0, stores: [], error: `SSH ls failed: ${listRes.output}` }
+    const isNoRoute = listRes.output.includes('No route to host') || listRes.output.includes('Connection refused') || listRes.output.includes('Connection timed out')
+    const hint = isNoRoute
+      ? `Store server ${STORE_SERVER_HOST} is niet bereikbaar. Controleer of de server aan staat en SSH open is op poort 22. Of laat STORE_SERVER_HOST leeg in .env voor lokale modus.`
+      : `SSH verbinding mislukt: ${listRes.output.trim()}`
+    return { added: 0, updated: 0, stores: [], error: hint }
   }
 
   const dirs = listRes.output

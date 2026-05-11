@@ -303,6 +303,13 @@ app.post('/api/stores/:storeId/rebuild', async (req, res) => {
   } catch (err) { res.status(500).json({ error: String(err) }) }
 })
 
+app.get('/api/server-mode', (_req, res) => {
+  res.json({
+    storeServerHost: process.env.STORE_SERVER_HOST || null,
+    hasRemoteMode: !!process.env.STORE_SERVER_HOST,
+  })
+})
+
 app.get('/api/ads', (_req, res) => {
   try {
     const ads = db.prepare(`

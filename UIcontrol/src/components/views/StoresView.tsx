@@ -31,6 +31,7 @@ export function StoresView() {
   const [selected, setSelected] = useState<string | null>(null)
   const [editingStore, setEditingStore] = useState<StoreInfoEx | null>(null)
   const [toasts, setToasts] = useState<DeployToast[]>([])
+  const [hasRemoteMode, setHasRemoteMode] = useState(false)
   const prevStatusRef = useRef<Map<string, string>>(new Map())
 
   const dismissToast = (id: string) => setToasts(t => t.filter(x => x.id !== id))
@@ -77,7 +78,10 @@ export function StoresView() {
       const res = await fetch('/api/admin/reconcile-stores', { method: 'POST' })
       const data = await res.json() as { added: number; updated: number; stores: string[]; error?: string }
       if (data.error) {
-        setSyncResult(`Fout: ${data.error}`)
+        const isConnErr = data.error.includes('niet bereikbaar') || data.error.includes('No route') || data.error.includes('Connection')
+        setSyncResult(isConnErr
+          ? `Store server niet bereikbaar. Zet STORE_SERVER_HOST leeg in .env voor lokale modus, of start de store server op ${data.error.match(/\d+\.\d+\.\d+\.\d+/)?.[0] ?? '192.168.121.8'}.`
+          : `Fout: ${data.error}`)
       } else {
         const parts = []
         if (data.added > 0) parts.push(`${data.added} nieuw hersteld`)
@@ -96,6 +100,7 @@ export function StoresView() {
   }
 
   useEffect(() => {
+    fetch('/api/server-mode').then(r => r.json()).then((d: { hasRemoteMode: boolean }) => setHasRemoteMode(d.hasRemoteMode)).catch(() => {})
     fetchStores()
     const interval = setInterval(fetchStores, 8000)
     return () => clearInterval(interval)
@@ -115,15 +120,17 @@ export function StoresView() {
             <p className="text-xs text-zinc-600 mt-0.5">{stores.length} stores totaal</p>
           </div>
           <div className="flex items-center gap-2">
-            <button
-              onClick={syncStores}
-              disabled={syncing}
-              title="Herstel bestaande stores van de store server"
-              className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-white border border-white/[0.08] hover:border-white/[0.2] px-2.5 py-1.5 rounded-lg disabled:opacity-40 transition-all"
-            >
-              <DownloadCloud size={13} className={syncing ? 'animate-pulse' : ''} />
-              {syncing ? 'Syncing...' : 'Sync'}
-            </button>
+            {hasRemoteMode && (
+              <button
+                onClick={syncStores}
+                disabled={syncing}
+                title="Herstel bestaande stores van de store server via SSH"
+                className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-white border border-white/[0.08] hover:border-white/[0.2] px-2.5 py-1.5 rounded-lg disabled:opacity-40 transition-all"
+              >
+                <DownloadCloud size={13} className={syncing ? 'animate-pulse' : ''} />
+                {syncing ? 'Syncing...' : 'Sync'}
+              </button>
+            )}
             <button
               onClick={fetchStores}
               disabled={loading}
@@ -172,14 +179,18 @@ export function StoresView() {
                 Heb je al stores gedeployed? Klik "Sync" om ze te herstellen vanuit de store server.
               </p>
             </div>
-            <button
-              onClick={syncStores}
-              disabled={syncing}
-              className="flex items-center gap-2 text-sm bg-white text-black px-4 py-2 rounded-lg font-medium hover:bg-zinc-200 transition-all disabled:opacity-50 mt-1"
-            >
-              <DownloadCloud size={14} />
-              {syncing ? 'Bezig met synchroniseren...' : 'Herstel stores van server'}
-            </button>
+            {hasRemoteMode ? (
+              <button
+                onClick={syncStores}
+                disabled={syncing}
+                className="flex items-center gap-2 text-sm bg-white text-black px-4 py-2 rounded-lg font-medium hover:bg-zinc-200 transition-all disabled:opacity-50 mt-1"
+              >
+                <DownloadCloud size={14} />
+                {syncing ? 'Bezig met synchroniseren...' : 'Herstel stores van server'}
+              </button>
+            ) : (
+              <p className="text-zinc-600 text-xs mt-1">Start een pipeline run om je eerste store te maken.</p>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
