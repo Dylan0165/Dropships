@@ -352,12 +352,8 @@ export default function Home() {
   // Thin borders, serif display font, editorial product grid.
   // ─────────────────────────────────────────────────────────────────────────────
   if (layout === 1) return `'use client';
-import ProductGrid from '../components/product-grid/ProductGrid';
-import ReviewCard from '../components/review-card/ReviewCard';
-
 interface Product { id: string; title: string; image: string; price: number; compareAtPrice?: number; badge?: string; description?: string }
 const products: Product[] = ${prods};
-const reviews = ${reviews};
 
 export default function Home() {
   return (
@@ -405,12 +401,46 @@ export default function Home() {
           <h2 style={{ fontSize: '1.75rem', fontWeight: 700, letterSpacing: '-0.03em', margin: 0 }}>De collectie</h2>
           <span style={{ color: '#aaa', fontSize: '0.75rem', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{products.length} producten</span>
         </div>
-        <ProductGrid products={products} columns={2} ctaLabel="In winkelwagen" />
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(280px,1fr))', gap: '2rem' }}>
+          {products.map((p, i) => (
+            <div key={i} style={{ background: '#fff', border: '1px solid #e8e8e4' }}>
+              <div style={{ aspectRatio: '1/1', overflow: 'hidden', background: '#f5f5f3' }}>
+                {p.image && <img src={p.image} alt={p.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+              </div>
+              <div style={{ padding: '1.5rem' }}>
+                <h3 style={{ fontSize: '0.9rem', fontWeight: 600, margin: '0 0 0.75rem' }}>{p.title}</h3>
+                <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', marginBottom: '1.25rem' }}>
+                  <span style={{ fontWeight: 700 }}>€{p.price.toFixed(2)}</span>
+                  {p.compareAtPrice && <span style={{ color: '#aaa', textDecoration: 'line-through', fontSize: '0.85rem' }}>€{p.compareAtPrice.toFixed(2)}</span>}
+                </div>
+                <button style={{ width: '100%', border: '1px solid #1a1a1a', background: 'transparent', color: '#1a1a1a', fontWeight: 600, padding: '0.875rem', fontSize: '0.8rem', letterSpacing: '0.1em', textTransform: 'uppercase', cursor: 'pointer' }}>
+                  In winkelwagen
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
       </section>
 
       {/* ── Reviews ── */}
       <section style={{ background: '#f2f1ee', padding: '6rem 3rem', borderTop: '1px solid #e8e8e4' }}>
-        <ReviewCard reviews={reviews} title="Wat onze klanten zeggen" showSummary />
+        <div>
+          <h2 style={{ fontSize: '1.5rem', fontWeight: 700, letterSpacing: '-0.02em', marginBottom: '3rem' }}>Wat onze klanten zeggen</h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(280px,1fr))', gap: '2rem' }}>
+            {[{n:'Sanne V.',s:5,t:'Geweldig product, exact wat ik zocht.',v:true},{n:'Thomas B.',s:5,t:'Topkwaliteit — zeker een aanrader.',v:true},{n:'Lena M.',s:4,t:'Blij mee! Snelle levering.',v:false}].map((r,i) => (
+              <div key={i} style={{ border: '1px solid #e8e8e4', padding: '2rem' }}>
+                <div style={{ display: 'flex', gap: '0.2rem', marginBottom: '1rem' }}>
+                  {Array.from({length: r.s}).map((_,j) => <span key={j} style={{ color: '#c9a84c', fontSize: '0.9rem' }}>★</span>)}
+                </div>
+                <p style={{ color: '#555', fontSize: '0.9rem', lineHeight: 1.6, marginBottom: '1rem' }}>{r.t}</p>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>{r.n}</span>
+                  {r.v && <span style={{ color: '#aaa', fontSize: '0.7rem', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Geverifieerd</span>}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </section>
 
       {/* ── Footer ── */}
@@ -435,9 +465,6 @@ export default function Home() {
   // ─────────────────────────────────────────────────────────────────────────────
   if (layout === 2) return `'use client';
 import { useState, useEffect } from 'react';
-import ProductGrid from '../components/product-grid/ProductGrid';
-import TrustBadges from '../components/trust-badges/TrustBadges';
-import AnnouncementBar from '../components/announcement-bar/AnnouncementBar';
 
 interface Product { id: string; title: string; image: string; price: number; compareAtPrice?: number; badge?: string; description?: string }
 const products: Product[] = ${prods};
@@ -467,7 +494,7 @@ function Countdown() {
 export default function Home() {
   return (
     <div style={{ background: '#fff', color: '#111', minHeight: '100vh' }}>
-      <AnnouncementBar message="Tijdelijk: Gratis verzending op alle bestellingen in NL & BE" dismissable />
+      <div style={{ background: '#1a1a1a', color: '#fff', textAlign: 'center', padding: '0.6rem', fontSize: '0.75rem', letterSpacing: '0.05em' }}>Tijdelijk: Gratis verzending op alle bestellingen in NL &amp; BE</div>
 
       {/* ── Hero — full brand color ── */}
       <section style={{ background: '${primary}', minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 2.5rem', position: 'relative', overflow: 'hidden' }}>
@@ -510,10 +537,35 @@ export default function Home() {
         <h2 style={{ fontSize: 'clamp(2rem,5vw,3.5rem)', fontWeight: 900, letterSpacing: '-0.04em', textTransform: 'uppercase', marginBottom: '3rem' }}>
           Bestel Nu
         </h2>
-        <ProductGrid products={products} columns={2} ctaLabel="Voeg toe" />
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(280px,1fr))', gap: '1.5rem' }}>
+          {products.map((p, i) => (
+            <div key={i} style={{ border: '2px solid #111', background: '#fff' }}>
+              <div style={{ aspectRatio: '1/1', overflow: 'hidden', background: '#f5f5f5', position: 'relative' }}>
+                {p.image && <img src={p.image} alt={p.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+                {p.badge && <span style={{ position: 'absolute', top: '0.75rem', left: '0.75rem', background: '${primary}', color: '#fff', fontSize: '0.65rem', fontWeight: 700, padding: '0.25rem 0.6rem', textTransform: 'uppercase' }}>{p.badge}</span>}
+              </div>
+              <div style={{ padding: '1.25rem' }}>
+                <h3 style={{ fontSize: '0.9rem', fontWeight: 900, margin: '0 0 0.5rem', textTransform: 'uppercase' }}>{p.title}</h3>
+                <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', marginBottom: '1rem' }}>
+                  <span style={{ fontWeight: 900, fontSize: '1.1rem' }}>€{p.price.toFixed(2)}</span>
+                  {p.compareAtPrice && <span style={{ color: '#aaa', textDecoration: 'line-through' }}>€{p.compareAtPrice.toFixed(2)}</span>}
+                </div>
+                <button style={{ width: '100%', background: '#111', color: '#fff', fontWeight: 900, padding: '0.9rem', fontSize: '0.75rem', letterSpacing: '0.15em', textTransform: 'uppercase', border: 'none', cursor: 'pointer' }}>
+                  Voeg toe
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
       </section>
 
-      <TrustBadges />
+      <div style={{ display: 'flex', gap: '2rem', justifyContent: 'center', padding: '2rem', borderTop: '4px solid #111', flexWrap: 'wrap' }}>
+        {[['🔒','Veilig betalen'],['🚚','Gratis verzending'],['↩','30 dagen retour']].map(([icon,text]) => (
+          <div key={text} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#444', fontSize: '0.85rem', fontWeight: 600 }}>
+            <span>{icon}</span><span>{text}</span>
+          </div>
+        ))}
+      </div>
 
       {/* ── Footer ── */}
       <footer style={{ background: '#111', color: '#fff', padding: '2.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
@@ -536,12 +588,8 @@ export default function Home() {
   // Rounded shapes, amber accents, soft shadows. Lifestyle/wellness aesthetic.
   // ─────────────────────────────────────────────────────────────────────────────
   if (layout === 3) return `'use client';
-import ProductGrid from '../components/product-grid/ProductGrid';
-import SocialProof from '../components/social-proof/SocialProof';
-
 interface Product { id: string; title: string; image: string; price: number; compareAtPrice?: number; badge?: string; description?: string }
 const products: Product[] = ${prods};
-const reviews = ${reviews};
 
 export default function Home() {
   return (
@@ -586,7 +634,23 @@ export default function Home() {
 
       {/* ── Reviews first (trust before products) ── */}
       <section style={{ background: '#ede8df', borderTop: '1px solid #e0d5c4', borderBottom: '1px solid #e0d5c4', padding: '4rem 2.5rem' }}>
-        <SocialProof reviews={reviews} showSummary title="Wat klanten zeggen" />
+        <div>
+          <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '2rem', color: '#1a120a' }}>Wat klanten zeggen</h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(260px,1fr))', gap: '1.5rem' }}>
+            {[{n:'Sanne V.',s:5,t:'Geweldig product, exact wat ik zocht.',v:true},{n:'Thomas B.',s:5,t:'Topkwaliteit — zeker een aanrader.',v:true},{n:'Lena M.',s:4,t:'Blij mee! Snelle levering.',v:false}].map((r,i) => (
+              <div key={i} style={{ background: '#f6f3ee', borderRadius: '16px', padding: '1.75rem', border: '1px solid #e5ddd0' }}>
+                <div style={{ display: 'flex', gap: '0.2rem', marginBottom: '1rem' }}>
+                  {Array.from({length: r.s}).map((_,j) => <span key={j} style={{ color: '#d4a853', fontSize: '0.9rem' }}>★</span>)}
+                </div>
+                <p style={{ color: '#7a6047', fontSize: '0.9rem', lineHeight: 1.6, marginBottom: '1rem' }}>{r.t}</p>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ fontWeight: 700, fontSize: '0.85rem', color: '#1a120a' }}>{r.n}</span>
+                  {r.v && <span style={{ color: '#8c7355', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Geverifieerd</span>}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </section>
 
       {/* ── USPs ── */}
@@ -606,7 +670,25 @@ export default function Home() {
           <h2 style={{ fontSize: '2rem', fontWeight: 700, letterSpacing: '-0.03em', color: '#1a120a', margin: 0 }}>Onze producten</h2>
           <span style={{ color: '#8c7355', fontSize: '0.8rem' }}>Zorgvuldig geselecteerd</span>
         </div>
-        <ProductGrid products={products} columns={3} ctaLabel="Bestellen" />
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(260px,1fr))', gap: '1.5rem' }}>
+          {products.map((p, i) => (
+            <div key={i} style={{ background: '#fff', borderRadius: '16px', overflow: 'hidden', border: '1px solid #e5ddd0' }}>
+              <div style={{ aspectRatio: '1/1', overflow: 'hidden', background: '#ede8df' }}>
+                {p.image && <img src={p.image} alt={p.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+              </div>
+              <div style={{ padding: '1.5rem' }}>
+                <h3 style={{ fontSize: '0.95rem', fontWeight: 600, margin: '0 0 0.75rem', color: '#1a120a' }}>{p.title}</h3>
+                <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', marginBottom: '1.25rem' }}>
+                  <span style={{ fontWeight: 700, fontSize: '1.1rem' }}>€{p.price.toFixed(2)}</span>
+                  {p.compareAtPrice && <span style={{ color: '#b0977a', textDecoration: 'line-through', fontSize: '0.85rem' }}>€{p.compareAtPrice.toFixed(2)}</span>}
+                </div>
+                <button style={{ width: '100%', background: '#2c2416', color: '#f6f3ee', fontWeight: 600, padding: '0.875rem', fontSize: '0.85rem', border: 'none', borderRadius: '100px', cursor: 'pointer' }}>
+                  Bestellen
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
       </section>
 
       {/* ── Footer ── */}
@@ -631,7 +713,6 @@ export default function Home() {
   // ─────────────────────────────────────────────────────────────────────────────
   return `'use client';
 import { initiateCheckout } from '../components/shared/checkout';
-import TrustBadges from '../components/trust-badges/TrustBadges';
 
 interface Product { id: string; title: string; image: string; price: number; compareAtPrice?: number; badge?: string; description?: string }
 const products: Product[] = ${prods};
@@ -715,8 +796,12 @@ export default function Home() {
         </div>
       </section>
 
-      <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '0 2rem 4rem' }}>
-        <TrustBadges />
+      <div style={{ display: 'flex', gap: '2rem', justifyContent: 'center', padding: '2rem', borderTop: '1px solid #30363d', flexWrap: 'wrap' }}>
+        {[['🔒','Veilig betalen'],['🚚','Gratis verzending'],['↩','30 dagen retour']].map(([icon,text]) => (
+          <div key={text} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#8b949e', fontSize: '0.85rem' }}>
+            <span>{icon}</span><span>{text}</span>
+          </div>
+        ))}
       </div>
 
       {/* ── Footer ── */}
