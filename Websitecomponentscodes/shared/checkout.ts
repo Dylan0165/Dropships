@@ -7,7 +7,7 @@
  */
 'use client'
 
-import type { CartItem } from './types.js'
+import type { CartItem } from './types'
 
 const CHECKOUT_URL = '{{CHECKOUT_URL}}'
 const STORE_ID = '{{STORE_ID}}'

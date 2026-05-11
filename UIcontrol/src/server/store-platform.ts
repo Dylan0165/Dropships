@@ -249,7 +249,7 @@ function generatePageTsx(layout: number, data: StoreData, usps: Array<{title: st
   if (layout === 0) return `'use client';
 import { initiateCheckout } from '../components/shared/checkout';
 
-interface Product { id: string; title: string; image: string; price: number; compareAtPrice?: number; badge?: string }
+interface Product { id: string; title: string; image: string; price: number; compareAtPrice?: number; badge?: string; description?: string; [key: string]: unknown }
 const products: Product[] = ${prods};
 
 export default function Home() {
@@ -355,7 +355,7 @@ export default function Home() {
 import ProductGrid from '../components/product-grid/ProductGrid';
 import ReviewCard from '../components/review-card/ReviewCard';
 
-interface Product { id: string; title: string; image: string; price: number; compareAtPrice?: number; badge?: string }
+interface Product { id: string; title: string; image: string; price: number; compareAtPrice?: number; badge?: string; description?: string; [key: string]: unknown }
 const products: Product[] = ${prods};
 const reviews = ${reviews};
 
@@ -439,7 +439,7 @@ import ProductGrid from '../components/product-grid/ProductGrid';
 import TrustBadges from '../components/trust-badges/TrustBadges';
 import AnnouncementBar from '../components/announcement-bar/AnnouncementBar';
 
-interface Product { id: string; title: string; image: string; price: number; compareAtPrice?: number; badge?: string }
+interface Product { id: string; title: string; image: string; price: number; compareAtPrice?: number; badge?: string; description?: string; [key: string]: unknown }
 const products: Product[] = ${prods};
 
 function Countdown() {
@@ -539,7 +539,7 @@ export default function Home() {
 import ProductGrid from '../components/product-grid/ProductGrid';
 import SocialProof from '../components/social-proof/SocialProof';
 
-interface Product { id: string; title: string; image: string; price: number; compareAtPrice?: number; badge?: string }
+interface Product { id: string; title: string; image: string; price: number; compareAtPrice?: number; badge?: string; description?: string; [key: string]: unknown }
 const products: Product[] = ${prods};
 const reviews = ${reviews};
 
@@ -633,7 +633,7 @@ export default function Home() {
 import { initiateCheckout } from '../components/shared/checkout';
 import TrustBadges from '../components/trust-badges/TrustBadges';
 
-interface Product { id: string; title: string; image: string; price: number; compareAtPrice?: number; badge?: string }
+interface Product { id: string; title: string; image: string; price: number; compareAtPrice?: number; badge?: string; description?: string; [key: string]: unknown }
 const products: Product[] = ${prods};
 
 export default function Home() {

@@ -17,6 +17,8 @@ interface Product {
   price: number
   compareAtPrice?: number
   badge?: string
+  description?: string
+  [key: string]: unknown
 }
 
 interface ProductGridProps {
