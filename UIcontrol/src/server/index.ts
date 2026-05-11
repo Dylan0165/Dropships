@@ -18,6 +18,7 @@ import { runLifecycleCycle, analyzeStoreHealth, getAllHealthReports, pauseStore,
 import { runSkillsUpdate, recordSkillPerformance, getSkillsStats } from './skills-updater.js'
 import { createExperiment, assignComponentVariant, recordComponentConversion, declareWinner, getExperiments, getWinners, getExperimentStats } from './component-lab.js'
 import { runSeasonalCheck, getActiveSeasons } from './seasonal.js'
+import { getStoreBranding, generateAdsForStore, animateAdWithHiggsfield, killAd, getAdsForStore, startHiggsfieldPoller } from './ad-manager.js'
 import db, { getAgentOutput, getResumableRuns } from './db.js'
 import { notifyApprovalNeeded } from './whatsapp.js'
 
@@ -315,6 +316,43 @@ app.get('/api/ads', (_req, res) => {
   } catch {
     res.json([])
   }
+})
+
+// ── Ad Manager routes ──────────────────────────────────────────────────────────
+
+app.get('/api/stores/:storeId/branding', (req, res) => {
+  try {
+    const branding = getStoreBranding(req.params.storeId)
+    if (!branding) { res.status(404).json({ error: 'Store niet gevonden' }); return }
+    res.json(branding)
+  } catch (err) { res.status(500).json({ error: String(err) }) }
+})
+
+app.get('/api/stores/:storeId/ads', (req, res) => {
+  try {
+    res.json(getAdsForStore(req.params.storeId))
+  } catch (err) { res.status(500).json({ error: String(err) }) }
+})
+
+app.post('/api/stores/:storeId/ads/generate', async (req, res) => {
+  try {
+    const ads = await generateAdsForStore(req.params.storeId)
+    res.json({ created: ads.length, ads })
+  } catch (err) { res.status(500).json({ error: String(err) }) }
+})
+
+app.post('/api/ads/:id/animate', async (req, res) => {
+  try {
+    const result = await animateAdWithHiggsfield(parseInt(req.params.id))
+    res.json(result ?? { error: 'Geen Higgsfield API key geconfigureerd' })
+  } catch (err) { res.status(500).json({ error: String(err) }) }
+})
+
+app.post('/api/ads/:id/kill', (req, res) => {
+  try {
+    killAd(parseInt(req.params.id))
+    res.json({ ok: true })
+  } catch (err) { res.status(500).json({ error: String(err) }) }
 })
 
 app.get('/api/components', (_req, res) => {
@@ -990,6 +1028,7 @@ function scheduleWeekly(dayOfWeek: number, hour: number, task: () => Promise<voi
 server.listen(PORT, () => {
   console.log(`[server] API + WS on http://localhost:${PORT}`)
   resumeInterruptedRuns()
+  startHiggsfieldPoller()
 
   // Daily lifecycle check at 02:00
   scheduleDaily(2, runLifecycleCycle, 'lifecycle-cycle')
