@@ -392,7 +392,7 @@ export default function Home() {
         <div style={{ padding: '2.5rem 3rem', borderRight: i < 2 ? '1px solid #e8e8e4' : 'none' }}>
           <span style={{ display: 'block', color: '#bbb', fontSize: '0.65rem', letterSpacing: '0.25em', textTransform: 'uppercase', marginBottom: '0.75rem' }}>0${i + 1}</span>
           <strong style={{ display: 'block', fontSize: '0.95rem', marginBottom: '0.4rem' }}>${esc(u.title)}</strong>
-          <span style={{ color: '#888', fontSize: '0.85rem', lineHeight: 1.5 }}>${u.desc}</span>
+          <span style={{ color: '#888', fontSize: '0.85rem', lineHeight: 1.5 }}>${esc(u.desc)}</span>
         </div>`).join('')}
       </div>
 
@@ -529,7 +529,7 @@ export default function Home() {
         ${usps.map((u, i) => `
         <div style={{ padding: '2.5rem', borderRight: i < 2 ? '1px solid #eee' : 'none', background: i === 1 ? '#f5f5f5' : '#fff' }}>
           <strong style={{ display: 'block', fontSize: '1rem', fontWeight: 900, marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '-0.01em' }}>${esc(u.title)}</strong>
-          <span style={{ color: '#666', fontSize: '0.85rem' }}>${u.desc}</span>
+          <span style={{ color: '#666', fontSize: '0.85rem' }}>${esc(u.desc)}</span>
         </div>`).join('')}
       </section>
 
@@ -660,7 +660,7 @@ export default function Home() {
           ${usps.map(u => `
           <div style={{ background: '#ede8df', borderRadius: '16px', padding: '2rem', border: '1px solid #e0d5c4' }}>
             <strong style={{ display: 'block', fontSize: '1rem', fontWeight: 700, marginBottom: '0.5rem', color: '#1a120a' }}>${esc(u.title)}</strong>
-            <span style={{ color: '#7a6047', fontSize: '0.875rem', lineHeight: 1.6 }}>${u.desc}</span>
+            <span style={{ color: '#7a6047', fontSize: '0.875rem', lineHeight: 1.6 }}>${esc(u.desc)}</span>
           </div>`).join('')}
         </div>
       </section>
@@ -762,7 +762,7 @@ export default function Home() {
           ${usps.map(u => `
           <div style={{ background: 'rgba(22,27,34,0.9)', padding: '1.5rem 2rem' }}>
             <strong style={{ display: 'block', color: '#e6edf3', fontSize: '0.95rem', marginBottom: '0.25rem' }}>${esc(u.title)}</strong>
-            <span style={{ color: '#8b949e', fontSize: '0.8rem' }}>${u.desc}</span>
+            <span style={{ color: '#8b949e', fontSize: '0.8rem' }}>${esc(u.desc)}</span>
           </div>`).join('')}
         </div>
       </section>
