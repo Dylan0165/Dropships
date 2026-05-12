@@ -1,5 +1,4 @@
-'use client'
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, Fragment } from 'react'
 import { RefreshCw, Download, Search, Filter, DollarSign, Activity, CheckCircle, XCircle, Clock } from 'lucide-react'
 import clsx from 'clsx'
 
