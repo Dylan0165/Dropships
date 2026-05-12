@@ -242,6 +242,19 @@ for (const [col, sql] of storeMigrations) {
   }
 }
 
+// ── Migrations voor runs (pipeline v3 — state machine) ───────────────────────
+const runsCols = (db.prepare(`PRAGMA table_info(runs)`).all() as { name: string }[]).map(c => c.name)
+const runMigrations: [string, string][] = [
+  ['current_stage', 'ALTER TABLE runs ADD COLUMN current_stage TEXT'],
+  ['state_json',    'ALTER TABLE runs ADD COLUMN state_json TEXT'],
+  ['paused',        'ALTER TABLE runs ADD COLUMN paused INTEGER NOT NULL DEFAULT 0'],
+]
+for (const [col, sql] of runMigrations) {
+  if (!runsCols.includes(col)) {
+    try { db.prepare(sql).run() } catch { /* already exists */ }
+  }
+}
+
 // Helper for the runner to persist agent outputs immediately on completion.
 export function saveAgentOutput(runId: string, agentId: string, output: Record<string, unknown>): void {
   try {
