@@ -116,15 +116,15 @@ pipelineEvents.on('event', (event) => {
 
 // ═══════ API Endpoints ═══════
 
-app.post('/api/pipeline/start', (req, res) => {
-  const { niche } = req.body
+app.post('/api/pipeline/start', async (req, res) => {
+  const { niche } = req.body as { niche: string }
   if (!niche || typeof niche !== 'string' || !niche.trim()) {
     res.status(400).json({ error: 'niche is required' })
     return
   }
   const clean = niche.trim()
 
-  // Enforce 1 niche = 1 brand = 1 webshop — check for existing runs with same/similar niche
+  // Enforce 1 niche = 1 brand = 1 webshop
   const allRuns = store.getAllRuns()
   const duplicate = allRuns.find(r =>
     r.niche.toLowerCase() === clean.toLowerCase() &&
@@ -139,35 +139,59 @@ app.post('/api/pipeline/start', (req, res) => {
 
   const runId = uuid()
   store.createRun(runId, clean)
-
-  // Mark the niche as 'used' in suggestions
-  db.prepare(`UPDATE niches SET status = 'used', run_id = ?, updated_at = ? WHERE name = ? COLLATE NOCASE`)
+  db.prepare(`UPDATE niches SET status='used', run_id=?, updated_at=? WHERE name=? COLLATE NOCASE`)
     .run(runId, new Date().toISOString(), clean)
 
-  coordinator.startPipeline(runId, clean, broadcast)
-  broadcast({
-    type: 'pipeline_started',
-    runId,
-    payload: { niche: clean },
-    timestamp: new Date().toISOString(),
-  })
-  res.json({ runId })
+  try {
+    const state = await pipelineStartRun(runId, clean)
+    res.json({ runId, state })
+  } catch (err) {
+    res.status(500).json({ error: err instanceof Error ? err.message : 'Pipeline start failed' })
+  }
 })
 
-app.post('/api/pipeline/stop', (req, res) => {
-  const { runId } = req.body
-  if (!runId) {
-    res.status(400).json({ error: 'runId is required' })
-    return
+app.post('/api/pipeline/:runId/pause', (req, res) => {
+  const ok = pipelinePauseRun(req.params.runId)
+  res.json({ paused: ok })
+})
+
+app.post('/api/pipeline/:runId/resume', async (req, res) => {
+  const state = await pipelineResumeRun(req.params.runId)
+  if (!state) { res.status(404).json({ error: 'Run not found' }); return }
+  res.json({ resumed: true, state })
+})
+
+app.post('/api/pipeline/:runId/stop', (req, res) => {
+  const ok = pipelineStopRun(req.params.runId)
+  store.completeRun(req.params.runId, 'failed')
+  res.json({ stopped: ok })
+})
+
+app.get('/api/pipeline/:runId/state', (req, res) => {
+  const state = pipelineGetRunState(req.params.runId)
+  if (!state) { res.status(404).json({ error: 'Run not found' }); return }
+  res.json(state)
+})
+
+app.get('/api/pipeline/runs', (_req, res) => {
+  res.json(listRecentRuns(20))
+})
+
+app.delete('/api/stores/failed', (_req, res) => {
+  try {
+    const result = db.prepare(`DELETE FROM stores WHERE status IN ('failed','building')`).run()
+    res.json({ deleted: result.changes })
+  } catch (err) {
+    res.status(500).json({ error: err instanceof Error ? err.message : 'Delete failed' })
   }
-  coordinator.stopPipeline(runId)
+})
+
+// Legacy stop alias (keeps frontend backward compat for one release)
+app.post('/api/pipeline/stop', (req, res) => {
+  const { runId } = req.body as { runId: string }
+  if (!runId) { res.status(400).json({ error: 'runId is required' }); return }
+  pipelineStopRun(runId)
   store.completeRun(runId, 'failed')
-  broadcast({
-    type: 'pipeline_failed',
-    runId,
-    payload: { reason: 'Manually stopped' },
-    timestamp: new Date().toISOString(),
-  })
   res.json({ success: true })
 })
 
