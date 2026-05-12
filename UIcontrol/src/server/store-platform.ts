@@ -638,7 +638,7 @@ app.post('/api/stores/deploy', async (req, res) => {
     // Wijs direct een poort toe aan de nieuwe store
     if (result.storeId && result.status !== 'failed') {
       const port = assignPort(result.storeId)
-      ;(result as Record<string, unknown>).port = port
+      ;(result as unknown as Record<string, unknown>).port = port
     }
 
     res.json(result)
