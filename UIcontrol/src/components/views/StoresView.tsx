@@ -5,6 +5,8 @@ import { getStores } from '@/lib/api'
 import type { StoreInfo } from '@/types'
 import StoreEditor from './StoreEditor'
 
+const STORE_HOST = (import.meta.env.VITE_STORE_SERVER_HOST as string) ?? '192.168.121.11'
+
 // Uitgebreide StoreInfo met health data
 interface StoreInfoEx extends StoreInfo {
   port?: number
