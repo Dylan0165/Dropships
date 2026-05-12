@@ -703,6 +703,56 @@ app.get('/api/models', (_req, res) => {
   res.json(deepseek.getAvailableModels())
 })
 
+// ── Observability ─────────────────────────────────────────────────────────────
+
+app.get('/api/obs/logs', (req, res) => {
+  const { run_id, agent, status, limit = '200', offset = '0' } = req.query as Record<string, string>
+  let sql = 'SELECT * FROM agent_executions WHERE 1=1'
+  const params: unknown[] = []
+  if (run_id)  { sql += ' AND run_id = ?';     params.push(run_id) }
+  if (agent)   { sql += ' AND agent_name LIKE ?'; params.push(`%${agent}%`) }
+  if (status)  { sql += ' AND status = ?';     params.push(status) }
+  sql += ' ORDER BY started_at DESC LIMIT ? OFFSET ?'
+  params.push(parseInt(limit, 10), parseInt(offset, 10))
+  try {
+    const rows = db.prepare(sql).all(...params)
+    res.json(rows)
+  } catch (err) {
+    res.status(500).json({ error: String(err) })
+  }
+})
+
+app.get('/api/obs/costs', (_req, res) => {
+  try {
+    const byRun = db.prepare(`
+      SELECT run_id,
+             SUM(cost_usd)    AS total_cost_usd,
+             SUM(tokens_in)   AS total_tokens_in,
+             SUM(tokens_out)  AS total_tokens_out,
+             COUNT(*)         AS calls,
+             MIN(started_at)  AS started_at
+      FROM agent_executions
+      GROUP BY run_id
+      ORDER BY started_at DESC
+      LIMIT 50
+    `).all()
+    const byAgent = db.prepare(`
+      SELECT agent_name,
+             SUM(cost_usd)    AS total_cost_usd,
+             AVG(duration_ms) AS avg_duration_ms,
+             COUNT(*)         AS calls,
+             SUM(CASE WHEN status='success' THEN 1 ELSE 0 END) AS successes,
+             SUM(CASE WHEN status='failed'  THEN 1 ELSE 0 END) AS failures
+      FROM agent_executions
+      GROUP BY agent_name
+      ORDER BY total_cost_usd DESC
+    `).all()
+    res.json({ byRun, byAgent })
+  } catch (err) {
+    res.status(500).json({ error: String(err) })
+  }
+})
+
 app.post('/api/cost-estimate', (req, res) => {
   const { model, inputTokens, outputTokens } = req.body
   if (!model || !inputTokens || !outputTokens) {
