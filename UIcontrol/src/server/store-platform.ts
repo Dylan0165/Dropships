@@ -1241,7 +1241,7 @@ async function sshExec(command: string): Promise<{ ok: boolean; output: string }
 function nginxConfig(subdomain: string, port?: number): string {
   // Elke store luistert op:
   //   - poort 80 via subdomain:  http://{subdomain}.stores.local
-  //   - eigen poort (indien toegewezen): http://192.168.121.8:{port}
+  //   - eigen poort (indien toegewezen): http://192.168.121.11:{port}
   const portBlock = port ? `\nserver {\n  listen ${port};\n  root /var/www/stores/${subdomain}/out;\n  index index.html;\n  location / { try_files $uri $uri.html $uri/index.html =404; }\n  gzip on;\n  gzip_types text/css application/javascript image/svg+xml;\n  add_header X-Store "${subdomain}";\n}\n` : ''
   return `server {
   listen 80;
