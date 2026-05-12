@@ -1,5 +1,6 @@
 import path from 'path'
 import fs from 'fs'
+import os from 'os'
 import { spawn } from 'child_process'
 
 const STORE_SERVER_HOST = process.env.STORE_SERVER_HOST || ''
