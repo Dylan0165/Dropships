@@ -279,7 +279,7 @@ export default function Home() {
           <a href="#products" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.75rem', background: '${primary}', color: '#fff', fontWeight: 700, padding: '1rem 2.5rem', fontSize: '0.75rem', letterSpacing: '0.15em', textTransform: 'uppercase', textDecoration: 'none' }}>
             Shop Nu <span>→</span>
           </a>
-          <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.9rem', maxWidth: '28ch', lineHeight: 1.6, margin: 0 }}>${data.slogan}</p>
+          <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.9rem', maxWidth: '28ch', lineHeight: 1.6, margin: 0 }}>${esc(data.slogan)}</p>
         </div>
       </section>
 
@@ -379,7 +379,7 @@ export default function Home() {
           ${esc(data.brand_name)}
         </h1>
         <div style={{ display: 'flex', alignItems: 'center', gap: '3rem', borderTop: '1px solid #e8e8e4', paddingTop: '2.5rem', flexWrap: 'wrap' }}>
-          <p style={{ color: '#666', fontSize: '1.05rem', lineHeight: 1.7, maxWidth: '36ch', margin: 0 }}>${data.slogan}</p>
+          <p style={{ color: '#666', fontSize: '1.05rem', lineHeight: 1.7, maxWidth: '36ch', margin: 0 }}>${esc(data.slogan)}</p>
           <a href="#products" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', border: '1px solid #1a1a1a', color: '#1a1a1a', fontWeight: 600, padding: '0.875rem 2rem', fontSize: '0.8rem', letterSpacing: '0.1em', textTransform: 'uppercase', textDecoration: 'none', whiteSpace: 'nowrap' }}>
             Bekijk collectie →
           </a>
@@ -511,7 +511,7 @@ export default function Home() {
           <h1 style={{ fontSize: 'clamp(4rem,12vw,10rem)', fontWeight: 900, lineHeight: 0.85, letterSpacing: '-0.05em', color: '#fff', margin: '0 0 2.5rem' }}>
             ${esc(data.brand_name)}
           </h1>
-          <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: 'clamp(1rem,2vw,1.4rem)', maxWidth: '38ch', lineHeight: 1.5, marginBottom: '3rem' }}>${data.slogan}</p>
+          <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: 'clamp(1rem,2vw,1.4rem)', maxWidth: '38ch', lineHeight: 1.5, marginBottom: '3rem' }}>${esc(data.slogan)}</p>
           <div style={{ display: 'flex', gap: '2rem', alignItems: 'center', flexWrap: 'wrap' }}>
             <a href="#products" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.75rem', background: '#fff', color: '${primary}', fontWeight: 900, padding: '1.1rem 3rem', fontSize: '0.85rem', letterSpacing: '0.12em', textTransform: 'uppercase', textDecoration: 'none' }}>
               Shop Nu →
@@ -615,7 +615,7 @@ export default function Home() {
           <h1 style={{ fontSize: 'clamp(2.5rem,5vw,4.5rem)', fontWeight: 700, lineHeight: 1.1, letterSpacing: '-0.03em', margin: '0 0 1.5rem', color: '#1a120a' }}>
             ${esc(data.brand_name)}
           </h1>
-          <p style={{ color: '#7a6047', fontSize: '1.1rem', lineHeight: 1.7, maxWidth: '34ch', marginBottom: '2.5rem' }}>${data.slogan}</p>
+          <p style={{ color: '#7a6047', fontSize: '1.1rem', lineHeight: 1.7, maxWidth: '34ch', marginBottom: '2.5rem' }}>${esc(data.slogan)}</p>
           <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
             <a href="#products" style={{ background: '#2c2416', color: '#f6f3ee', fontWeight: 600, padding: '0.9rem 2.25rem', fontSize: '0.85rem', letterSpacing: '0.05em', textDecoration: 'none', borderRadius: '100px' }}>
               Shop de collectie
@@ -747,7 +747,7 @@ export default function Home() {
         <h1 style={{ fontSize: 'clamp(2.5rem,8vw,7rem)', fontWeight: 800, lineHeight: 0.9, letterSpacing: '-0.04em', margin: '0 0 1.5rem', background: 'linear-gradient(135deg,#e6edf3 0%,#8b949e 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
           ${esc(data.brand_name)}
         </h1>
-        <p style={{ color: '#8b949e', fontSize: '1.15rem', lineHeight: 1.6, maxWidth: '44ch', marginBottom: '2.5rem' }}>${data.slogan}</p>
+        <p style={{ color: '#8b949e', fontSize: '1.15rem', lineHeight: 1.6, maxWidth: '44ch', marginBottom: '2.5rem' }}>${esc(data.slogan)}</p>
         <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
           <a href="#products" style={{ background: '${primary}', color: '#fff', fontWeight: 700, padding: '0.9rem 2.5rem', fontSize: '0.85rem', textDecoration: 'none', borderRadius: '8px', display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
             Bekijk collectie <span>→</span>
@@ -1025,18 +1025,18 @@ function buildStaticPreviewHtml(data: StoreData): string {
   return `<!doctype html>
 <html lang="nl"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>${esc(data.brand_name)} — ${data.slogan}</title>
-<meta name="description" content="${data.slogan}">
+<title>${esc(data.brand_name)} — ${esc(data.slogan)}</title>
+<meta name="description" content="${esc(data.slogan)}">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="${canonicalUrl}">
 <meta property="og:type" content="website">
 <meta property="og:title" content="${esc(data.brand_name)}">
-<meta property="og:description" content="${data.slogan}">
+<meta property="og:description" content="${esc(data.slogan)}">
 <meta property="og:url" content="${canonicalUrl}">
 ${firstImage ? `<meta property="og:image" content="${firstImage}">` : ''}
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="${esc(data.brand_name)}">
-<meta name="twitter:description" content="${data.slogan}">
+<meta name="twitter:description" content="${esc(data.slogan)}">
 <script type="application/ld+json">
 ${buildJsonLd(data, canonicalUrl)}
 </script>
@@ -1066,7 +1066,7 @@ ${clarityScript}
 <header><span class="brand">${esc(data.brand_name)}</span><nav>Shop · Over ons · Contact</nav></header>
 <section class="hero">
   <h1>${esc(data.brand_name)}</h1>
-  <p>${data.slogan}</p>
+  <p>${esc(data.slogan)}</p>
   <a href="#products" class="cta">Shop nu</a>
 </section>
 <section id="products"><div class="grid">${productsHtml}</div></section>
