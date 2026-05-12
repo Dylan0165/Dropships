@@ -342,20 +342,6 @@ function runCmd(
 
 // ── Remote deploy helpers ─────────────────────────────────────────────────────
 
-async function npmBuild(cwd: string): Promise<{ ok: boolean; log: string }> {
-  console.log(`[store-platform] npm install in ${cwd}`)
-  const install = await runCmd('npm', ['install', '--no-audit', '--no-fund'], { cwd, timeoutMs: 120_000 })
-  if (install.code !== 0) {
-    return { ok: false, log: `npm install failed (code ${install.code}):\n${install.stderr}` }
-  }
-  console.log(`[store-platform] next build in ${cwd}`)
-  const build = await runCmd('npm', ['run', 'build'], { cwd, timeoutMs: 120_000 })
-  if (build.code !== 0) {
-    return { ok: false, log: `next build failed (code ${build.code}):\n${build.stderr}` }
-  }
-  return { ok: true, log: install.stdout + '\n' + build.stdout }
-}
-
 async function scpToRemote(localPath: string, remotePath: string): Promise<boolean> {
   const sshArgs = STORE_SSH_KEY_PATH ? ['-i', STORE_SSH_KEY_PATH] : []
   const target = `${STORE_SERVER_USER}@${STORE_SERVER_HOST}:${remotePath}`
