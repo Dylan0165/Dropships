@@ -449,26 +449,11 @@ export async function deployStore(storeData: StoreData): Promise<DeployedStore> 
     console.warn('[store-platform] Alle producten waren in gebruik — oudste store vrijgegeven, producten hergebruikt')
   }
 
-  // ── Design inspiratie van WebsiteInspector ───────────────────────────────
-  let inspiration: DesignInspiration | null = null
-  try {
-    inspiration = await fetchInspiration(storeData.niche)
-    if (inspiration) {
-      console.log(`[store-platform] inspiratie geladen voor niche "${storeData.niche}": layout=${inspiration.recommended_layout}, tone=${inspiration.recommended_tone}`)
-    }
-  } catch {
-    // Non-fatal — WebsiteInspector mag offline zijn
-  }
-
   const data = {
     ...storeData,
     products: uniqueProducts,
     subdomain,
     _storeId: storeId,
-    // Apply inspiration color only when brand-agent didn't provide one
-    primary_color: storeData.primary_color ?? inspiration?.color_palette?.[0],
-    // Merge image URLs from previous pipeline step
-    imageUrls: storeData.imageUrls,
   }
 
   const isRemote = !!STORE_SERVER_HOST
