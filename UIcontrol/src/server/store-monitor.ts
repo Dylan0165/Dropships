@@ -17,7 +17,7 @@ const PORT_START          = 4001             // eerste store poort
 const AI_DIAGNOSE_AFTER   = 2               // diagnose na N opeenvolgende failures
 
 // Store server host — voor poortgebaseerde health checks (bereikbaar vanuit tool server)
-const STORE_SERVER_HOST = process.env.STORE_SERVER_HOST || '192.168.121.8'
+const STORE_SERVER_HOST = process.env.STORE_SERVER_HOST || '192.168.121.11'
 
 // ── LLM config (zelfde als agent-runner) ─────────────────────────────────────
 const LLM_BASE_URL = process.env.LLM_BASE_URL ?? 'https://api.deepseek.com'
