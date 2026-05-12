@@ -339,6 +339,144 @@ export function releasePort(storeId: string): void {
   } catch { /* ignore */ }
 }
 
+export function savePipelineState(
+  runId: string,
+  currentStage: string,
+  stateJson: Record<string, unknown>,
+  paused = false,
+): void {
+  try {
+    db.prepare(`
+      UPDATE runs
+      SET current_stage = ?, state_json = ?, paused = ?, updated_at = ?
+      WHERE run_id = ?
+    `).run(currentStage, JSON.stringify(stateJson), paused ? 1 : 0, new Date().toISOString(), runId)
+  } catch (err) {
+    console.error('[db] savePipelineState failed:', err)
+  }
+}
+
+export function loadPipelineState(runId: string): {
+  currentStage: string | null
+  stateJson: Record<string, unknown> | null
+  paused: boolean
+} | null {
+  try {
+    const row = db.prepare(
+      `SELECT current_stage, state_json, paused FROM runs WHERE run_id = ?`,
+    ).get(runId) as { current_stage: string | null; state_json: string | null; paused: number } | undefined
+    if (!row) return null
+    return {
+      currentStage: row.current_stage,
+      stateJson: row.state_json ? (JSON.parse(row.state_json) as Record<string, unknown>) : null,
+      paused: row.paused === 1,
+    }
+  } catch (err) {
+    console.error('[db] loadPipelineState failed:', err)
+    return null
+  }
+}
+
+export function listRecentRuns(limit = 20): Array<{
+  runId: string
+  niche: string
+  status: string
+  currentStage: string | null
+  paused: boolean
+  startedAt: string
+  completedAt: string | null
+}> {
+  try {
+    const rows = db.prepare(`
+      SELECT run_id, niche, status, current_stage, paused, started_at, completed_at
+      FROM runs ORDER BY started_at DESC LIMIT ?
+    `).all(limit) as Array<{
+      run_id: string; niche: string; status: string; current_stage: string | null
+      paused: number; started_at: string; completed_at: string | null
+    }>
+    return rows.map(r => ({
+      runId: r.run_id, niche: r.niche, status: r.status,
+      currentStage: r.current_stage, paused: r.paused === 1,
+      startedAt: r.started_at, completedAt: r.completed_at,
+    }))
+  } catch (err) {
+    console.error('[db] listRecentRuns failed:', err)
+    return []
+  }
+}
+
+export function listAgentExecutions(filter: {
+  runId?: string; agentName?: string; status?: string; limit?: number; offset?: number
+} = {}): Array<{
+  id: string; runId: string; agentName: string; stage: string; status: string
+  inputJson: string | null; outputJson: string | null; errorMessage: string | null
+  costUsd: number; tokensIn: number; tokensOut: number
+  durationMs: number; retryCount: number; startedAt: string; finishedAt: string | null
+}> {
+  const conds: string[] = []
+  const params: unknown[] = []
+  if (filter.runId)     { conds.push('run_id = ?');     params.push(filter.runId) }
+  if (filter.agentName) { conds.push('agent_name = ?'); params.push(filter.agentName) }
+  if (filter.status)    { conds.push('status = ?');     params.push(filter.status) }
+  const where = conds.length ? `WHERE ${conds.join(' AND ')}` : ''
+  const limit = filter.limit ?? 100
+  const offset = filter.offset ?? 0
+  try {
+    const rows = db.prepare(`
+      SELECT * FROM agent_executions ${where}
+      ORDER BY started_at DESC LIMIT ? OFFSET ?
+    `).all(...params, limit, offset) as Array<{
+      id: string; run_id: string; agent_name: string; stage: string; status: string
+      input_json: string | null; output_json: string | null; error_message: string | null
+      cost_usd: number; tokens_in: number; tokens_out: number
+      duration_ms: number; retry_count: number; started_at: string; finished_at: string | null
+    }>
+    return rows.map(r => ({
+      id: r.id, runId: r.run_id, agentName: r.agent_name, stage: r.stage, status: r.status,
+      inputJson: r.input_json, outputJson: r.output_json, errorMessage: r.error_message,
+      costUsd: r.cost_usd, tokensIn: r.tokens_in, tokensOut: r.tokens_out,
+      durationMs: r.duration_ms, retryCount: r.retry_count,
+      startedAt: r.started_at, finishedAt: r.finished_at,
+    }))
+  } catch (err) {
+    console.error('[db] listAgentExecutions failed:', err)
+    return []
+  }
+}
+
+export function aggregateCosts(runId?: string): {
+  byRun: Array<{ runId: string; totalUsd: number; calls: number }>
+  byAgent: Array<{ agentName: string; totalUsd: number; calls: number; successRate: number }>
+} {
+  try {
+    const runFilter = runId ? `WHERE run_id = ?` : ''
+    const args = runId ? [runId] : []
+    const byRun = db.prepare(`
+      SELECT run_id, SUM(cost_usd) as total, COUNT(*) as calls
+      FROM agent_executions ${runFilter}
+      GROUP BY run_id ORDER BY MAX(started_at) DESC LIMIT 20
+    `).all(...args) as Array<{ run_id: string; total: number; calls: number }>
+    const byAgent = db.prepare(`
+      SELECT agent_name,
+             SUM(cost_usd) as total,
+             COUNT(*) as calls,
+             SUM(CASE WHEN status = 'success' THEN 1 ELSE 0 END) as ok
+      FROM agent_executions ${runFilter}
+      GROUP BY agent_name ORDER BY total DESC
+    `).all(...args) as Array<{ agent_name: string; total: number; calls: number; ok: number }>
+    return {
+      byRun: byRun.map(r => ({ runId: r.run_id, totalUsd: r.total ?? 0, calls: r.calls })),
+      byAgent: byAgent.map(a => ({
+        agentName: a.agent_name, totalUsd: a.total ?? 0, calls: a.calls,
+        successRate: a.calls > 0 ? a.ok / a.calls : 0,
+      })),
+    }
+  } catch (err) {
+    console.error('[db] aggregateCosts failed:', err)
+    return { byRun: [], byAgent: [] }
+  }
+}
+
 export function getResumableRuns(): { runId: string; niche: string }[] {
   try {
     const rows = db.prepare(
