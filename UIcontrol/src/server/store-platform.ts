@@ -481,12 +481,12 @@ export async function deployStore(storeData: StoreData): Promise<DeployedStore> 
       return { storeId, subdomain, niche: data.niche, status: 'local', previewUrl, filesPath: baseDir, createdAt }
     }
 
-    // STEP 2 — npm install + next build
-    const buildResult = await npmBuild(baseDir)
+    // STEP 2 — npm install + next build (via build-validator)
+    const buildResult = await validateAndBuild(baseDir, (msg) => console.log(`[store-platform] ${msg}`))
     if (!buildResult.ok) {
       console.error(`[store-platform] build failed for ${subdomain}:\n${buildResult.log.slice(-1000)}`)
       const fallback = { storeId, subdomain, niche: data.niche, status: 'failed' as const,
-        previewUrl: '', filesPath: baseDir, createdAt, errorMessage: 'build failed' }
+        previewUrl: '', filesPath: baseDir, createdAt, errorMessage: `build failed (${buildResult.phase})` }
       persistStore(fallback, storeData.runId)
       return fallback
     }
