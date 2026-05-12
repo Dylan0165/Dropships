@@ -36,7 +36,7 @@ function esc(s: string): string {
 
 function fill(template: string, vars: TemplateVars): string {
   return template.replace(/\{\{([A-Z0-9_]+)\}\}/g, (_, key: string) => {
-    const val = (vars as Record<string, string>)[key]
+    const val = (vars as unknown as Record<string, string>)[key]
     return val !== undefined ? val : `{{${key}}}`
   })
 }
