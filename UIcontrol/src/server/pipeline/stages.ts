@@ -257,7 +257,7 @@ export const STAGE_RUNNERS: Record<Stage, (ctx: StageContext) => Promise<StageOu
     const url = deployOut?.preview_url as string
     if (!url) return { ok: false, error: 'no preview_url from deploy' }
     const hc = await healthCheck(url)
-    saveStageOutput(ctx.runId, 'health-check', { ok: hc.ok, attempts: hc.attempts, ...hc })
+    saveStageOutput(ctx.runId, 'health-check', { ...hc })
     if (!hc.ok) return { ok: false, error: hc.error ?? `health check failed after ${hc.attempts} attempts` }
     return { ok: true, output: { url, attempts: hc.attempts, status_code: hc.statusCode } }
   },
