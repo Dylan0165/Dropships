@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState, useEffect, useRef } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   ReactFlow,
   Background,
@@ -6,297 +6,276 @@ import {
   MiniMap,
   type Node,
   type Edge,
-  type NodeTypes,
-  BackgroundVariant,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
-import { Play, Square, Search, ChevronDown, RefreshCw, TrendingUp, Zap } from 'lucide-react'
-import clsx from 'clsx'
-import type { AgentId, PipelineRun } from '@/types'
-import { AGENT_CONFIGS, PIPELINE_EDGES } from '@/constants/pipeline'
-import { AgentNode } from './AgentNode'
-import * as api from '@/lib/api'
-import type { NicheSuggestion } from '@/lib/api'
+import { Play, Pause, Square, RotateCw, Trash2 } from 'lucide-react'
+import { usePipelineSocket, type Stage } from '@/hooks/usePipelineSocket'
+import { StageNode, STAGE_META } from './StageNode'
+import { StageDrawer } from './StageDrawer'
 
-const nodeTypes: NodeTypes = { agentNode: AgentNode }
-
-// B&W edge colors: wit voor actieve, zinc voor idle
-const EDGE_STATUS_COLOR = {
-  running:   '#e4e4e7',   // zinc-200
-  completed: '#52525b',   // zinc-600
-  idle:      '#27272a',   // zinc-800
-  failed:    '#ef4444',   // red
+interface RunSummary {
+  runId: string
+  niche: string
+  status: string
+  currentStage: string | null
+  paused: boolean
+  startedAt: string
+  completedAt: string | null
 }
 
-interface Props {
-  activeRun: PipelineRun | null
-  selectedAgentId: AgentId | null
-  onSelectAgent: (id: AgentId | null) => void
-  onStartPipeline: (niche: string) => Promise<void>
-  onStopPipeline: () => Promise<void>
-  lastNiche?: string
+interface CostSummary {
+  byRun: Array<{ runId: string; totalUsd: number; calls: number }>
+  byAgent: Array<{ agentName: string; totalUsd: number; calls: number; successRate: number }>
 }
 
-export function PipelineCanvas({
-  activeRun,
-  selectedAgentId,
-  onSelectAgent,
-  onStartPipeline,
-  onStopPipeline,
-  lastNiche,
-}: Props) {
-  const [nicheInput, setNicheInput] = useState('')
-  const [suggestions, setSuggestions] = useState<NicheSuggestion[]>([])
-  const [showSuggestions, setShowSuggestions] = useState(false)
-  const [rescraping, setRescraping] = useState(false)
-  const [startError, setStartError] = useState<string | null>(null)
-  const dropdownRef = useRef<HTMLDivElement>(null)
-  const isRunning = activeRun?.status === 'running'
+const nodeTypes = { stage: StageNode }
+const STAGES_ORDER: Stage[] = [
+  'trend-discovery', 'niche-review', 'product-research', 'product-review',
+  'brand-creation', 'content-generation', 'store-build', 'build-validate',
+  'deploy', 'health-check', 'growth',
+]
 
-  useEffect(() => {
-    api.getNiches().then(setSuggestions).catch(() => {})
-  }, [])
+export function PipelineCanvas() {
+  const [runs, setRuns] = useState<RunSummary[]>([])
+  const [selectedRunId, setSelectedRunId] = useState<string | null>(null)
+  const [selectedStage, setSelectedStage] = useState<Stage | null>(null)
+  const [niche, setNiche] = useState('')
+  const [costs, setCosts] = useState<CostSummary | null>(null)
+  const [starting, setStarting] = useState(false)
 
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as HTMLElement)) {
-        setShowSuggestions(false)
+  const { state, isConnected, lastEvent, logs } = usePipelineSocket({ runId: selectedRunId })
+
+  const refreshRuns = useCallback(async () => {
+    try {
+      const r = await fetch('/api/pipeline/runs')
+      if (r.ok) {
+        const data = await r.json() as RunSummary[]
+        setRuns(data)
+        setSelectedRunId(prev => prev ?? (data[0]?.runId ?? null))
       }
-    }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
+    } catch { /* ignore */ }
   }, [])
 
-  const handleRescrape = useCallback(async () => {
-    setRescraping(true)
+  useEffect(() => { refreshRuns() }, [refreshRuns])
+
+  useEffect(() => {
+    if (!lastEvent) return
+    if (lastEvent.type === 'pipeline:started' || lastEvent.type === 'pipeline:done'
+        || lastEvent.type === 'pipeline:failed' || lastEvent.type === 'pipeline:cancelled') {
+      refreshRuns()
+    }
+  }, [lastEvent, refreshRuns])
+
+  useEffect(() => {
+    if (!selectedRunId) { setCosts(null); return }
+    fetch(`/api/obs/costs?run_id=${selectedRunId}`)
+      .then(r => r.ok ? r.json() : null)
+      .then((data: CostSummary | null) => setCosts(data))
+      .catch(() => setCosts(null))
+  }, [selectedRunId, lastEvent])
+
+  const onStart = useCallback(async () => {
+    const value = niche.trim()
+    if (!value) return
+    setStarting(true)
     try {
-      const result = await api.rescrapeNiches()
-      setSuggestions(result.niches)
-    } catch {
-      // ignore
+      const r = await fetch('/api/pipeline/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ niche: value }),
+      })
+      if (!r.ok) {
+        const err = await r.json().catch(() => ({ error: 'start failed' })) as { error?: string }
+        alert(err.error ?? 'Pipeline start mislukt')
+        return
+      }
+      const data = await r.json() as { runId: string }
+      setSelectedRunId(data.runId)
+      setNiche('')
+      refreshRuns()
     } finally {
-      setRescraping(false)
+      setStarting(false)
     }
+  }, [niche, refreshRuns])
+
+  const onPause = useCallback(async () => {
+    if (!selectedRunId) return
+    await fetch(`/api/pipeline/${selectedRunId}/pause`, { method: 'POST' })
+  }, [selectedRunId])
+
+  const onResume = useCallback(async () => {
+    if (!selectedRunId) return
+    await fetch(`/api/pipeline/${selectedRunId}/resume`, { method: 'POST' })
+  }, [selectedRunId])
+
+  const onStop = useCallback(async () => {
+    if (!selectedRunId) return
+    if (!confirm('Pipeline stoppen?')) return
+    await fetch(`/api/pipeline/${selectedRunId}/stop`, { method: 'POST' })
+    refreshRuns()
+  }, [selectedRunId, refreshRuns])
+
+  const onDeleteFailed = useCallback(async () => {
+    if (!confirm('Alle failed stores verwijderen?')) return
+    const r = await fetch('/api/stores/failed', { method: 'DELETE' })
+    const data = await r.json() as { deleted?: number; error?: string }
+    alert(data.error ? `Error: ${data.error}` : `${data.deleted} stores verwijderd`)
   }, [])
 
-  const availableSuggestions = suggestions.filter(s => s.status === 'suggested')
-
-  const nodes: Node[] = useMemo(
-    () =>
-      AGENT_CONFIGS.map((cfg) => ({
-        id: cfg.id,
-        type: 'agentNode',
-        position: cfg.position,
-        data: {
-          ...cfg,
-          run: activeRun?.agents[cfg.id] ?? null,
-          selected: selectedAgentId === cfg.id,
+  const { nodes, edges } = useMemo(() => {
+    const ns: Node[] = STAGES_ORDER.map((stage, i) => ({
+      id: stage,
+      type: 'stage',
+      position: { x: i * 260, y: 100 },
+      data: {
+        stage,
+        label: STAGE_META[stage].label,
+        kind: STAGE_META[stage].kind,
+        state: state?.stages[stage] ?? {
+          status: 'pending', retries: 0, tokensIn: 0, tokensOut: 0, costUsd: 0, durationMs: 0,
         },
-        draggable: false,
-      })),
-    [activeRun, selectedAgentId],
-  )
-
-  const edges: Edge[] = useMemo(
-    () =>
-      PIPELINE_EDGES.map((e, i) => {
-        const sourceAgent = activeRun?.agents[e.source as AgentId]
-        const status = sourceAgent?.status ?? 'idle'
-        const color = status === 'running' ? EDGE_STATUS_COLOR.running
-          : status === 'completed' ? EDGE_STATUS_COLOR.completed
-          : status === 'failed' ? EDGE_STATUS_COLOR.failed
-          : EDGE_STATUS_COLOR.idle
-        return {
-          id: `e-${i}`,
-          source: e.source,
-          target: e.target,
-          animated: status === 'running',
-          label: e.label,
-          style: {
-            stroke: color,
-            strokeWidth: 1.5,
-            opacity: 0.7,
-            strokeDasharray: e.dashed ? '5 4' : undefined,
-          },
-          labelStyle: { fill: '#52525b', fontSize: 9 },
-          labelBgStyle: { fill: '#080808', fillOpacity: 1 },
-        }
-      }),
-    [activeRun],
-  )
-
-  const onNodeClick = useCallback(
-    (_: React.MouseEvent, node: Node) => {
-      onSelectAgent(node.id as AgentId)
-    },
-    [onSelectAgent],
-  )
-
-  const handleStart = useCallback(async () => {
-    if (!nicheInput.trim()) return
-    setStartError(null)
-    try {
-      await onStartPipeline(nicheInput.trim())
-      setNicheInput('')
-      api.getNiches().then(setSuggestions).catch(() => {})
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Start mislukt'
-      setStartError(msg)
-      setTimeout(() => setStartError(null), 6000)
+        onClick: () => setSelectedStage(stage),
+      },
+    }))
+    const es: Edge[] = []
+    for (let i = 0; i < STAGES_ORDER.length - 1; i++) {
+      const cur = STAGES_ORDER[i]
+      const nxt = STAGES_ORDER[i + 1]
+      const curState = state?.stages[cur]
+      const isRunning = curState?.status === 'running'
+      const isApproved = curState?.status === 'approved'
+      es.push({
+        id: `${cur}->${nxt}`,
+        source: cur, target: nxt,
+        animated: isRunning,
+        style: {
+          stroke: isApproved ? '#16a34a' : isRunning ? '#3b82f6' : '#52525b',
+          strokeWidth: isRunning || isApproved ? 2.5 : 1,
+        },
+      })
     }
-  }, [nicheInput, onStartPipeline])
+    return { nodes: ns, edges: es }
+  }, [state])
 
-  const selectSuggestion = useCallback((name: string) => {
-    setNicheInput(name)
-    setShowSuggestions(false)
-  }, [])
-
-  // Stats van huidige run
-  const completedCount = activeRun ? Object.values(activeRun.agents).filter(a => a.status === 'completed').length : 0
-  const totalAgents    = activeRun ? Object.keys(activeRun.agents).length : 0
+  const totalCost = costs?.byRun.find(r => r.runId === selectedRunId)
+  const isRunning = state && Object.values(state.stages).some(s => s.status === 'running')
+  const isPaused = state?.paused
 
   return (
-    <div className="flex-1 flex flex-col">
-      {/* Control bar */}
-      <div className="h-14 bg-[#0a0a0a] border-b border-white/[0.07] px-4 flex items-center gap-3">
-
-        {/* Niche input + suggestions */}
-        <div className="relative flex-1 max-w-md" ref={dropdownRef}>
-          <div className="flex items-center gap-2 bg-white/[0.03] border border-white/[0.08] rounded-lg px-3 py-2 focus-within:border-white/[0.2] transition-colors">
-            <Search size={13} className="text-zinc-600 flex-shrink-0" />
-            <input
-              type="text"
-              placeholder="Niche invoeren (bijv. fitness accessories)"
-              value={nicheInput}
-              onChange={(e) => setNicheInput(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleStart()}
-              onFocus={() => availableSuggestions.length > 0 && setShowSuggestions(true)}
-              className="flex-1 bg-transparent border-none text-sm text-white placeholder:text-zinc-700 focus:outline-none"
-            />
-            {availableSuggestions.length > 0 && (
-              <button
-                onClick={() => setShowSuggestions(!showSuggestions)}
-                className="text-zinc-600 hover:text-zinc-400 transition-colors"
-              >
-                <ChevronDown size={14} className={clsx('transition-transform', showSuggestions && 'rotate-180')} />
-              </button>
-            )}
-          </div>
-
-          {/* Suggestions dropdown */}
-          {showSuggestions && availableSuggestions.length > 0 && (
-            <div className="absolute top-full left-0 right-0 mt-1 bg-[#111] border border-white/[0.1] rounded-xl shadow-2xl shadow-black/60 z-50 max-h-72 overflow-y-auto">
-              <div className="px-3 py-2 border-b border-white/[0.07] flex items-center justify-between">
-                <span className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">
-                  {availableSuggestions.length} aanbevolen niches
-                </span>
-                <button
-                  onClick={handleRescrape}
-                  disabled={rescraping}
-                  className="text-[10px] text-zinc-400 hover:text-white flex items-center gap-1 transition-colors disabled:opacity-40"
-                >
-                  <RefreshCw size={10} className={clsx(rescraping && 'animate-spin')} />
-                  {rescraping ? 'Laden...' : 'Vernieuwen'}
-                </button>
-              </div>
-              {availableSuggestions.map((s) => (
-                <button
-                  key={s.id}
-                  onClick={() => selectSuggestion(s.name)}
-                  className="w-full px-3 py-2.5 text-left hover:bg-white/[0.04] transition-colors border-b border-white/[0.04] last:border-b-0"
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-white font-medium">{s.name}</span>
-                    <span className="ml-auto flex items-center gap-2 text-[10px] text-zinc-600 flex-shrink-0">
-                      <span className="flex items-center gap-0.5">
-                        <TrendingUp size={9} className="text-emerald-500" />
-                        {s.trending_score}
-                      </span>
-                      <span className="flex items-center gap-0.5">
-                        <Zap size={9} className="text-amber-500" />
-                        {s.viral_potential}
-                      </span>
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-zinc-600 mt-0.5 line-clamp-1">{s.reasoning}</p>
-                </button>
-              ))}
-            </div>
-          )}
-
-          {/* Error toast */}
-          {startError && (
-            <div className="absolute top-full left-0 right-0 mt-1 bg-red-900/80 border border-red-700/40 rounded-lg px-3 py-2 text-xs text-red-200 z-50">
-              {startError}
-            </div>
-          )}
-        </div>
-
-        {/* Start button */}
+    <div className="flex-1 flex flex-col bg-zinc-950 text-zinc-100">
+      {/* Toolbar */}
+      <div className="border-b border-zinc-800 px-4 py-2.5 flex items-center gap-2">
+        <input
+          type="text"
+          placeholder="Niche (bv. 'portable blender bottles')…"
+          value={niche}
+          onChange={(e) => setNiche(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && onStart()}
+          className="px-3 py-1.5 bg-zinc-900 border border-zinc-800 rounded text-sm w-72 focus:outline-none focus:border-blue-500"
+        />
         <button
-          onClick={handleStart}
-          disabled={isRunning || !nicheInput.trim()}
-          className="bg-white hover:bg-zinc-100 disabled:opacity-25 disabled:cursor-not-allowed text-black text-xs font-semibold px-4 py-2.5 rounded-lg flex items-center gap-1.5 transition-all flex-shrink-0"
+          onClick={onStart}
+          disabled={starting || !niche.trim()}
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 disabled:bg-zinc-800 disabled:text-zinc-500 text-white text-xs rounded font-medium"
         >
-          <Play size={12} />
-          Start
+          <Play size={13} /> Start
+        </button>
+        <div className="w-px h-6 bg-zinc-800 mx-1" />
+        <button
+          onClick={isPaused ? onResume : onPause}
+          disabled={!selectedRunId || (!isRunning && !isPaused)}
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-900 hover:bg-zinc-800 disabled:opacity-40 text-zinc-200 text-xs rounded"
+        >
+          {isPaused ? <RotateCw size={13} /> : <Pause size={13} />}
+          {isPaused ? 'Hervat' : 'Pauzeer'}
+        </button>
+        <button
+          onClick={onStop}
+          disabled={!selectedRunId}
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-900 hover:bg-zinc-800 disabled:opacity-40 text-zinc-200 text-xs rounded"
+        >
+          <Square size={13} /> Stop
+        </button>
+        <button
+          onClick={onDeleteFailed}
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-900 hover:bg-zinc-800 text-zinc-400 text-xs rounded ml-auto"
+        >
+          <Trash2 size={13} /> Failed wissen
         </button>
 
-        {/* Stop button */}
-        {isRunning && (
-          <button
-            onClick={onStopPipeline}
-            className="bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-400 hover:text-red-300 text-xs font-semibold px-3 py-2.5 rounded-lg flex items-center gap-1.5 transition-all flex-shrink-0"
-          >
-            <Square size={12} />
-            Stop
-          </button>
-        )}
+        <select
+          value={selectedRunId ?? ''}
+          onChange={(e) => setSelectedRunId(e.target.value || null)}
+          className="px-2 py-1.5 bg-zinc-900 border border-zinc-800 rounded text-xs"
+        >
+          <option value="">— kies run —</option>
+          {runs.map(r => (
+            <option key={r.runId} value={r.runId}>
+              {r.niche} · {r.runId.slice(0, 8)} · {r.status}
+            </option>
+          ))}
+        </select>
 
-        {/* Live run status — rechts */}
-        {lastNiche && (
-          <div className="ml-auto flex items-center gap-2 text-[11px] text-zinc-500 flex-shrink-0">
-            <span className={clsx(
-              'w-1.5 h-1.5 rounded-full flex-shrink-0',
-              activeRun?.status === 'running'   ? 'bg-emerald-400 animate-pulse' :
-              activeRun?.status === 'completed' ? 'bg-white' :
-              activeRun?.status === 'failed'    ? 'bg-red-400' : 'bg-zinc-700',
-            )} />
-            <span className="truncate max-w-[140px] text-zinc-400">{lastNiche}</span>
-            {activeRun?.status === 'running' && (
-              <span className="text-zinc-600 font-mono">{completedCount}/{totalAgents}</span>
-            )}
+        {totalCost && (
+          <div className="text-xs font-mono text-zinc-400 px-2">
+            €{(totalCost.totalUsd * 0.92).toFixed(4)} / {totalCost.calls} calls
           </div>
         )}
+
+        <span className={`flex items-center gap-1 text-[10px] ${isConnected ? 'text-green-400' : 'text-red-400'}`}>
+          <span className={`w-1.5 h-1.5 rounded-full ${isConnected ? 'bg-green-400' : 'bg-red-400'}`} />
+          {isConnected ? 'live' : 'offline'}
+        </span>
       </div>
 
       {/* Canvas */}
-      <div className="flex-1">
+      <div className="flex-1 relative">
         <ReactFlow
           nodes={nodes}
           edges={edges}
           nodeTypes={nodeTypes}
-          onNodeClick={onNodeClick}
           fitView
-          fitViewOptions={{ padding: 0.3 }}
-          minZoom={0.3}
+          fitViewOptions={{ padding: 0.2 }}
+          minZoom={0.2}
           maxZoom={1.5}
           proOptions={{ hideAttribution: true }}
         >
-          <Background variant={BackgroundVariant.Dots} color="#1c1c1c" gap={22} size={1} />
-          <Controls position="top-left" />
+          <Background color="#27272a" gap={20} />
+          <Controls className="!bg-zinc-900 !border-zinc-800" />
           <MiniMap
             nodeColor={(n) => {
-              const status = (n.data as { run?: { status: string } })?.run?.status
-              if (status === 'running')   return '#34d399'
-              if (status === 'completed') return '#52525b'
-              if (status === 'failed')    return '#ef4444'
-              return '#1c1c1c'
+              const s = (n.data as { state?: { status: string } })?.state?.status ?? 'pending'
+              const colors: Record<string, string> = {
+                pending: '#3f3f46', running: '#3b82f6', approved: '#16a34a',
+                rejected: '#dc2626', failed: '#dc2626', uncertain: '#f59e0b', skipped: '#52525b',
+              }
+              return colors[s] ?? '#3f3f46'
             }}
-            maskColor="rgba(8,8,8,0.8)"
+            className="!bg-zinc-900 !border-zinc-800"
           />
         </ReactFlow>
+
+        {logs.length > 0 && (
+          <div className="absolute bottom-0 left-0 right-0 max-h-32 overflow-y-auto bg-zinc-950/95 border-t border-zinc-800 px-3 py-2 text-[11px] font-mono text-zinc-400">
+            {logs.slice(-12).map((l, i) => (
+              <div key={i} className="truncate">
+                <span className="text-zinc-600">{new Date(l.ts).toLocaleTimeString()}</span>
+                {l.stage && <span className="text-zinc-500 ml-2">[{l.stage}]</span>}
+                <span className="ml-2">{l.message}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
+
+      {selectedStage && state && (
+        <StageDrawer
+          stage={selectedStage}
+          state={state.stages[selectedStage]}
+          runId={state.runId}
+          onClose={() => setSelectedStage(null)}
+        />
+      )}
     </div>
   )
 }
