@@ -182,6 +182,47 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_hf_ad_id ON higgsfield_jobs(ad_id);
 `)
 
+// ── Nieuwe tables voor pipeline v2 ───────────────────────────────────────────
+db.exec(`
+  CREATE TABLE IF NOT EXISTS agent_executions (
+    id           TEXT PRIMARY KEY,
+    run_id       TEXT NOT NULL,
+    agent_name   TEXT NOT NULL,
+    stage        TEXT NOT NULL,
+    status       TEXT NOT NULL,
+    input_json   TEXT,
+    output_json  TEXT,
+    error_message TEXT,
+    cost_usd     REAL    DEFAULT 0,
+    tokens_in    INTEGER DEFAULT 0,
+    tokens_out   INTEGER DEFAULT 0,
+    duration_ms  INTEGER DEFAULT 0,
+    retry_count  INTEGER DEFAULT 0,
+    started_at   TEXT NOT NULL,
+    finished_at  TEXT,
+    FOREIGN KEY (run_id) REFERENCES runs(run_id)
+  );
+  CREATE INDEX IF NOT EXISTS idx_executions_run   ON agent_executions(run_id);
+  CREATE INDEX IF NOT EXISTS idx_executions_agent ON agent_executions(agent_name);
+  CREATE INDEX IF NOT EXISTS idx_executions_status ON agent_executions(status);
+
+  CREATE TABLE IF NOT EXISTS stage_outputs (
+    run_id       TEXT NOT NULL,
+    stage        TEXT NOT NULL,
+    output_json  TEXT NOT NULL,
+    approved_at  TEXT NOT NULL,
+    PRIMARY KEY (run_id, stage)
+  );
+
+  CREATE TABLE IF NOT EXISTS port_allocations (
+    port         INTEGER PRIMARY KEY,
+    store_id     TEXT NOT NULL,
+    allocated_at TEXT NOT NULL,
+    released_at  TEXT
+  );
+  CREATE INDEX IF NOT EXISTS idx_ports_store ON port_allocations(store_id);
+`)
+
 // ── Idempotente migrations voor bestaande databases ──────────────────────────
 const storesCols = (db.prepare(`PRAGMA table_info(stores)`).all() as { name: string }[]).map(c => c.name)
 const storeMigrations: [string, string][] = [
