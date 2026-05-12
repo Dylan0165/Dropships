@@ -121,7 +121,7 @@ export async function atomicDeploy(
   const vhostPath = `/tmp/${subdomain}.nginx.conf`
 
   // Write vhost locally then scp
-  const tmpVhost = path.join(require('os').tmpdir(), `${subdomain}.nginx.conf`)
+  const tmpVhost = path.join(os.tmpdir(), `${subdomain}.nginx.conf`)
   fs.writeFileSync(tmpVhost, vhostContent, 'utf-8')
   const vhostScp = await runScp(tmpVhost, vhostPath)
   fs.unlinkSync(tmpVhost)
