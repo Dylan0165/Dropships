@@ -105,6 +105,15 @@ function broadcast(event: WsEvent): void {
   }
 }
 
+// ── Pipeline v3 event fan-out ──
+// All pipeline events are pushed to every WS client; the client filters by runId.
+pipelineEvents.on('event', (event) => {
+  const data = JSON.stringify(event)
+  for (const ws of clients) {
+    if (ws.readyState === WebSocket.OPEN) ws.send(data)
+  }
+})
+
 // ═══════ API Endpoints ═══════
 
 app.post('/api/pipeline/start', (req, res) => {
