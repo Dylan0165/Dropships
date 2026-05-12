@@ -842,19 +842,23 @@ async function generatePageWithAI(
   const systemPrompt = `You are an expert Next.js / React developer specializing in high-converting e-commerce pages.
 Generate a complete, production-ready Next.js page.tsx for a dropshipping store.
 
-STRICT RULES:
-1. Start with exactly: 'use client';
-2. Only allowed import: import { initiateCheckout } from '../components/shared/checkout';
-3. NO other imports — no React import needed (Next.js auto-imports it), no external libs.
-4. ALL styling via React inline styles (style={{ ... }}) — NO Tailwind classes, NO className, NO CSS files.
-5. The page must be fully self-contained and compile without any other files.
-6. ALL ampersand (&) characters in JSX text content MUST be written as &amp;
-7. Return ONLY the TypeScript/TSX code. No markdown fences, no explanation text.
+CRITICAL RULES for the generated page.tsx:
+1. NO external component imports. The file must be 100% self-contained.
+2. Do NOT import from '../shared/checkout.js', '../components/*', or any relative path.
+3. Do NOT import NavBar, HeroBanner, UspSection, ProductGrid, ReviewCard or any named component.
+4. All UI must be written as inline JSX with inline styles inside a single default export function.
+5. The Product interface inside the file must include: id, title, image, price, compareAtPrice?, badge?, description?
+6. All & characters in JSX text nodes must be written as &amp;
+7. The file must compile with: npx tsc --noEmit --strict
+8. Start with exactly: 'use client';
+9. NO imports at all — no React import (Next.js auto-imports it), no external libs, no relative paths.
+10. ALL styling via React inline styles (style={{ ... }}) — NO Tailwind classes, NO className, NO CSS files.
+11. Return ONLY the TypeScript/TSX code. No markdown fences, no explanation text.
 
 REQUIRED SECTIONS (in this order):
 - Nav: brand name left, navigation links right
 - Hero: large visually striking headline, slogan subtitle, "Shop nu" CTA button
-- Products: responsive grid — each card has image, title, price, compare price (strikethrough), "Kopen" button that calls initiateCheckout
+- Products: responsive grid — each card has image, title, price, compare price (strikethrough), "Kopen" button (use window.location.href or alert for checkout)
 - USPs: three selling points (use the provided USPs)
 - Reviews: three hardcoded Dutch customer reviews with star ratings
 - Footer: © year, brand name
