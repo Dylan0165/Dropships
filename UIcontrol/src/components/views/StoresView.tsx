@@ -83,7 +83,7 @@ export function StoresView() {
       for (const store of data) {
         const prev = prevStatusRef.current.get(store.storeId)
         const curr = store.status
-        if (prev === 'building' && (curr === 'live' || curr === 'local')) {
+        if (prev === 'building' && (curr === 'live' || (curr as string) === 'local')) {
           const port = store.port
           newToasts.push({
             id: `${store.storeId}-${Date.now()}`,
