@@ -55,6 +55,8 @@ interface StoreRow {
   health_checked_at: string | null
   health_response_ms: number | null
   health_error: string | null
+  ai_diagnosed_at: string | null
+  ai_diagnosis: string | null
 }
 
 async function checkStore(store: StoreRow): Promise<void> {
