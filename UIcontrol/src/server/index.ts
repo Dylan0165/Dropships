@@ -226,21 +226,21 @@ app.get('/api/approvals/pending', (_req, res) => {
   res.json(pending)
 })
 
-app.post('/api/pipeline/approve', (req, res) => {
-  const { runId, agentId, decision, opmerking } = req.body
+app.post('/api/pipeline/approve', async (req, res) => {
+  const { runId, agentId, decision, opmerking } = req.body as {
+    runId: string; agentId: string; decision: string; opmerking?: string
+  }
   if (!runId || !agentId || !decision) {
     res.status(400).json({ error: 'runId, agentId, and decision are required' })
     return
   }
   store.resolveEscalation(runId, agentId as AgentId, decision, opmerking)
-  coordinator.sendApproval(runId, agentId, decision, opmerking)
-  broadcast({
-    type: 'agent_started',
-    runId,
-    agentId,
-    payload: { decision, opmerking },
-    timestamp: new Date().toISOString(),
-  })
+  // For uncertain stages: human approval = resume; rejection = stop
+  if (decision === 'approve') {
+    await pipelineResumeRun(runId)
+  } else {
+    pipelineStopRun(runId)
+  }
   res.json({ success: true })
 })
 
