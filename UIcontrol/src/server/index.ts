@@ -20,6 +20,7 @@ import { createExperiment, assignComponentVariant, recordComponentConversion, de
 import { runSeasonalCheck, getActiveSeasons } from './seasonal.js'
 import { getStoreBranding, generateAdsForStore, animateAdWithHiggsfield, killAd, getAdsForStore, startHiggsfieldPoller } from './ad-manager.js'
 import db, { getAgentOutput, getResumableRuns } from './db.js'
+import type { Database } from 'better-sqlite3'
 import { notifyApprovalNeeded } from './whatsapp.js'
 
 const APPROVAL_PIN = process.env.APPROVAL_PIN ?? '1234'
