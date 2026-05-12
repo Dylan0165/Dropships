@@ -279,6 +279,17 @@ export async function runAgent(
 ): Promise<AgentResult> {
   const model = options.model ?? LLM_MODEL_DEFAULT
   const log = options.onLog ?? (() => { /* noop */ })
+  const execId = uuid()
+  const startedAt = new Date().toISOString()
+  const t0 = Date.now()
+
+  // ── Circuit breaker ───────────────────────────────────────────────────────
+  if (isCircuitOpen(agentId)) {
+    const msg = `Circuit breaker open voor ${agentId} — wacht op cooldown`
+    log('warn', msg)
+    logAgentExecution({ id: execId, runId, agentName: agentId, stage: agentId, status: 'circuit_open', errorMessage: msg, startedAt, finishedAt: new Date().toISOString() })
+    return { ok: false, output: null, inputTokens: 0, outputTokens: 0, attempts: 0, rawResponse: '', error: msg }
+  }
 
   const skillPrompt = loadSkillPrompt(agentId) +
     '\n\n## CRITICAL OUTPUT RULE\nReturn ONLY a single valid JSON object. No markdown code fences, no explanation text before or after. Start your response with `{` and end with `}`.'
@@ -299,6 +310,13 @@ export async function runAgent(
 
     log('info', `attempt ${attempt}/${MAX_ATTEMPTS} — calling ${model}`)
 
+    // Exponential backoff between retries: 1s, 4s, 16s
+    if (attempt > 1) {
+      const delay = Math.pow(4, attempt - 2) * 1000
+      log('info', `backoff ${delay}ms voor poging ${attempt}`)
+      await new Promise(r => setTimeout(r, delay))
+    }
+
     let raw: string
     try {
       const result = await callLLM(model, skillPrompt, userPrompt)
@@ -308,12 +326,10 @@ export async function runAgent(
       outputTokens += result.outputTokens
     } catch (err) {
       lastError = err instanceof Error ? err.message : String(err)
-      log('error', `DeepSeek call failed: ${lastError}`)
-      // Network/API errors are not retried in tight loop
-      return {
-        ok: false, output: null, inputTokens, outputTokens,
-        attempts: attempt, rawResponse: lastRaw, error: lastError,
-      }
+      log('error', `LLM call failed: ${lastError}`)
+      recordCircuitFailure(agentId)
+      logAgentExecution({ id: execId, runId, agentName: agentId, stage: agentId, status: 'failed', errorMessage: lastError, tokensIn: inputTokens, tokensOut: outputTokens, durationMs: Date.now() - t0, retryCount: attempt - 1, startedAt, finishedAt: new Date().toISOString() })
+      return { ok: false, output: null, inputTokens, outputTokens, attempts: attempt, rawResponse: lastRaw, error: lastError }
     }
 
     const parsed = tryParseJson(raw)
@@ -326,20 +342,16 @@ export async function runAgent(
     const validationErrors = validateOutput(agentId, parsed)
     if (validationErrors.length === 0) {
       log('info', `attempt ${attempt}: output validated`)
-      return {
-        ok: true, output: parsed, inputTokens, outputTokens,
-        attempts: attempt, rawResponse: raw,
-      }
+      recordCircuitSuccess(agentId)
+      logAgentExecution({ id: execId, runId, agentName: agentId, stage: agentId, status: 'completed', outputJson: JSON.stringify(parsed), tokensIn: inputTokens, tokensOut: outputTokens, durationMs: Date.now() - t0, retryCount: attempt - 1, startedAt, finishedAt: new Date().toISOString() })
+      return { ok: true, output: parsed, inputTokens, outputTokens, attempts: attempt, rawResponse: raw }
     }
 
     lastErrors = validationErrors
     log('warn', `attempt ${attempt}: validation failed — ${validationErrors.join('; ')}`)
   }
 
-  return {
-    ok: false, output: null, inputTokens, outputTokens,
-    attempts: MAX_ATTEMPTS, rawResponse: lastRaw,
-    error: 'validation failed after retries',
-    validationErrors: lastErrors,
-  }
+  recordCircuitFailure(agentId)
+  logAgentExecution({ id: execId, runId, agentName: agentId, stage: agentId, status: 'failed', errorMessage: 'validation failed after retries', validationErrors: JSON.stringify(lastErrors), tokensIn: inputTokens, tokensOut: outputTokens, durationMs: Date.now() - t0, retryCount: MAX_ATTEMPTS - 1, startedAt, finishedAt: new Date().toISOString() } as Parameters<typeof logAgentExecution>[0])
+  return { ok: false, output: null, inputTokens, outputTokens, attempts: MAX_ATTEMPTS, rawResponse: lastRaw, error: 'validation failed after retries', validationErrors: lastErrors }
 }
