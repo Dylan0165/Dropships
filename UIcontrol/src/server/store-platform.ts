@@ -30,6 +30,7 @@ import {
   buildTemplateVars, validateNoForbiddenImports,
 } from './store-platform/template-engine.js'
 import { validateAndBuild } from './store-platform/build-validator.js'
+import { atomicDeploy, getHighestNginxPort } from './store-platform/deploy.js'
 void _saveAgentOutput
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
