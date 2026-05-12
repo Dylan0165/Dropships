@@ -341,41 +341,12 @@ function runCmd(
   })
 }
 
-// ── Remote deploy helpers ─────────────────────────────────────────────────────
-
-async function scpToRemote(localPath: string, remotePath: string): Promise<boolean> {
-  const sshArgs = STORE_SSH_KEY_PATH ? ['-i', STORE_SSH_KEY_PATH] : []
-  const target = `${STORE_SERVER_USER}@${STORE_SERVER_HOST}:${remotePath}`
-  const result = await runCmd('scp', [...sshArgs, '-r', localPath, target], { timeoutMs: 120_000 })
-  if (result.code !== 0) {
-    console.error(`[store-platform] scp failed: ${result.stderr}`)
-    return false
-  }
-  return true
-}
+// ── Remote deploy helpers (SSH for reconcileStores) ──────────────────────────
 
 async function sshExec(command: string): Promise<{ ok: boolean; output: string }> {
   const sshArgs = STORE_SSH_KEY_PATH ? ['-i', STORE_SSH_KEY_PATH] : []
   const result = await runCmd('ssh', [...sshArgs, `${STORE_SERVER_USER}@${STORE_SERVER_HOST}`, command], { timeoutMs: 30_000 })
   return { ok: result.code === 0, output: result.stdout + result.stderr }
-}
-
-function nginxConfig(subdomain: string, port?: number): string {
-  // Elke store luistert op:
-  //   - poort 80 via subdomain:  http://{subdomain}.stores.local
-  //   - eigen poort (indien toegewezen): http://192.168.121.11:{port}
-  const portBlock = port ? `\nserver {\n  listen ${port};\n  root /var/www/stores/${subdomain}/out;\n  index index.html;\n  location / { try_files $uri $uri.html $uri/index.html =404; }\n  gzip on;\n  gzip_types text/css application/javascript image/svg+xml;\n  add_header X-Store "${subdomain}";\n}\n` : ''
-  return `server {
-  listen 80;
-  server_name ${subdomain}.${STORE_BASE_DOMAIN};
-  root /var/www/stores/${subdomain}/out;
-  index index.html;
-  location / { try_files $uri $uri.html $uri/index.html =404; }
-  gzip on;
-  gzip_types text/css application/javascript image/svg+xml;
-  add_header X-Store "${subdomain}";
-}
-${portBlock}`
 }
 
 // ── Duplicate product guard ────────────────────────────────────────────────────
