@@ -10,10 +10,11 @@ import { DashboardView } from './components/views/DashboardView'
 import { SettingsView } from './components/views/SettingsView'
 import { TrendScraperView } from './components/views/TrendScraperView'
 import { AdManagerView } from './components/views/AdManagerView'
+import { ObservabilityView } from './components/views/ObservabilityView'
 import { usePipeline } from './hooks/usePipeline'
 import type { AgentId } from './types'
 
-export type View = 'pipeline' | 'stores' | 'components' | 'runs' | 'dashboard' | 'settings' | 'trendscraper' | 'ads'
+export type View = 'pipeline' | 'stores' | 'components' | 'runs' | 'dashboard' | 'settings' | 'trendscraper' | 'ads' | 'observability'
 
 export default function App() {
   const [view, setView] = useState<View>('pipeline')
