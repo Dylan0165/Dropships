@@ -267,6 +267,65 @@ export function getAgentOutput(runId: string, agentId: string): Record<string, u
   }
 }
 
+export function logAgentExecution(exec: {
+  id: string; runId: string; agentName: string; stage: string; status: string
+  inputJson?: string; outputJson?: string; errorMessage?: string
+  costUsd?: number; tokensIn?: number; tokensOut?: number
+  durationMs?: number; retryCount?: number; startedAt: string; finishedAt?: string
+}): void {
+  try {
+    db.prepare(`
+      INSERT OR REPLACE INTO agent_executions
+        (id, run_id, agent_name, stage, status, input_json, output_json, error_message,
+         cost_usd, tokens_in, tokens_out, duration_ms, retry_count, started_at, finished_at)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+    `).run(
+      exec.id, exec.runId, exec.agentName, exec.stage, exec.status,
+      exec.inputJson ?? null, exec.outputJson ?? null, exec.errorMessage ?? null,
+      exec.costUsd ?? 0, exec.tokensIn ?? 0, exec.tokensOut ?? 0,
+      exec.durationMs ?? 0, exec.retryCount ?? 0, exec.startedAt, exec.finishedAt ?? null,
+    )
+  } catch (err) {
+    console.error('[db] logAgentExecution failed:', err)
+  }
+}
+
+export function saveStageOutput(runId: string, stage: string, output: Record<string, unknown>): void {
+  try {
+    db.prepare(`
+      INSERT OR REPLACE INTO stage_outputs (run_id, stage, output_json, approved_at) VALUES (?,?,?,?)
+    `).run(runId, stage, JSON.stringify(output), new Date().toISOString())
+  } catch (err) {
+    console.error('[db] saveStageOutput failed:', err)
+  }
+}
+
+export function getStageOutput(runId: string, stage: string): Record<string, unknown> | null {
+  try {
+    const row = db.prepare(`SELECT output_json FROM stage_outputs WHERE run_id=? AND stage=?`).get(runId, stage) as { output_json: string } | undefined
+    return row ? JSON.parse(row.output_json) as Record<string, unknown> : null
+  } catch { return null }
+}
+
+export function claimPort(storeId: string): number {
+  const now = new Date().toISOString()
+  return db.transaction(() => {
+    const maxRow = db.prepare(
+      `SELECT MAX(port) as m FROM port_allocations WHERE released_at IS NULL`
+    ).get() as { m: number | null } | undefined
+    const next = (maxRow?.m ?? 4000) + 1
+    db.prepare(`INSERT INTO port_allocations (port, store_id, allocated_at) VALUES (?,?,?)`).run(next, storeId, now)
+    return next
+  })()
+}
+
+export function releasePort(storeId: string): void {
+  try {
+    db.prepare(`UPDATE port_allocations SET released_at=? WHERE store_id=? AND released_at IS NULL`)
+      .run(new Date().toISOString(), storeId)
+  } catch { /* ignore */ }
+}
+
 export function getResumableRuns(): { runId: string; niche: string }[] {
   try {
     const rows = db.prepare(
