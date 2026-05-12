@@ -87,8 +87,9 @@ export default function App() {
             {view === 'ads'         && <AdManagerView />}
             {view === 'components'  && <ComponentsView />}
             {view === 'dashboard'   && <DashboardView />}
-            {view === 'trendscraper'&& <TrendScraperView />}
-            {view === 'settings'    && <SettingsView />}
+            {view === 'trendscraper'  && <TrendScraperView />}
+            {view === 'observability' && <ObservabilityView />}
+            {view === 'settings'      && <SettingsView />}
           </div>
         </div>
       </div>
