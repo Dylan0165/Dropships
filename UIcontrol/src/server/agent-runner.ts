@@ -352,6 +352,6 @@ export async function runAgent(
   }
 
   recordCircuitFailure(agentId)
-  logAgentExecution({ id: execId, runId, agentName: agentId, stage: agentId, status: 'failed', errorMessage: 'validation failed after retries', validationErrors: JSON.stringify(lastErrors), tokensIn: inputTokens, tokensOut: outputTokens, durationMs: Date.now() - t0, retryCount: MAX_ATTEMPTS - 1, startedAt, finishedAt: new Date().toISOString() } as Parameters<typeof logAgentExecution>[0])
+  logAgentExecution({ id: execId, runId, agentName: agentId, stage: agentId, status: 'failed', errorMessage: `validation failed: ${lastErrors.join('; ')}`, tokensIn: inputTokens, tokensOut: outputTokens, durationMs: Date.now() - t0, retryCount: MAX_ATTEMPTS - 1, startedAt, finishedAt: new Date().toISOString() })
   return { ok: false, output: null, inputTokens, outputTokens, attempts: MAX_ATTEMPTS, rawResponse: lastRaw, error: 'validation failed after retries', validationErrors: lastErrors }
 }
