@@ -55,7 +55,7 @@ export function StoresView() {
             storeName: store.subdomein ?? store.storeId,
             subdomain: store.subdomein ?? store.storeId,
             port,
-            url: port ? `http://192.168.121.8:${port}` : store.previewUrl,
+            url: port ? `http://${STORE_HOST}:${port}` : store.previewUrl,
           })
         }
         prevStatusRef.current.set(store.storeId, curr)
