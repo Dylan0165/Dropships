@@ -273,7 +273,7 @@ export default function Home() {
       <section style={{ minHeight: '90vh', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', padding: '0 2.5rem 5rem' }}>
         <p style={{ color: 'rgba(255,255,255,0.25)', fontSize: '0.65rem', letterSpacing: '0.4em', textTransform: 'uppercase', marginBottom: '2rem' }}>Nieuw Binnen — ${year}</p>
         <h1 style={{ fontSize: 'clamp(3.5rem,11vw,9rem)', fontWeight: 900, lineHeight: 0.88, letterSpacing: '-0.04em', margin: '0 0 3rem', maxWidth: '14ch' }}>
-          ${data.brand_name}
+          ${esc(data.brand_name)}
         </h1>
         <div style={{ display: 'flex', alignItems: 'center', gap: '3rem', flexWrap: 'wrap' }}>
           <a href="#products" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.75rem', background: '${primary}', color: '#fff', fontWeight: 700, padding: '1rem 2.5rem', fontSize: '0.75rem', letterSpacing: '0.15em', textTransform: 'uppercase', textDecoration: 'none' }}>
@@ -366,7 +366,7 @@ export default function Home() {
           <a href="#products" style={{ color: '#888', fontSize: '0.75rem', letterSpacing: '0.12em', textTransform: 'uppercase', textDecoration: 'none' }}>Shop</a>
           <a href="/over" style={{ color: '#888', fontSize: '0.75rem', letterSpacing: '0.12em', textTransform: 'uppercase', textDecoration: 'none' }}>Over ons</a>
         </div>
-        <span style={{ fontWeight: 700, fontSize: '1rem', letterSpacing: '-0.02em', textAlign: 'center' }}>${data.brand_name}</span>
+        <span style={{ fontWeight: 700, fontSize: '1rem', letterSpacing: '-0.02em', textAlign: 'center' }}>${esc(data.brand_name)}</span>
         <div style={{ display: 'flex', gap: '2rem', justifyContent: 'flex-end' }}>
           <a href="/contact" style={{ color: '#888', fontSize: '0.75rem', letterSpacing: '0.12em', textTransform: 'uppercase', textDecoration: 'none' }}>Contact</a>
         </div>
@@ -376,7 +376,7 @@ export default function Home() {
       <section style={{ padding: '8rem 3rem 6rem', maxWidth: '900px', margin: '0 auto' }}>
         <p style={{ color: '#aaa', fontSize: '0.7rem', letterSpacing: '0.3em', textTransform: 'uppercase', marginBottom: '2rem' }}>Collectie ${year}</p>
         <h1 style={{ fontSize: 'clamp(3rem,7vw,6rem)', fontWeight: 700, lineHeight: 1.05, letterSpacing: '-0.03em', margin: '0 0 2.5rem', maxWidth: '14ch' }}>
-          ${data.brand_name}
+          ${esc(data.brand_name)}
         </h1>
         <div style={{ display: 'flex', alignItems: 'center', gap: '3rem', borderTop: '1px solid #e8e8e4', paddingTop: '2.5rem', flexWrap: 'wrap' }}>
           <p style={{ color: '#666', fontSize: '1.05rem', lineHeight: 1.7, maxWidth: '36ch', margin: 0 }}>${data.slogan}</p>
@@ -446,13 +446,13 @@ export default function Home() {
 
       {/* ── Footer ── */}
       <footer style={{ borderTop: '1px solid #e8e8e4', padding: '3rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', background: '#fafaf8' }}>
-        <span style={{ fontWeight: 700, fontSize: '0.9rem' }}>${data.brand_name}</span>
+        <span style={{ fontWeight: 700, fontSize: '0.9rem' }}>${esc(data.brand_name)}</span>
         <div style={{ display: 'flex', gap: '2.5rem' }}>
           {[['Over ons','/over'],['Retour','/retour'],['Contact','/contact'],['FAQ','/faq']].map(([l,h]) => (
             <a key={l} href={h} style={{ color: '#999', fontSize: '0.75rem', letterSpacing: '0.08em', textTransform: 'uppercase', textDecoration: 'none' }}>{l}</a>
           ))}
         </div>
-        <span style={{ color: '#ccc', fontSize: '0.75rem' }}>© ${year} ${data.brand_name}</span>
+        <span style={{ color: '#ccc', fontSize: '0.75rem' }}>© ${year} ${esc(data.brand_name)}</span>
       </footer>
     </div>
   );
@@ -501,7 +501,7 @@ export default function Home() {
       <section style={{ background: '${primary}', minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 2.5rem', position: 'relative', overflow: 'hidden' }}>
         {/* Nav inside hero */}
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.5rem 2.5rem' }}>
-          <span style={{ color: '#fff', fontWeight: 900, fontSize: '1.1rem', letterSpacing: '-0.02em' }}>${data.brand_name}</span>
+          <span style={{ color: '#fff', fontWeight: 900, fontSize: '1.1rem', letterSpacing: '-0.02em' }}>${esc(data.brand_name)}</span>
           <a href="#products" style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.75rem', letterSpacing: '0.15em', textTransform: 'uppercase', textDecoration: 'none' }}>Shop nu</a>
         </div>
 
@@ -509,7 +509,7 @@ export default function Home() {
         <div style={{ maxWidth: '900px', marginTop: '4rem' }}>
           <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.7rem', letterSpacing: '0.4em', textTransform: 'uppercase', marginBottom: '1.5rem' }}>Beperkt aanbod</p>
           <h1 style={{ fontSize: 'clamp(4rem,12vw,10rem)', fontWeight: 900, lineHeight: 0.85, letterSpacing: '-0.05em', color: '#fff', margin: '0 0 2.5rem' }}>
-            ${data.brand_name}
+            ${esc(data.brand_name)}
           </h1>
           <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: 'clamp(1rem,2vw,1.4rem)', maxWidth: '38ch', lineHeight: 1.5, marginBottom: '3rem' }}>${data.slogan}</p>
           <div style={{ display: 'flex', gap: '2rem', alignItems: 'center', flexWrap: 'wrap' }}>
@@ -570,7 +570,7 @@ export default function Home() {
 
       {/* ── Footer ── */}
       <footer style={{ background: '#111', color: '#fff', padding: '2.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-        <span style={{ fontWeight: 900, fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '-0.01em' }}>${data.brand_name}</span>
+        <span style={{ fontWeight: 900, fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '-0.01em' }}>${esc(data.brand_name)}</span>
         <div style={{ display: 'flex', gap: '2rem' }}>
           {[['Retour','/retour'],['Contact','/contact'],['FAQ','/faq']].map(([l,h]) => (
             <a key={l} href={h} style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.75rem', letterSpacing: '0.08em', textTransform: 'uppercase', textDecoration: 'none' }}>{l}</a>
@@ -602,7 +602,7 @@ export default function Home() {
           <a href="#products" style={{ color: '#8c7355', fontSize: '0.8rem', letterSpacing: '0.1em', textTransform: 'uppercase', textDecoration: 'none' }}>Shop</a>
           <a href="/over" style={{ color: '#8c7355', fontSize: '0.8rem', letterSpacing: '0.1em', textTransform: 'uppercase', textDecoration: 'none' }}>Over ons</a>
         </div>
-        <span style={{ fontWeight: 700, fontSize: '1.1rem', letterSpacing: '-0.02em' }}>${data.brand_name}</span>
+        <span style={{ fontWeight: 700, fontSize: '1.1rem', letterSpacing: '-0.02em' }}>${esc(data.brand_name)}</span>
         <a href="/contact" style={{ color: '#8c7355', fontSize: '0.8rem', letterSpacing: '0.1em', textTransform: 'uppercase', textDecoration: 'none' }}>Contact</a>
       </nav>
 
@@ -613,7 +613,7 @@ export default function Home() {
             Nieuw ${year}
           </span>
           <h1 style={{ fontSize: 'clamp(2.5rem,5vw,4.5rem)', fontWeight: 700, lineHeight: 1.1, letterSpacing: '-0.03em', margin: '0 0 1.5rem', color: '#1a120a' }}>
-            ${data.brand_name}
+            ${esc(data.brand_name)}
           </h1>
           <p style={{ color: '#7a6047', fontSize: '1.1rem', lineHeight: 1.7, maxWidth: '34ch', marginBottom: '2.5rem' }}>${data.slogan}</p>
           <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
@@ -694,7 +694,7 @@ export default function Home() {
 
       {/* ── Footer ── */}
       <footer style={{ background: '#2c2416', color: '#f6f3ee', padding: '3rem 2.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-        <span style={{ fontWeight: 700, fontSize: '1rem' }}>${data.brand_name}</span>
+        <span style={{ fontWeight: 700, fontSize: '1rem' }}>${esc(data.brand_name)}</span>
         <div style={{ display: 'flex', gap: '2rem' }}>
           {[['Over ons','/over'],['Retour','/retour'],['Contact','/contact']].map(([l,h]) => (
             <a key={l} href={h} style={{ color: 'rgba(246,243,238,0.45)', fontSize: '0.8rem', letterSpacing: '0.08em', textTransform: 'uppercase', textDecoration: 'none' }}>{l}</a>
@@ -729,7 +729,7 @@ export default function Home() {
       <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.25rem 2rem', borderBottom: '1px solid #30363d', background: 'rgba(13,17,23,0.95)', backdropFilter: 'blur(12px)', position: 'sticky', top: 0, zIndex: 50 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
           <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '${primary}', boxShadow: '0 0 8px ${primary}' }} />
-          <span style={{ fontWeight: 700, fontSize: '0.95rem', letterSpacing: '-0.01em' }}>${data.brand_name}</span>
+          <span style={{ fontWeight: 700, fontSize: '0.95rem', letterSpacing: '-0.01em' }}>${esc(data.brand_name)}</span>
         </div>
         <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
           <a href="#products" style={{ color: '#8b949e', fontSize: '0.8rem', textDecoration: 'none' }}>Producten</a>
@@ -745,7 +745,7 @@ export default function Home() {
           <span style={{ color: '#8b949e', fontSize: '0.72rem', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Live collectie ${year}</span>
         </div>
         <h1 style={{ fontSize: 'clamp(2.5rem,8vw,7rem)', fontWeight: 800, lineHeight: 0.9, letterSpacing: '-0.04em', margin: '0 0 1.5rem', background: 'linear-gradient(135deg,#e6edf3 0%,#8b949e 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-          ${data.brand_name}
+          ${esc(data.brand_name)}
         </h1>
         <p style={{ color: '#8b949e', fontSize: '1.15rem', lineHeight: 1.6, maxWidth: '44ch', marginBottom: '2.5rem' }}>${data.slogan}</p>
         <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
@@ -809,14 +809,14 @@ export default function Home() {
       <footer style={{ borderTop: '1px solid #30363d', padding: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', background: 'rgba(13,17,23,0.95)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '${primary}' }} />
-          <span style={{ fontWeight: 700, fontSize: '0.85rem' }}>${data.brand_name}</span>
+          <span style={{ fontWeight: 700, fontSize: '0.85rem' }}>${esc(data.brand_name)}</span>
         </div>
         <div style={{ display: 'flex', gap: '1.5rem' }}>
           {[['Over ons','/over'],['Retour','/retour'],['Contact','/contact'],['FAQ','/faq']].map(([l,h]) => (
             <a key={l} href={h} style={{ color: '#8b949e', fontSize: '0.75rem', textDecoration: 'none' }}>{l}</a>
           ))}
         </div>
-        <span style={{ color: '#484f58', fontSize: '0.75rem' }}>© ${year} ${data.brand_name}</span>
+        <span style={{ color: '#484f58', fontSize: '0.75rem' }}>© ${year} ${esc(data.brand_name)}</span>
       </footer>
     </div>
   );
@@ -1025,17 +1025,17 @@ function buildStaticPreviewHtml(data: StoreData): string {
   return `<!doctype html>
 <html lang="nl"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>${data.brand_name} — ${data.slogan}</title>
+<title>${esc(data.brand_name)} — ${data.slogan}</title>
 <meta name="description" content="${data.slogan}">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="${canonicalUrl}">
 <meta property="og:type" content="website">
-<meta property="og:title" content="${data.brand_name}">
+<meta property="og:title" content="${esc(data.brand_name)}">
 <meta property="og:description" content="${data.slogan}">
 <meta property="og:url" content="${canonicalUrl}">
 ${firstImage ? `<meta property="og:image" content="${firstImage}">` : ''}
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="${data.brand_name}">
+<meta name="twitter:title" content="${esc(data.brand_name)}">
 <meta name="twitter:description" content="${data.slogan}">
 <script type="application/ld+json">
 ${buildJsonLd(data, canonicalUrl)}
@@ -1063,14 +1063,14 @@ ${clarityScript}
   footer { padding: 2rem; border-top: 1px solid #e5e7eb; text-align: center; color: #64748b; font-size: 0.875rem }
 </style></head>
 <body>
-<header><span class="brand">${data.brand_name}</span><nav>Shop · Over ons · Contact</nav></header>
+<header><span class="brand">${esc(data.brand_name)}</span><nav>Shop · Over ons · Contact</nav></header>
 <section class="hero">
-  <h1>${data.brand_name}</h1>
+  <h1>${esc(data.brand_name)}</h1>
   <p>${data.slogan}</p>
   <a href="#products" class="cta">Shop nu</a>
 </section>
 <section id="products"><div class="grid">${productsHtml}</div></section>
-<footer>© ${new Date().getFullYear()} ${data.brand_name} — ${data.niche}</footer>
+<footer>© ${new Date().getFullYear()} ${esc(data.brand_name)} — ${data.niche}</footer>
 </body></html>`
 }
 
