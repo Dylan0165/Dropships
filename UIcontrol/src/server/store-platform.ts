@@ -882,7 +882,7 @@ ${productsJson}
 USPs:
 ${uspsText}
 
-Rules: inline styles only, no Tailwind, only the checkout import, all & → &amp; in JSX text.`
+Rules: inline styles only, no Tailwind, NO imports of any kind, all & → &amp; in JSX text, must compile with tsc --strict.`
 
   try {
     const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
