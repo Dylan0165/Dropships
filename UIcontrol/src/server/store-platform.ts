@@ -1368,7 +1368,7 @@ export async function deployStore(storeData: StoreData): Promise<DeployedStore> 
     rmDirRecursive(baseDir)
     ensureDir(baseDir)
     copyComponents(baseDir, data)
-    writeNextScaffold(baseDir, data)
+    await writeNextScaffold(baseDir, data)
     fs.writeFileSync(path.join(baseDir, 'index.html'), buildStaticPreviewHtml(data), 'utf-8')
     fs.writeFileSync(path.join(baseDir, 'store.json'), JSON.stringify({ storeId, ...data, createdAt }, null, 2), 'utf-8')
 
