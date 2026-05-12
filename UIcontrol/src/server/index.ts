@@ -773,32 +773,10 @@ app.get('/api/obs/logs', (req, res) => {
   }
 })
 
-app.get('/api/obs/costs', (_req, res) => {
+app.get('/api/obs/costs', (req, res) => {
   try {
-    const byRun = db.prepare(`
-      SELECT run_id,
-             SUM(cost_usd)    AS total_cost_usd,
-             SUM(tokens_in)   AS total_tokens_in,
-             SUM(tokens_out)  AS total_tokens_out,
-             COUNT(*)         AS calls,
-             MIN(started_at)  AS started_at
-      FROM agent_executions
-      GROUP BY run_id
-      ORDER BY started_at DESC
-      LIMIT 50
-    `).all()
-    const byAgent = db.prepare(`
-      SELECT agent_name,
-             SUM(cost_usd)    AS total_cost_usd,
-             AVG(duration_ms) AS avg_duration_ms,
-             COUNT(*)         AS calls,
-             SUM(CASE WHEN status='success' THEN 1 ELSE 0 END) AS successes,
-             SUM(CASE WHEN status='failed'  THEN 1 ELSE 0 END) AS failures
-      FROM agent_executions
-      GROUP BY agent_name
-      ORDER BY total_cost_usd DESC
-    `).all()
-    res.json({ byRun, byAgent })
+    const runId = (req.query.run_id as string | undefined) ?? undefined
+    res.json(aggregateCosts(runId))
   } catch (err) {
     res.status(500).json({ error: String(err) })
   }
