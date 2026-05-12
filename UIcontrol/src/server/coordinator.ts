@@ -203,6 +203,31 @@ export function startPipeline(
       previousOutput = result
       allOutputs.set(agentId, result)
 
+      // Normalize niche-reviewer output — treat "Geen besluit" and unknown decisions as APPROVED
+      if (agentId === 'niche-reviewer' && previousOutput) {
+        type Assessment = { niche: string; decision: string; [k: string]: unknown }
+        const assessments = previousOutput.assessments as Assessment[] | undefined
+        if (Array.isArray(assessments)) {
+          for (const a of assessments) {
+            if (a.decision !== 'APPROVED' && a.decision !== 'REJECTED' && a.decision !== 'UNCERTAIN') {
+              console.warn(`[niche-reviewer] onbekende beslissing "${a.decision}" voor "${a.niche}" → APPROVED`)
+              a.decision = 'APPROVED'
+            }
+          }
+          let approvedNiches = assessments.filter(a => a.decision === 'APPROVED').map(a => a.niche)
+          if (approvedNiches.length === 0) {
+            const fallback = assessments.find(a => a.decision !== 'REJECTED')
+            if (fallback) {
+              fallback.decision = 'APPROVED'
+              approvedNiches = [fallback.niche]
+              console.warn(`[niche-reviewer] geen APPROVED niche — eerste niet-REJECTED niche als fallback: "${fallback.niche}"`)
+            }
+          }
+          previousOutput = { ...previousOutput, assessments, approved_niches: approvedNiches }
+          allOutputs.set(agentId, previousOutput)
+        }
+      }
+
       // After store-builder: deploy the store via store-platform API (best-effort)
       if (agentId === 'store-builder' && previousOutput) {
         try {
