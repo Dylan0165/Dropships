@@ -34,8 +34,6 @@ void _saveAgentOutput
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const workspaceRoot = path.resolve(__dirname, '../../../')
-const COMPONENTS_DIR = path.join(workspaceRoot, 'Websitecomponentscodes')
-
 const PORT = parseInt(process.env.PLATFORM_PORT ?? '3002', 10)
 const STORE_SERVER_HOST = process.env.STORE_SERVER_HOST || ''
 const STORE_SERVER_USER = process.env.STORE_SERVER_USER || 'deploy'
