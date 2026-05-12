@@ -1,70 +1,56 @@
 import clsx from 'clsx'
-import { AlertTriangle, Wifi, WifiOff } from 'lucide-react'
-import type { PipelineRun } from '@/types'
+import { Wifi, WifiOff } from 'lucide-react'
+import { useEffect, useState } from 'react'
 
-interface Props {
-  activeRun: PipelineRun | null
-  totalCostEur: number
-  activeEscalations: number
-  wsConnected: boolean
-}
+export function TopBar() {
+  const [wsConnected, setWsConnected] = useState(false)
+  const [totalEur, setTotalEur] = useState(0)
 
-export function TopBar({ activeRun, totalCostEur, activeEscalations, wsConnected }: Props) {
-  const completedCount = activeRun
-    ? Object.values(activeRun.agents).filter((a) => a.status === 'completed').length
-    : 0
-  const totalAgents = activeRun ? Object.keys(activeRun.agents).length : 0
+  useEffect(() => {
+    let cancelled = false
 
-  type StatusCfg = { dot: string; text: string; label: string; badge: string }
-  const statusConfig = (): StatusCfg => {
-    if (!activeRun || activeRun.status === 'idle')
-      return { dot: 'bg-zinc-600', text: 'text-zinc-500', label: 'Idle', badge: '' }
-    if (activeRun.status === 'running')
-      return { dot: 'bg-emerald-400 animate-pulse', text: 'text-white', label: activeRun.niche ?? 'Running', badge: `${completedCount}/${totalAgents}` }
-    if (activeRun.status === 'paused')
-      return { dot: 'bg-amber-400', text: 'text-amber-400', label: 'Paused', badge: '' }
-    if (activeRun.status === 'failed')
-      return { dot: 'bg-red-400', text: 'text-red-400', label: 'Failed', badge: '' }
-    if (activeRun.status === 'completed')
-      return { dot: 'bg-emerald-400', text: 'text-white', label: `Done — ${activeRun.niche}`, badge: '' }
-    return { dot: 'bg-zinc-600', text: 'text-zinc-500', label: 'Idle', badge: '' }
-  }
+    function probe() {
+      const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+      const host = window.location.hostname
+      const port = import.meta.env.VITE_WS_PORT ?? '3001'
+      const ws = new WebSocket(`${proto}//${host}:${port}/ws`)
+      ws.onopen  = () => !cancelled && setWsConnected(true)
+      ws.onclose = () => {
+        if (cancelled) return
+        setWsConnected(false)
+        setTimeout(probe, 3000)
+      }
+      ws.onerror = () => { /* close fires next */ }
+    }
+    probe()
 
-  const s = statusConfig()
+    function loadCosts() {
+      fetch('/api/obs/costs')
+        .then(r => r.ok ? r.json() : null)
+        .then((data: { byRun: Array<{ totalUsd: number }> } | null) => {
+          if (cancelled || !data) return
+          const sum = data.byRun.reduce((a, x) => a + x.totalUsd, 0)
+          setTotalEur(sum * 0.92)
+        })
+        .catch(() => { /* ignore */ })
+    }
+    loadCosts()
+    const interval = setInterval(loadCosts, 30_000)
+
+    return () => { cancelled = true; clearInterval(interval) }
+  }, [])
 
   return (
     <header className="h-[52px] flex-shrink-0 bg-[#0a0a0a] border-b border-white/[0.07] px-5 flex items-center justify-between z-50">
-      {/* Left — brand */}
       <div className="flex items-center gap-2.5">
         <span className="font-semibold text-white tracking-tight text-sm">Dropship</span>
         <span className="text-[10px] border border-white/[0.1] text-zinc-500 px-1.5 py-0.5 rounded-full font-mono">v0.1</span>
       </div>
 
-      {/* Center — status pill */}
-      <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/[0.03] border border-white/[0.07]">
-        <span className={clsx('w-1.5 h-1.5 rounded-full flex-shrink-0', s.dot)} />
-        <span className={clsx('text-xs font-medium truncate max-w-[220px]', s.text)}>{s.label}</span>
-        {s.badge && (
-          <span className="text-[10px] text-zinc-500 bg-white/[0.05] px-1.5 py-0.5 rounded-full flex-shrink-0 font-mono">{s.badge}</span>
-        )}
-      </div>
-
-      {/* Right — metrics */}
       <div className="flex items-center gap-4">
-        {/* Cost */}
-        {totalCostEur > 0 && (
-          <span className="text-white font-semibold font-mono text-sm">€{totalCostEur.toFixed(3)}</span>
+        {totalEur > 0 && (
+          <span className="text-white font-semibold font-mono text-sm">€{totalEur.toFixed(3)}</span>
         )}
-
-        {/* Escalations */}
-        {activeEscalations > 0 && (
-          <div className="flex items-center gap-1.5 bg-red-500/10 border border-red-500/20 rounded-full px-2.5 py-1">
-            <AlertTriangle size={11} className="text-red-400" />
-            <span className="text-red-400 text-xs font-bold">{activeEscalations}</span>
-          </div>
-        )}
-
-        {/* WS status */}
         <div
           title={wsConnected ? 'WebSocket connected' : 'WebSocket disconnected'}
           className={clsx(
