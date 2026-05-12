@@ -8,7 +8,6 @@ import fs from 'fs'
 import { fileURLToPath } from 'url'
 import type { AgentId, WsEvent } from '../types/index.js'
 import * as store from './store.js'
-import * as coordinator from './coordinator.js'
 import * as deepseek from './deepseek.js'
 import * as trendscraper from './trendscraper.js'
 import { createPayment, handleWebhook, getCheckoutOrders } from './mollie.js'
@@ -19,8 +18,17 @@ import { runSkillsUpdate, recordSkillPerformance, getSkillsStats } from './skill
 import { createExperiment, assignComponentVariant, recordComponentConversion, declareWinner, getExperiments, getWinners, getExperimentStats } from './component-lab.js'
 import { runSeasonalCheck, getActiveSeasons } from './seasonal.js'
 import { getStoreBranding, generateAdsForStore, animateAdWithHiggsfield, killAd, getAdsForStore, startHiggsfieldPoller } from './ad-manager.js'
-import db, { getAgentOutput, getResumableRuns } from './db.js'
+import db, { getAgentOutput, listRecentRuns, aggregateCosts } from './db.js'
 import { notifyApprovalNeeded } from './whatsapp.js'
+import {
+  startRun as pipelineStartRun,
+  pauseRun as pipelinePauseRun,
+  resumeRun as pipelineResumeRun,
+  stopRun as pipelineStopRun,
+  getRunState as pipelineGetRunState,
+  resumePersistedRuns,
+  pipelineEvents,
+} from './pipeline/index.js'
 
 const APPROVAL_PIN = process.env.APPROVAL_PIN ?? '1234'
 
