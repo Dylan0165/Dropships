@@ -6,6 +6,8 @@
 import { useState, useEffect } from 'react'
 import { X, Save, RefreshCw, ExternalLink, AlertCircle, CheckCircle2 } from 'lucide-react'
 
+const STORE_HOST = (import.meta.env.VITE_STORE_SERVER_HOST as string) ?? '192.168.121.11'
+
 interface Product {
   id: string
   title: string
