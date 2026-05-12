@@ -277,25 +277,11 @@ app.get('/api/runs/:runId/agents/:agentId/output', (req, res) => {
   res.status(404).json({ error: 'No output available' })
 })
 
-app.get('/api/runs/:runId/resume', (req, res) => {
+app.get('/api/runs/:runId/resume', async (req, res) => {
   const run = store.getRun(req.params.runId)
-  if (!run) {
-    res.status(404).json({ error: 'Run not found' })
-    return
-  }
-  if (run.status !== 'running') {
-    res.status(409).json({ error: `Run is ${run.status} — only running runs can be resumed` })
-    return
-  }
-  // Restart pipeline from where it left off
-  coordinator.startPipeline(run.runId, run.niche, broadcast)
-  broadcast({
-    type: 'pipeline_started',
-    runId: run.runId,
-    payload: { niche: run.niche, resumed: true },
-    timestamp: new Date().toISOString(),
-  })
-  res.json({ resumed: true, runId: run.runId, niche: run.niche })
+  if (!run) { res.status(404).json({ error: 'Run not found' }); return }
+  const state = await pipelineResumeRun(req.params.runId)
+  res.json({ resumed: !!state, runId: req.params.runId, niche: run.niche })
 })
 
 app.get('/api/stores', (_req, res) => {
