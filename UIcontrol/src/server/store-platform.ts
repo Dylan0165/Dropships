@@ -262,7 +262,7 @@ export default function Home() {
 
       {/* ── Nav ── */}
       <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.5rem 2.5rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-        <span style={{ fontWeight: 900, fontSize: '1.1rem', letterSpacing: '-0.03em' }}>${data.brand_name.toUpperCase()}</span>
+        <span style={{ fontWeight: 900, fontSize: '1.1rem', letterSpacing: '-0.03em' }}>${esc(data.brand_name).toUpperCase()}</span>
         <div style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
           <a href="#products" style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.7rem', letterSpacing: '0.2em', textTransform: 'uppercase', textDecoration: 'none' }}>Shop</a>
           <a href="/contact" style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.7rem', letterSpacing: '0.2em', textTransform: 'uppercase', textDecoration: 'none' }}>Contact</a>
@@ -334,7 +334,7 @@ export default function Home() {
 
       {/* ── Footer ── */}
       <footer style={{ borderTop: '1px solid rgba(255,255,255,0.06)', padding: '2rem 2.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-        <span style={{ fontWeight: 900, fontSize: '0.9rem', letterSpacing: '-0.02em' }}>${data.brand_name.toUpperCase()}</span>
+        <span style={{ fontWeight: 900, fontSize: '0.9rem', letterSpacing: '-0.02em' }}>${esc(data.brand_name).toUpperCase()}</span>
         <div style={{ display: 'flex', gap: '2rem' }}>
           {[['Over ons','/over'],['Retour','/retour'],['Contact','/contact'],['FAQ','/faq']].map(([l,h]) => (
             <a key={l} href={h} style={{ color: 'rgba(255,255,255,0.25)', fontSize: '0.7rem', letterSpacing: '0.1em', textTransform: 'uppercase', textDecoration: 'none' }}>{l}</a>
