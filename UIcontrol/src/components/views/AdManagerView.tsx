@@ -203,7 +203,7 @@ export function AdManagerView() {
           {storesWithAds.map(store => {
             const live   = store.ads.filter(a => a.status === 'published').length
             const killed = store.ads.filter(a => a.status === 'killed').length
-            const isLive = store.status === 'live' || store.status === 'local'
+            const isLive = (store.status as string) === 'live' || (store.status as string) === 'local'
             return (
               <button
                 key={store.storeId}
