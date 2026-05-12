@@ -478,17 +478,6 @@ export async function deployStore(storeData: StoreData): Promise<DeployedStore> 
       return fallback
     }
 
-    // STEP 3 — scp + nginx reload
-    const remoteRoot = `/var/www/stores/${subdomain}`
-    await sshExec(`sudo mkdir -p ${remoteRoot} && sudo chown -R ${STORE_SERVER_USER}:${STORE_SERVER_USER} ${remoteRoot}`)
-    const buildOk = await scpToRemote(path.join(baseDir, 'out'), `${remoteRoot}/`)
-    if (!buildOk) {
-      const fallback = { storeId, subdomain, niche: data.niche, status: 'failed' as const,
-        previewUrl: '', filesPath: baseDir, createdAt, errorMessage: 'scp failed' }
-      persistStore(fallback, storeData.runId)
-      return fallback
-    }
-
     // STEP 3 — atomic deploy: symlink-based releases + nginx reload + auto-rollback
     const maxNginxPort = await getHighestNginxPort()
     if (maxNginxPort > 0) {
