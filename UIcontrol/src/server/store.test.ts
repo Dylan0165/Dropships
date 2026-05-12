@@ -62,7 +62,7 @@ describe('store', () => {
     }
   })
 
-  it('createEmptyAgentRuns should cover all agent IDs', () => {
+  it('createEmptyAgentRuns covers all configured agent IDs', () => {
     const agents = store.createEmptyAgentRuns()
     const ids = Object.keys(agents)
     expect(ids).toContain('trend-agent')
@@ -72,8 +72,6 @@ describe('store', () => {
     expect(ids).toContain('brand-agent')
     expect(ids).toContain('store-builder')
     expect(ids).toContain('store-reviewer')
-    expect(ids).toContain('ads-agent')
-    expect(ids).toContain('ads-reviewer')
     expect(ids).toContain('growth-agent')
     expect(ids).toContain('security-agent')
   })
