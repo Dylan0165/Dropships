@@ -1086,12 +1086,7 @@ app.use((err: Error, _req: express.Request, res: express.Response, _next: expres
 // ── Resume any in-flight runs that were interrupted by a server restart ──
 function resumeInterruptedRuns(): void {
   try {
-    const runs = getResumableRuns()
-    if (runs.length === 0) return
-    console.log(`[server] resuming ${runs.length} interrupted run(s):`, runs.map(r => r.runId.slice(0, 8)).join(', '))
-    for (const r of runs) {
-      coordinator.startPipeline(r.runId, r.niche, broadcast)
-    }
+    resumePersistedRuns()
   } catch (err) {
     console.error('[server] resumeInterruptedRuns failed:', err)
   }
