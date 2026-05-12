@@ -489,31 +489,22 @@ export async function deployStore(storeData: StoreData): Promise<DeployedStore> 
       return fallback
     }
 
-    // Vraag de store server naar de hoogste nginx-poort in gebruik
-    // Dit voorkomt port-conflicten als de DB leeg/uit-sync is met de store server
-    const maxNginxRes = await sshExec(
-      `grep -rh "listen" /etc/nginx/sites-available/ 2>/dev/null | grep -v "listen 80" | grep -oE "[0-9]{4,}" | sort -n | tail -1`
-    )
-    const maxNginxPort = parseInt(maxNginxRes.output.trim(), 10) || 0
+    // STEP 3 — atomic deploy: symlink-based releases + nginx reload + auto-rollback
+    const maxNginxPort = await getHighestNginxPort()
     if (maxNginxPort > 0) {
       console.log(`[store-platform] hoogste nginx poort op store server: ${maxNginxPort}`)
     }
-
-    // Write nginx vhost remotely (inclusief poort-block)
-    // Geef maxNginxPort mee als vloer zodat de nieuwe store altijd een vrije poort krijgt
     const assignedPort = assignPort(storeId, maxNginxPort)
-    const nginxLocal = path.join(baseDir, 'nginx.conf')
-    fs.writeFileSync(nginxLocal, nginxConfig(subdomain, assignedPort), 'utf-8')
-    await scpToRemote(nginxLocal, `/tmp/${subdomain}.nginx.conf`)
-    const nginxRes = await sshExec(
-      `sudo mv /tmp/${subdomain}.nginx.conf /etc/nginx/sites-available/${subdomain} && ` +
-      `sudo ln -sf /etc/nginx/sites-available/${subdomain} /etc/nginx/sites-enabled/${subdomain} && ` +
-      `sudo nginx -t && sudo systemctl reload nginx`,
+    const deployRes = await atomicDeploy(
+      subdomain,
+      path.join(baseDir, 'out'),
+      assignedPort,
+      (msg) => console.log(`[store-platform] ${msg}`),
     )
-    if (!nginxRes.ok) {
-      console.error(`[store-platform] nginx reload failed: ${nginxRes.output.slice(-500)}`)
+    if (!deployRes.ok) {
+      console.error(`[store-platform] atomicDeploy mislukt: ${deployRes.error}`)
       const fallback = { storeId, subdomain, niche: data.niche, status: 'failed' as const,
-        previewUrl: '', filesPath: baseDir, createdAt, errorMessage: 'nginx reload failed' }
+        previewUrl: '', filesPath: baseDir, createdAt, errorMessage: deployRes.error }
       persistStore(fallback, storeData.runId)
       return fallback
     }
@@ -522,7 +513,7 @@ export async function deployStore(storeData: StoreData): Promise<DeployedStore> 
     const live = { storeId, subdomain, niche: data.niche, status: 'live' as const,
       previewUrl, filesPath: baseDir, createdAt }
     persistStore(live, storeData.runId, data)
-    console.log(`[store-platform] live store deployed: ${subdomain} → ${previewUrl}`)
+    console.log(`[store-platform] live store deployed: ${subdomain} → ${previewUrl} (port ${assignedPort})`)
     return live
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
