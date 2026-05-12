@@ -146,7 +146,7 @@ export default function StoreEditor({ storeId, subdomain, niche, onClose, onSave
             <p style={{ margin: '0.25rem 0 0', fontSize: '0.75rem', color: '#555' }}>{niche}</p>
           </div>
           <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-            <a href={`http://192.168.121.8:4001`} target="_blank" rel="noopener" style={{ color: '#555', display: 'flex', alignItems: 'center' }}>
+            <a href={`http://${STORE_HOST}:4001`} target="_blank" rel="noopener" style={{ color: '#555', display: 'flex', alignItems: 'center' }}>
               <ExternalLink size={14} />
             </a>
             <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#555', cursor: 'pointer', display: 'flex', padding: '0.25rem' }}>
