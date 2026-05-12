@@ -1031,9 +1031,9 @@ async function writeNextScaffold(targetDir: string, data: StoreData): Promise<vo
     `  );\n` +
     `}\n`, 'utf-8')
 
-  // page.tsx — layout-specific
-  fs.writeFileSync(path.join(targetDir, 'app/page.tsx'),
-    generatePageTsx(layoutIdx, data, usps, primary, secondary, accent), 'utf-8')
+  // page.tsx — AI-generated (DeepSeek), static template as fallback
+  const pageTsx = await generatePageWithAI(data, usps, primary, font)
+  fs.writeFileSync(path.join(targetDir, 'app/page.tsx'), pageTsx, 'utf-8')
 }
 
 // ── SEO assets ───────────────────────────────────────────────────────────────
