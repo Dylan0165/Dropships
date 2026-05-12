@@ -9,11 +9,43 @@
 import path from 'path'
 import fs from 'fs'
 import { fileURLToPath } from 'url'
+import { v4 as uuid } from 'uuid'
+import { logAgentExecution } from './db.js'
+import { getAgent } from './agents/registry.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const workspaceRoot = path.resolve(__dirname, '../../../')
 const SKILLS_PATH = process.env.SKILLS_PATH ?? path.join(workspaceRoot, 'Skillslibrary')
 const MAX_ATTEMPTS = 3
+
+// ── Circuit breaker state (in-memory per process) ────────────────────────────
+interface CircuitState { failures: number; openUntil: number }
+const circuitBreakers = new Map<string, CircuitState>()
+const CIRCUIT_OPEN_MS = 5 * 60 * 1000  // 5 minuten
+
+function isCircuitOpen(agentId: string): boolean {
+  const s = circuitBreakers.get(agentId)
+  if (!s) return false
+  if (Date.now() < s.openUntil) return true
+  // Reset after cooldown
+  circuitBreakers.delete(agentId)
+  return false
+}
+
+function recordCircuitFailure(agentId: string): void {
+  const threshold = getAgent(agentId).circuitBreakerThreshold
+  const s = circuitBreakers.get(agentId) ?? { failures: 0, openUntil: 0 }
+  s.failures++
+  if (s.failures >= threshold) {
+    s.openUntil = Date.now() + CIRCUIT_OPEN_MS
+    console.warn(`[agent-runner] Circuit breaker OPEN voor ${agentId} — pauze ${CIRCUIT_OPEN_MS / 60000} min`)
+  }
+  circuitBreakers.set(agentId, s)
+}
+
+function recordCircuitSuccess(agentId: string): void {
+  circuitBreakers.delete(agentId)
+}
 
 // ── LLM provider config ───────────────────────────────────────────────────────
 // Werkt met zowel Ollama (lokaal) als DeepSeek API.
