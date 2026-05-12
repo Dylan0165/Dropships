@@ -173,9 +173,8 @@ function LogsTab() {
           </thead>
           <tbody className="divide-y divide-white/[0.03]">
             {filtered.map(row => (
-              <>
+              <Fragment key={row.id}>
                 <tr
-                  key={row.id}
                   onClick={() => setExpanded(expanded === row.id ? null : row.id)}
                   className="cursor-pointer hover:bg-white/[0.02] transition-colors"
                 >
@@ -198,7 +197,7 @@ function LogsTab() {
                   </td>
                 </tr>
                 {expanded === row.id && (
-                  <tr key={`${row.id}-expanded`} className="bg-white/[0.015]">
+                  <tr className="bg-white/[0.015]">
                     <td colSpan={7} className="px-4 py-3 space-y-2">
                       {row.error_message && (
                         <div className="bg-red-900/20 border border-red-700/30 rounded-lg p-2.5">
@@ -222,7 +221,7 @@ function LogsTab() {
                     </td>
                   </tr>
                 )}
-              </>
+              </Fragment>
             ))}
           </tbody>
         </table>
