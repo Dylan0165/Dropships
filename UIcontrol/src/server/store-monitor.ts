@@ -6,7 +6,7 @@
  * Resultaten worden opgeslagen in de stores tabel (health_status, health_response_ms, etc.)
  *
  * Poortbeheer: eerste store krijgt poort 4001, elke volgende +1.
- * De poort wordt ook via nginx op 192.168.121.8 bereikbaar gemaakt (naast subdomain).
+ * De poort wordt ook via nginx op 192.168.121.11 bereikbaar gemaakt (naast subdomain).
  */
 
 import db from './db.js'
