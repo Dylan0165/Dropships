@@ -1,0 +1,115 @@
+'use client';
+
+interface Product { id: string; title: string; image: string; price: number; compareAtPrice?: number; badge?: string; description?: string }
+const PRODUCTS: Product[] = {{PRODUCTS_JSON}};
+const PRIMARY = '{{PRIMARY}}';
+
+export default function Home() {
+  const year = new Date().getFullYear();
+  return (
+    <div style={{ background: '#fdf8f3', color: '#2d2417', minHeight: '100vh', fontFamily: 'inherit' }}>
+
+      {/* Nav */}
+      <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.5rem 3rem', background: 'rgba(253,248,243,0.95)', backdropFilter: 'blur(8px)', position: 'sticky', top: 0, zIndex: 10, borderBottom: '1px solid rgba(45,36,23,0.08)' }}>
+        <span style={{ fontWeight: 700, fontSize: '1.1rem', color: '#2d2417', letterSpacing: '-0.01em' }}>{{BRAND_NAME}}</span>
+        <div style={{ display: 'flex', gap: '2.5rem' }}>
+          <a href="#products" style={{ color: '#8a7260', fontSize: '0.85rem', textDecoration: 'none' }}>Shop</a>
+          <a href="#over" style={{ color: '#8a7260', fontSize: '0.85rem', textDecoration: 'none' }}>Over ons</a>
+          <a href="#contact" style={{ color: '#8a7260', fontSize: '0.85rem', textDecoration: 'none' }}>Contact</a>
+        </div>
+      </nav>
+
+      {/* Hero */}
+      <section style={{ padding: '6rem 3rem', maxWidth: '1100px', margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1.2fr', gap: '4rem', alignItems: 'center' }}>
+        <div>
+          <p style={{ color: PRIMARY, fontSize: '0.75rem', letterSpacing: '0.25em', textTransform: 'uppercase', marginBottom: '1.5rem', fontWeight: 600 }}>Handgemaakt met zorg</p>
+          <h1 style={{ fontSize: 'clamp(2.5rem,5vw,4.5rem)', fontWeight: 700, lineHeight: 1.1, letterSpacing: '-0.03em', margin: '0 0 1.5rem', color: '#2d2417' }}>
+            {{HERO_HEADLINE}}
+          </h1>
+          <p style={{ color: '#8a7260', fontSize: '1.05rem', lineHeight: 1.75, maxWidth: '38ch', marginBottom: '2.5rem' }}>{{SLOGAN}}</p>
+          <a href="#products" style={{ display: 'inline-block', background: '#2d2417', color: '#fdf8f3', padding: '1rem 2.5rem', fontSize: '0.85rem', letterSpacing: '0.08em', textDecoration: 'none', fontWeight: 600, borderRadius: '2px' }}>
+            Ontdek de collectie
+          </a>
+        </div>
+        <div style={{ borderRadius: '4px', overflow: 'hidden', background: '#efe8df' }}>
+          {PRODUCTS[0]?.image
+            ? <img src={PRODUCTS[0].image} alt={PRODUCTS[0].title} style={{ width: '100%', aspectRatio: '4/5', objectFit: 'cover', display: 'block' }} />
+            : <div style={{ width: '100%', aspectRatio: '4/5', background: '#e0d5c8' }} />}
+        </div>
+      </section>
+
+      {/* USPs */}
+      <section style={{ background: '#fff', padding: '3rem', borderTop: '1px solid rgba(45,36,23,0.08)', borderBottom: '1px solid rgba(45,36,23,0.08)' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '2rem', maxWidth: '900px', margin: '0 auto', textAlign: 'center' }}>
+          {[
+            { t: '{{USP_1_TITLE}}', d: '{{USP_1_DESC}}' },
+            { t: '{{USP_2_TITLE}}', d: '{{USP_2_DESC}}' },
+            { t: '{{USP_3_TITLE}}', d: '{{USP_3_DESC}}' },
+          ].map((u,i) => (
+            <div key={i}>
+              <div style={{ width: '40px', height: '2px', background: PRIMARY, margin: '0 auto 1rem' }} />
+              <h3 style={{ fontSize: '0.9rem', fontWeight: 600, marginBottom: '0.5rem', color: '#2d2417' }}>{u.t}</h3>
+              <p style={{ color: '#8a7260', fontSize: '0.8rem', lineHeight: 1.6, margin: 0 }}>{u.d}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Products */}
+      <section id="products" style={{ padding: '5rem 3rem', maxWidth: '1200px', margin: '0 auto' }}>
+        <h2 style={{ fontSize: '1.75rem', fontWeight: 700, letterSpacing: '-0.02em', marginBottom: '0.75rem', color: '#2d2417' }}>Onze collectie</h2>
+        <p style={{ color: '#8a7260', fontSize: '0.9rem', marginBottom: '3rem' }}>Zorgvuldig samengesteld voor jou</p>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(260px,1fr))', gap: '2.5rem' }}>
+          {PRODUCTS.map((p,i) => (
+            <div key={i} style={{ cursor: 'pointer' }}>
+              <div style={{ borderRadius: '4px', overflow: 'hidden', background: '#efe8df', marginBottom: '1.25rem', position: 'relative' }}>
+                {p.image
+                  ? <img src={p.image} alt={p.title} style={{ width: '100%', aspectRatio: '1/1', objectFit: 'cover', display: 'block', transition: 'transform 0.5s ease' }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLImageElement).style.transform = 'scale(1.04)' }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLImageElement).style.transform = 'scale(1)' }} />
+                  : <div style={{ width: '100%', aspectRatio: '1/1', background: '#e0d5c8' }} />}
+                {p.badge && <span style={{ position: 'absolute', top: '1rem', right: '1rem', background: PRIMARY, color: '#fff', fontSize: '0.65rem', fontWeight: 700, padding: '0.2rem 0.6rem', letterSpacing: '0.1em', borderRadius: '2px', textTransform: 'uppercase' }}>{p.badge}</span>}
+              </div>
+              <h3 style={{ fontSize: '0.95rem', fontWeight: 600, margin: '0 0 0.4rem', color: '#2d2417' }}>{p.title}</h3>
+              <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                <span style={{ fontWeight: 700, color: '#2d2417' }}>&#8364;{p.price.toFixed(2)}</span>
+                {p.compareAtPrice && <span style={{ color: '#bba99a', fontSize: '0.85rem', textDecoration: 'line-through' }}>&#8364;{p.compareAtPrice.toFixed(2)}</span>}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Reviews */}
+      <section style={{ padding: '5rem 3rem', background: '#fff', borderTop: '1px solid rgba(45,36,23,0.08)' }}>
+        <h2 style={{ textAlign: 'center', fontSize: '1.5rem', fontWeight: 700, marginBottom: '3rem', color: '#2d2417' }}>Klantenverhalen</h2>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))', gap: '2rem', maxWidth: '900px', margin: '0 auto' }}>
+          {[
+            { n: 'Emma S.',   s: 5, t: 'Precies wat ik zocht. Natuur en duurzaamheid in &#233;&#233;n.' },
+            { n: 'Pieter W.', s: 5, t: 'Mooie kwaliteit en snel geleverd. Top service!' },
+            { n: 'Lisa N.',   s: 4, t: 'Blij verrast door de presentatie. Een cadeau in zichzelf.' },
+          ].map((r,i) => (
+            <div key={i} style={{ padding: '2rem', background: '#fdf8f3', borderRadius: '4px' }}>
+              <div style={{ display: 'flex', gap: '2px', marginBottom: '1rem' }}>
+                {Array.from({ length: r.s }).map((_,j) => <span key={j} style={{ color: PRIMARY, fontSize: '0.85rem' }}>&#9733;</span>)}
+              </div>
+              <p style={{ color: '#5a4a3a', fontSize: '0.9rem', lineHeight: 1.7, marginBottom: '1rem', fontStyle: 'italic' }} dangerouslySetInnerHTML={{ __html: `"${r.t}"` }} />
+              <span style={{ fontWeight: 600, fontSize: '0.8rem', color: '#2d2417' }}>&#8212; {r.n}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer style={{ background: '#2d2417', color: '#fdf8f3', padding: '3rem', textAlign: 'center' }}>
+        <p style={{ fontWeight: 700, letterSpacing: '0.1em', marginBottom: '1rem' }}>{{BRAND_NAME}}</p>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '2rem', marginBottom: '2rem', flexWrap: 'wrap' }}>
+          {[['Over ons','/over'],['Retour','/retour'],['Contact','/contact'],['FAQ','/faq']].map(([l,h]) => (
+            <a key={l} href={h} style={{ color: '#8a7260', fontSize: '0.8rem', textDecoration: 'none' }}>{l}</a>
+          ))}
+        </div>
+        <p style={{ color: '#5a4a3a', fontSize: '0.75rem', margin: 0 }}>&#169; {year} {{BRAND_NAME}}</p>
+      </footer>
+    </div>
+  );
+}
