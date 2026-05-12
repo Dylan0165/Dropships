@@ -1,5 +1,5 @@
 import { useEffect, useState, Fragment } from 'react'
-import { RefreshCw, Download, Search, Filter, DollarSign, Activity, CheckCircle, XCircle, Clock } from 'lucide-react'
+import { RefreshCw, Download, Search, DollarSign, Activity, CheckCircle, XCircle, Clock } from 'lucide-react'
 import clsx from 'clsx'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
