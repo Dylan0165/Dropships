@@ -82,7 +82,7 @@ export function StoresView() {
       if (data.error) {
         const isConnErr = data.error.includes('niet bereikbaar') || data.error.includes('No route') || data.error.includes('Connection')
         setSyncResult(isConnErr
-          ? `Store server niet bereikbaar. Zet STORE_SERVER_HOST leeg in .env voor lokale modus, of start de store server op ${data.error.match(/\d+\.\d+\.\d+\.\d+/)?.[0] ?? '192.168.121.8'}.`
+          ? `Store server niet bereikbaar. Zet STORE_SERVER_HOST leeg in .env voor lokale modus, of start de store server op ${data.error.match(/\d+\.\d+\.\d+\.\d+/)?.[0] ?? '192.168.121.11'}.`
           : `Fout: ${data.error}`)
       } else {
         const parts = []
