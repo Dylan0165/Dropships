@@ -824,7 +824,107 @@ export default function Home() {
 `
 }
 
-function writeNextScaffold(targetDir: string, data: StoreData): void {
+async function generatePageWithAI(
+  data: StoreData,
+  usps: Array<{title: string; desc: string}>,
+  primary: string,
+  font: { heading: string; body: string },
+): Promise<string> {
+  const apiKey = process.env.DEEPSEEK_API_KEY
+  if (!apiKey) {
+    console.warn('[store-platform] DEEPSEEK_API_KEY niet ingesteld — statisch template gebruikt')
+    return generatePageTsx(selectLayout(data.niche), data, usps, primary)
+  }
+
+  const productsJson = JSON.stringify(data.products, null, 2)
+  const uspsText = usps.map((u, i) => `${i + 1}. ${u.title}: ${u.desc}`).join('\n')
+
+  const systemPrompt = `You are an expert Next.js / React developer specializing in high-converting e-commerce pages.
+Generate a complete, production-ready Next.js page.tsx for a dropshipping store.
+
+STRICT RULES:
+1. Start with exactly: 'use client';
+2. Only allowed import: import { initiateCheckout } from '../components/shared/checkout';
+3. NO other imports — no React import needed (Next.js auto-imports it), no external libs.
+4. ALL styling via React inline styles (style={{ ... }}) — NO Tailwind classes, NO className, NO CSS files.
+5. The page must be fully self-contained and compile without any other files.
+6. ALL ampersand (&) characters in JSX text content MUST be written as &amp;
+7. Return ONLY the TypeScript/TSX code. No markdown fences, no explanation text.
+
+REQUIRED SECTIONS (in this order):
+- Nav: brand name left, navigation links right
+- Hero: large visually striking headline, slogan subtitle, "Shop nu" CTA button
+- Products: responsive grid — each card has image, title, price, compare price (strikethrough), "Kopen" button that calls initiateCheckout
+- USPs: three selling points (use the provided USPs)
+- Reviews: three hardcoded Dutch customer reviews with star ratings
+- Footer: © year, brand name
+
+DESIGN: Create a UNIQUE visual concept tailored specifically to the niche.
+Primary color: ${primary}
+Heading font: ${font.heading}
+Body font: ${font.body}
+Match tone to niche: sport = energetic, luxury = minimal, home = warm, tech = clean, beauty = soft.`
+
+  const userPrompt = `Generate page.tsx for this store:
+
+Brand: ${data.brand_name}
+Niche: ${data.niche}
+Slogan: ${data.slogan}
+Primary color: ${primary}
+
+Products:
+${productsJson}
+
+USPs:
+${uspsText}
+
+Rules: inline styles only, no Tailwind, only the checkout import, all & → &amp; in JSX text.`
+
+  try {
+    const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+        max_tokens: 8192,
+        temperature: 0.7,
+      }),
+      signal: AbortSignal.timeout(120_000),
+    })
+
+    if (!response.ok) {
+      const txt = await response.text()
+      throw new Error(`DeepSeek API ${response.status}: ${txt.slice(0, 300)}`)
+    }
+
+    const result = await response.json() as { choices: { message: { content: string } }[] }
+    let content = result.choices[0]?.message?.content ?? ''
+
+    // Strip markdown code fences if model wraps output
+    const fenceMatch = content.match(/```(?:tsx?|jsx?|typescript)?\s*([\s\S]*?)```/)
+    if (fenceMatch) content = fenceMatch[1].trim()
+    else content = content.trim()
+
+    if (!content.startsWith("'use client'") && !content.startsWith('"use client"')) {
+      content = `'use client';\n${content}`
+    }
+
+    console.log(`[store-platform] AI page.tsx gegenereerd voor ${data.brand_name} (${data.niche}) — ${content.length} tekens`)
+    return content
+  } catch (err) {
+    console.error('[store-platform] generatePageWithAI mislukt — statisch template als fallback:', err)
+    return generatePageTsx(selectLayout(data.niche), data, usps, primary)
+  }
+}
+
+async function writeNextScaffold(targetDir: string, data: StoreData): Promise<void> {
   const subdomain = data.subdomain ?? slugify(data.brand_name)
   ensureDir(path.join(targetDir, 'app'))
   ensureDir(path.join(targetDir, 'public'))
