@@ -303,7 +303,7 @@ function StoreCard({ store, expanded, onToggle, onEdit }: {
   const healthText = isUp ? 'Online' : isDown ? 'Offline' : isSlow ? 'Traag' : 'Onbekend'
   const healthColor = isUp ? 'text-emerald-400' : isDown ? 'text-red-400' : isSlow ? 'text-amber-400' : 'text-zinc-600'
 
-  const portUrl = store.port ? `http://192.168.121.8:${store.port}` : store.previewUrl
+  const portUrl = store.port ? `http://${STORE_HOST}:${store.port}` : store.previewUrl
 
   return (
     <div
