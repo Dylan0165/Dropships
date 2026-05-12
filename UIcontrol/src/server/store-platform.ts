@@ -24,7 +24,12 @@ import fs from 'fs'
 import { spawn, type ChildProcess } from 'child_process'
 import { fileURLToPath } from 'url'
 import { v4 as uuid } from 'uuid'
-import db, { saveAgentOutput as _saveAgentOutput } from './db.js'
+import db, { saveAgentOutput as _saveAgentOutput, claimPort } from './db.js'
+import {
+  selectTemplate, applyTemplate, buildLayoutSharedFiles,
+  buildTemplateVars, validateNoForbiddenImports,
+} from './store-platform/template-engine.js'
+import { validateAndBuild } from './store-platform/build-validator.js'
 void _saveAgentOutput
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
