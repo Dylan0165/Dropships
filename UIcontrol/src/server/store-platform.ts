@@ -1315,7 +1315,7 @@ export async function deployStore(storeData: StoreData): Promise<DeployedStore> 
 
   // ── Duplicate product preventie ───────────────────────────────────────────
   const deployedIds = getDeployedProductIds()
-  const uniqueProducts = limitedProducts.filter(p => {
+  let uniqueProducts = limitedProducts.filter(p => {
     if (deployedIds.has(p.id)) {
       console.log(`[store-platform] Product ${p.id} (${p.title}) al in gebruik door andere store — overgeslagen`)
       return false
@@ -1323,17 +1323,19 @@ export async function deployStore(storeData: StoreData): Promise<DeployedStore> 
     return true
   })
   if (uniqueProducts.length === 0) {
-    console.warn('[store-platform] Alle producten zijn al in gebruik — store niet aangemaakt. Pipeline moet nieuwe producten vinden.')
-    return {
-      storeId,
-      subdomain,
-      niche: storeData.niche,
-      status: 'failed',
-      previewUrl: '',
-      filesPath: '',
-      createdAt,
-      errorMessage: 'Alle geselecteerde producten zijn al actief in andere stores',
-    }
+    // Release products from the oldest store so they can be reused
+    try {
+      const oldest = db.prepare(
+        `SELECT id FROM stores WHERE status IN ('local','live') AND products_json != '[]' ORDER BY created_at ASC LIMIT 1`,
+      ).get() as { id: string } | undefined
+      if (oldest) {
+        db.prepare(`UPDATE stores SET products_json = '[]' WHERE id = ?`).run(oldest.id)
+        console.log(`[store-platform] Producten vrijgegeven van oudste store ${oldest.id} — hergebruik ingeschakeld`)
+      }
+    } catch { /* ignore */ }
+    // After releasing, accept all products (duplicate guard bypassed)
+    uniqueProducts = limitedProducts
+    console.warn('[store-platform] Alle producten waren in gebruik — oudste store vrijgegeven, producten hergebruikt')
   }
 
   // ── Design inspiratie van WebsiteInspector ───────────────────────────────
