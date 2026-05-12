@@ -1,0 +1,131 @@
+'use client';
+
+interface Product { id: string; title: string; image: string; price: number; compareAtPrice?: number; badge?: string; description?: string }
+const PRODUCTS: Product[] = {{PRODUCTS_JSON}};
+const PRIMARY = '{{PRIMARY}}';
+
+export default function Home() {
+  const year = new Date().getFullYear();
+  return (
+    <div style={{ background: '#0d1117', color: '#e6edf3', minHeight: '100vh', fontFamily: "'SF Mono', 'Fira Code', monospace" }}>
+
+      {/* Nav */}
+      <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 2.5rem', background: '#161b22', borderBottom: '1px solid #30363d' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: PRIMARY, display: 'inline-block', boxShadow: `0 0 6px ${PRIMARY}` }} />
+          <span style={{ fontWeight: 700, fontSize: '0.9rem', letterSpacing: '0.05em' }}>{{BRAND_NAME}}</span>
+        </div>
+        <div style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
+          <a href="#products" style={{ color: '#8b949e', fontSize: '0.75rem', letterSpacing: '0.08em', textDecoration: 'none' }}>products</a>
+          <a href="#docs" style={{ color: '#8b949e', fontSize: '0.75rem', letterSpacing: '0.08em', textDecoration: 'none' }}>docs</a>
+          <a href="#products" style={{ background: PRIMARY, color: '#fff', padding: '0.4rem 1rem', fontSize: '0.75rem', fontWeight: 700, textDecoration: 'none', borderRadius: '4px' }}>
+            Shop Now
+          </a>
+        </div>
+      </nav>
+
+      {/* Hero — terminal/data style */}
+      <section style={{ padding: '5rem 2.5rem', borderBottom: '1px solid #30363d', background: 'linear-gradient(180deg, #161b22 0%, #0d1117 100%)' }}>
+        <div style={{ maxWidth: '800px' }}>
+          <div style={{ background: '#161b22', border: '1px solid #30363d', borderRadius: '6px', padding: '1rem 1.5rem', marginBottom: '2rem', display: 'inline-block' }}>
+            <span style={{ color: '#3fb950', fontSize: '0.75rem', fontFamily: 'monospace' }}>&#9654; {{BRAND_NAME}} v2.0 — Now available</span>
+          </div>
+          <h1 style={{ fontSize: 'clamp(2.5rem,6vw,5.5rem)', fontWeight: 800, lineHeight: 1.05, letterSpacing: '-0.04em', margin: '0 0 1.5rem', color: '#f0f6fc' }}>
+            {{HERO_HEADLINE}}
+          </h1>
+          <p style={{ color: '#8b949e', fontSize: '1.1rem', lineHeight: 1.65, maxWidth: '52ch', marginBottom: '2.5rem' }}>{{SLOGAN}}</p>
+          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+            <a href="#products" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', background: PRIMARY, color: '#fff', fontWeight: 700, padding: '0.75rem 1.75rem', fontSize: '0.875rem', textDecoration: 'none', borderRadius: '6px' }}>
+              &#9654; Bekijk producten
+            </a>
+            <a href="#over" style={{ display: 'inline-flex', alignItems: 'center', color: '#8b949e', fontWeight: 600, padding: '0.75rem 1.75rem', fontSize: '0.875rem', textDecoration: 'none', border: '1px solid #30363d', borderRadius: '6px' }}>
+              Meer info &#8594;
+            </a>
+          </div>
+        </div>
+      </section>
+
+      {/* Stats / USPs */}
+      <section style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', borderBottom: '1px solid #30363d' }}>
+        {[
+          { stat: '&#10003;', t: '{{USP_1_TITLE}}', d: '{{USP_1_DESC}}' },
+          { stat: '&#10003;', t: '{{USP_2_TITLE}}', d: '{{USP_2_DESC}}' },
+          { stat: '&#10003;', t: '{{USP_3_TITLE}}', d: '{{USP_3_DESC}}' },
+        ].map((u,i) => (
+          <div key={i} style={{ padding: '2rem 2.5rem', borderRight: i < 2 ? '1px solid #30363d' : undefined }}>
+            <div style={{ color: PRIMARY, fontSize: '1.5rem', fontWeight: 900, marginBottom: '0.5rem' }} dangerouslySetInnerHTML={{ __html: u.stat }} />
+            <h3 style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.4rem', color: '#f0f6fc' }}>{u.t}</h3>
+            <p style={{ color: '#8b949e', fontSize: '0.8rem', lineHeight: 1.5, margin: 0 }}>{u.d}</p>
+          </div>
+        ))}
+      </section>
+
+      {/* Products */}
+      <section id="products" style={{ padding: '4rem 2.5rem', borderBottom: '1px solid #30363d' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#f0f6fc', margin: 0 }}>Products</h2>
+          <span style={{ color: '#8b949e', fontSize: '0.75rem', fontFamily: 'monospace' }}>{PRODUCTS.length} available</span>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(260px,1fr))', gap: '1rem' }}>
+          {PRODUCTS.map((p,i) => (
+            <div key={i} style={{ background: '#161b22', border: '1px solid #30363d', borderRadius: '6px', overflow: 'hidden', cursor: 'pointer', transition: 'border-color 0.15s' }}
+              onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.borderColor = PRIMARY }}
+              onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.borderColor = '#30363d' }}>
+              <div style={{ background: '#0d1117', overflow: 'hidden', position: 'relative' }}>
+                {p.image
+                  ? <img src={p.image} alt={p.title} style={{ width: '100%', aspectRatio: '4/3', objectFit: 'cover', display: 'block', transition: 'transform 0.3s ease' }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLImageElement).style.transform = 'scale(1.04)' }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLImageElement).style.transform = 'scale(1)' }} />
+                  : <div style={{ width: '100%', aspectRatio: '4/3', background: '#21262d' }} />}
+                {p.badge && <span style={{ position: 'absolute', top: '0.75rem', right: '0.75rem', background: PRIMARY, color: '#fff', fontSize: '0.6rem', fontWeight: 700, padding: '0.15rem 0.5rem', borderRadius: '20px', letterSpacing: '0.08em', textTransform: 'uppercase' }}>{p.badge}</span>}
+              </div>
+              <div style={{ padding: '1rem' }}>
+                <p style={{ margin: '0 0 0.4rem', fontWeight: 600, fontSize: '0.85rem', color: '#f0f6fc' }}>{p.title}</p>
+                {p.description && <p style={{ margin: '0 0 0.75rem', fontSize: '0.75rem', color: '#8b949e', lineHeight: 1.5 }}>{p.description}</p>}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <span style={{ fontWeight: 700, color: PRIMARY }}>&#8364;{p.price.toFixed(2)}</span>
+                    {p.compareAtPrice && <span style={{ color: '#484f58', fontSize: '0.8rem', textDecoration: 'line-through', marginLeft: '0.5rem' }}>&#8364;{p.compareAtPrice.toFixed(2)}</span>}
+                  </div>
+                  <button style={{ background: 'transparent', border: `1px solid ${PRIMARY}`, color: PRIMARY, padding: '0.35rem 0.875rem', fontSize: '0.75rem', fontWeight: 700, borderRadius: '4px', cursor: 'pointer' }}>
+                    Kopen
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Reviews */}
+      <section style={{ padding: '4rem 2.5rem', borderBottom: '1px solid #30363d' }}>
+        <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#f0f6fc', marginBottom: '2rem' }}>Reviews</h2>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(250px,1fr))', gap: '1rem' }}>
+          {[
+            { n: 'user_sanne',   s: 5, t: 'Uitstekende kwaliteit &#8212; precies wat beschreven.' },
+            { n: 'thomas_b',     s: 5, t: 'Snelle levering en perfecte verpakking. Aanrader!' },
+            { n: 'lena_m',       s: 4, t: 'Blij mee. Product doet precies wat het belooft.' },
+          ].map((r,i) => (
+            <div key={i} style={{ background: '#161b22', border: '1px solid #30363d', borderRadius: '6px', padding: '1.25rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+                <span style={{ color: '#58a6ff', fontSize: '0.8rem', fontFamily: 'monospace' }}>{r.n}</span>
+                <span style={{ color: '#3fb950', fontSize: '0.75rem' }}>{'★'.repeat(r.s)}</span>
+              </div>
+              <p style={{ color: '#8b949e', fontSize: '0.8rem', lineHeight: 1.6, margin: 0, fontStyle: 'italic' }} dangerouslySetInnerHTML={{ __html: `"${r.t}"` }} />
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer style={{ padding: '2rem 2.5rem', background: '#161b22', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+        <span style={{ color: '#8b949e', fontSize: '0.75rem', fontFamily: 'monospace' }}>// &#169; {year} {{BRAND_NAME}}</span>
+        <div style={{ display: 'flex', gap: '1.5rem' }}>
+          {[['over','/over'],['retour','/retour'],['contact','/contact'],['faq','/faq']].map(([l,h]) => (
+            <a key={l} href={h} style={{ color: '#484f58', fontSize: '0.75rem', textDecoration: 'none', fontFamily: 'monospace' }}>{l}</a>
+          ))}
+        </div>
+      </footer>
+    </div>
+  );
+}
