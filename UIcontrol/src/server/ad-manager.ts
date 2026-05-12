@@ -136,12 +136,20 @@ export async function generateAdsForStore(storeId: string): Promise<AdRow[]> {
     : []
 
   // Generate ad creatives via image-gen (if we have real images, or use mock)
-  let generatedUrls: string[] = []
+  let generatedUrls: string[] = imageUrls
   if (imageUrls.length > 0) {
     try {
-      generatedUrls = await generateAdCreatives(storeId, branding.niche, branding.brandName, imageUrls)
+      const result = await generateAdCreatives({
+        storeId,
+        productName: branding.brandName,
+        niche: branding.niche,
+        adHooks: [],
+      })
+      // result has fields per format — collect any non-empty URLs
+      const collected = Object.values(result).filter((v): v is string => typeof v === 'string' && v.length > 0)
+      if (collected.length > 0) generatedUrls = collected
     } catch {
-      generatedUrls = imageUrls // fallback to original product images
+      generatedUrls = imageUrls
     }
   }
 
