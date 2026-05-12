@@ -391,34 +391,6 @@ function nginxConfig(subdomain: string, port?: number): string {
 ${portBlock}`
 }
 
-// ── WebsiteInspector integration ─────────────────────────────────────────────
-
-interface DesignInspiration {
-  niche: string
-  color_palette: string[]
-  recommended_layout: string
-  recommended_tone: string
-  headline_formula: string
-  section_order: string[]
-  source_store_ids: number[]
-}
-
-async function fetchInspiration(niche: string): Promise<DesignInspiration | null> {
-  const inspectorUrl = process.env.INSPECTOR_URL ?? 'http://localhost:8002'
-  try {
-    const resp = await fetch(
-      `${inspectorUrl}/inspiration?niche=${encodeURIComponent(niche)}`,
-      { signal: AbortSignal.timeout(3000) },
-    )
-    if (!resp.ok) return null
-    return await resp.json() as DesignInspiration
-  } catch {
-    return null
-  }
-}
-
-// ── Main deploy entrypoint ───────────────────────────────────────────────────
-
 // ── Duplicate product guard ────────────────────────────────────────────────────
 // Haal alle CJ product IDs op die al in gebruik zijn door andere stores.
 function getDeployedProductIds(): Set<string> {
