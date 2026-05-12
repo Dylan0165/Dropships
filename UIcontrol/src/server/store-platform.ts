@@ -934,115 +934,52 @@ Rules: inline styles only, no Tailwind, NO imports of any kind, all & → &amp; 
 }
 
 async function writeNextScaffold(targetDir: string, data: StoreData): Promise<void> {
-  const subdomain = data.subdomain ?? slugify(data.brand_name)
   ensureDir(path.join(targetDir, 'app'))
   ensureDir(path.join(targetDir, 'public'))
 
-  // Resolve brand colors — brand-agent may pass them as data.colors or data.primary_color
   const d = data as StoreData & { colors?: Record<string, string> }
   const primary   = d.colors?.primary   ?? d.primary_color ?? '#2563eb'
   const secondary = d.colors?.secondary ?? '#1e293b'
   const accent    = d.colors?.accent    ?? '#f59e0b'
 
-  const layoutIdx = selectLayout(data.niche)
-  const font      = FONT_PAIRINGS[layoutIdx]
-  const usps      = nicheUsps(data.niche)
+  const templateName = selectTemplate(data.niche)
+  const layoutIdx    = ['noir','blanc','bolt','dusk','grid'].indexOf(templateName)
+  const font         = FONT_PAIRINGS[layoutIdx >= 0 ? layoutIdx : 0]
+  const usps         = nicheUsps(data.niche)
 
-  // package.json
-  fs.writeFileSync(path.join(targetDir, 'package.json'), JSON.stringify({
-    name: `store-${subdomain}`,
-    version: '0.1.0',
-    private: true,
-    scripts: { build: 'next build', start: 'next start', dev: 'next dev' },
-    dependencies: {
-      next: '^14.2.0',
-      react: '^18.3.0',
-      'react-dom': '^18.3.0',
-    },
-    devDependencies: {
-      typescript: '^5.4.0',
-      '@types/react': '^18.3.0',
-      '@types/react-dom': '^18.3.0',
-      '@types/node': '^20.0.0',
-      tailwindcss: '^3.4.0',
-      autoprefixer: '^10.4.0',
-      postcss: '^8.4.0',
-    },
-  }, null, 2), 'utf-8')
+  const vars = buildTemplateVars({
+    brandName:    data.brand_name,
+    slogan:       data.slogan,
+    niche:        data.niche,
+    primary,
+    secondary,
+    accent,
+    products:     data.products,
+    usps,
+    heroHeadline: (data as StoreData & { hero_headline?: string }).hero_headline ?? data.brand_name,
+    fontUrl:      font.url,
+    headingFont:  font.heading,
+    bodyFont:     font.body,
+  })
 
-  fs.writeFileSync(path.join(targetDir, 'postcss.config.js'),
-    `module.exports = { plugins: { tailwindcss: {}, autoprefixer: {} } };\n`, 'utf-8')
+  // 1. Schrijf shared files (package.json, tsconfig, layout.tsx, globals.css)
+  buildLayoutSharedFiles(targetDir, vars)
 
-  fs.writeFileSync(path.join(targetDir, 'tailwind.config.js'),
-    `/** @type {import('tailwindcss').Config} */\n` +
-    `module.exports = {\n` +
-    `  content: ['./app/**/*.{js,ts,jsx,tsx}', './components/**/*.{js,ts,jsx,tsx}'],\n` +
-    `  theme: { extend: { colors: {\n` +
-    `    primary: '${primary}', secondary: '${secondary}', accent: '${accent}',\n` +
-    `  }, fontFamily: {\n` +
-    `    heading: [${JSON.stringify(font.heading)}],\n` +
-    `    body: [${JSON.stringify(font.body)}],\n` +
-    `  } } },\n` +
-    `  plugins: [],\n` +
-    `};\n`, 'utf-8')
+  // 2. Kopieer template page.tsx.tmpl + vul placeholders in
+  applyTemplate(targetDir, templateName, vars)
 
-  fs.writeFileSync(path.join(targetDir, 'app/globals.css'),
-    `@tailwind base;\n@tailwind components;\n@tailwind utilities;\n\n` +
-    `:root {\n` +
-    `  --brand-primary: ${primary};\n` +
-    `  --brand-secondary: ${secondary};\n` +
-    `  --brand-accent: ${accent};\n` +
-    `}\n\n` +
-    `*, *::before, *::after { box-sizing: border-box; }\n` +
-    `body {\n` +
-    `  font-family: ${font.body};\n` +
-    `  margin: 0;\n` +
-    `  background: #fff;\n` +
-    `  color: #111;\n` +
-    `  -webkit-font-smoothing: antialiased;\n` +
-    `}\n` +
-    `h1, h2, h3, h4, h5, h6 { font-family: ${font.heading}; }\n` +
-    `@keyframes fadeUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }\n` +
-    `.animate-fade-up { animation: fadeUp 0.7s cubic-bezier(0.16,1,0.3,1) both; }\n` +
-    `.delay-100 { animation-delay: 0.1s; } .delay-200 { animation-delay: 0.2s; } .delay-300 { animation-delay: 0.3s; }\n`,
-    'utf-8')
+  // 3. Valideer gegenereerde page.tsx op verboden imports
+  const pagePath = path.join(targetDir, 'app', 'page.tsx')
+  if (fs.existsSync(pagePath)) {
+    const pageContent = fs.readFileSync(pagePath, 'utf-8')
+    const importErrors = validateNoForbiddenImports(pageContent)
+    if (importErrors.length > 0) {
+      console.warn(`[store-platform] Import-waarschuwingen in page.tsx (${templateName}):`)
+      importErrors.forEach(e => console.warn(`  ${e}`))
+    }
+  }
 
-  fs.writeFileSync(path.join(targetDir, 'tsconfig.json'), JSON.stringify({
-    compilerOptions: {
-      target: 'es2017', lib: ['dom', 'dom.iterable', 'esnext'], allowJs: true,
-      skipLibCheck: true, strict: false, noEmit: true, esModuleInterop: true,
-      module: 'esnext', moduleResolution: 'bundler', resolveJsonModule: true,
-      isolatedModules: true, jsx: 'preserve', incremental: true,
-      plugins: [{ name: 'next' }], paths: { '@/*': ['./*'] },
-    },
-    include: ['next-env.d.ts', '**/*.ts', '**/*.tsx', '.next/types/**/*.ts'],
-    exclude: ['node_modules'],
-  }, null, 2), 'utf-8')
-
-  fs.writeFileSync(path.join(targetDir, 'next.config.js'),
-    `module.exports = { output: 'export', images: { unoptimized: true } };\n`, 'utf-8')
-
-  // layout.tsx — Google Fonts injected via <link>
-  fs.writeFileSync(path.join(targetDir, 'app/layout.tsx'),
-    `import './globals.css';\n` +
-    `import type { Metadata } from 'next';\n\n` +
-    `export const metadata: Metadata = { title: ${JSON.stringify(data.brand_name)}, description: ${JSON.stringify(data.slogan)} };\n\n` +
-    `export default function RootLayout({ children }: { children: React.ReactNode }) {\n` +
-    `  return (\n` +
-    `    <html lang="nl">\n` +
-    `      <head>\n` +
-    `        <link rel="preconnect" href="https://fonts.googleapis.com" />\n` +
-    `        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />\n` +
-    `        <link href="${font.url}" rel="stylesheet" />\n` +
-    `      </head>\n` +
-    `      <body className="min-h-screen antialiased">{children}</body>\n` +
-    `    </html>\n` +
-    `  );\n` +
-    `}\n`, 'utf-8')
-
-  // page.tsx — AI-generated (DeepSeek), static template as fallback
-  const pageTsx = await generatePageWithAI(data, usps, primary, font)
-  fs.writeFileSync(path.join(targetDir, 'app/page.tsx'), pageTsx, 'utf-8')
+  console.log(`[store-platform] Template "${templateName}" toegepast voor ${data.brand_name}`)
 }
 
 // ── SEO assets ───────────────────────────────────────────────────────────────
