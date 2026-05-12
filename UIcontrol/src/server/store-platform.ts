@@ -45,20 +45,6 @@ const TMP_BUILD_DIR = path.join(os.tmpdir(), 'stores')
 // Max producten per store — branded stores zijn focused, geen catalogus
 const MAX_PRODUCTS_PER_STORE = parseInt(process.env.MAX_PRODUCTS_PER_STORE ?? '3', 10)
 
-const COMPONENT_NAMES = [
-  'navigation',
-  'hero-banner',
-  'usp-section',
-  'product-grid',
-  'social-proof',
-  'checkout-flow',
-  'footer',
-  'announcement-bar',
-  'countdown-timer',
-  'trust-badges',
-  'review-card',
-] as const
-
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 export interface StoreProduct {
