@@ -9,7 +9,7 @@ Plak dit aan het begin van elke nieuwe chat zodat Claude direct weet waar we sta
 | Rol            | IP                | User      |
 |----------------|-------------------|-----------|
 | Tool server    | 192.168.121.133   | student   |
-| Store server   | 192.168.121.8     | student   |
+| Store server   | 192.168.121.11     | student   |
 
 ## Repository
 - **GitHub**: `Dylan0165/Dropships` (privé)
@@ -34,7 +34,7 @@ UIcontrol/
 ├── src/server/
 │   ├── agent-runner.ts      # Agent uitvoering + JSON validatie + retry (max 3x)
 │   ├── coordinator.ts       # Pipeline orchestratie + store deploy trigger
-│   ├── store-platform.ts    # Next.js store generatie + SSH deploy naar 192.168.121.8
+│   ├── store-platform.ts    # Next.js store generatie + SSH deploy naar 192.168.121.11
 │   ├── store-monitor.ts     # Health checks elke 5 min + AI diagnose bij down store
 │   └── db.ts                # SQLite schema + idempotente migraties
 ├── data/dropship.db          # SQLite database
@@ -60,7 +60,7 @@ Security-agent en growth-agent bestaan maar draaien NIET automatisch.
 - Stores worden gegenereerd als Next.js static export (`output: 'export'`)
 - Gedeployed naar store server via SSH + rsync
 - Elke store krijgt een poort (4001, 4002, ...) en een subdomain
-- Bereikbaar via `http://192.168.121.8:<port>`
+- Bereikbaar via `http://192.168.121.11:<port>`
 - Nginx configs worden automatisch aangemaakt op store server
 
 ## SQLite Commando's (tool server)
@@ -97,6 +97,6 @@ import { addToCart } from '../shared/checkout.js'
 ```bash
 pm2 logs uicontrol --lines 100          # pipeline logs
 pm2 logs store-platform --lines 50     # store build/deploy logs
-curl -I http://192.168.121.8:4001      # store bereikbaar?
-ssh student@192.168.121.8 "sudo nginx -t"  # nginx config check
+curl -I http://192.168.121.11:4001      # store bereikbaar?
+ssh student@192.168.121.11 "sudo nginx -t"  # nginx config check
 ```
