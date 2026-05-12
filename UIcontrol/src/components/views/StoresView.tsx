@@ -10,7 +10,7 @@ const VIEW_MODE_KEY = 'storesViewMode'
 
 type ViewMode = 'compact' | 'detailed' | 'flow'
 
-interface StoreInfoEx extends StoreInfo {
+interface StoreInfoEx extends Omit<StoreInfo, 'subdomein'> {
   port?: number
   healthStatus?: string
   healthError?: string
