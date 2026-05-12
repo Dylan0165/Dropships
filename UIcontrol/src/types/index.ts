@@ -31,7 +31,7 @@ export interface AgentConfig {
   id: AgentId
   label: string
   category: AgentCategory
-  model: 'deepseek-v4-flash' | 'deepseek-v4-pro'
+  model: string
   description: string
   position: { x: number; y: number }
 }
