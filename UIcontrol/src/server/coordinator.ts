@@ -271,18 +271,19 @@ export function startPipeline(
           })
 
           if (deployRes.ok) {
-            const deployed = await deployRes.json() as { store_id: string; preview_url: string; subdomain: string }
+            const deployed = await deployRes.json() as { storeId: string; previewUrl: string; subdomain: string; status: string }
+            const url = deployed.previewUrl
             store.addLog(runId, agentId, {
               timestamp: new Date().toISOString(),
               level: 'info',
-              message: `Store deployed: ${deployed.preview_url}`,
+              message: `Store deployed: ${url} (${deployed.status})`,
             })
             broadcast({
               type: 'agent_log', runId, agentId,
-              payload: { level: 'info', message: `✅ Store live: ${deployed.preview_url}` },
+              payload: { level: 'info', message: `✅ Store live: ${url}` },
               timestamp: new Date().toISOString(),
             })
-            previousOutput = { ...previousOutput, deployed_store: deployed }
+            previousOutput = { ...previousOutput, deployed_store: { store_id: deployed.storeId, preview_url: url, subdomain: deployed.subdomain, status: deployed.status } }
           } else {
             const errText = await deployRes.text()
             store.addLog(runId, agentId, {
