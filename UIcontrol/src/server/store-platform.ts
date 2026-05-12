@@ -94,63 +94,7 @@ function rmDirRecursive(p: string): void {
   if (fs.existsSync(p)) fs.rmSync(p, { recursive: true, force: true })
 }
 
-function applyPlaceholders(content: string, data: StoreData & { _storeId?: string }): string {
-  const imgs = data.imageUrls ?? []
-  return content
-    .replace(/\{\{BRAND_NAME\}\}/g, data.brand_name)
-    .replace(/\{\{SLOGAN\}\}/g, data.slogan)
-    .replace(/\{\{PRIMARY_COLOR\}\}/g, data.primary_color || '#7c3aed')
-    .replace(/\{\{NICHE\}\}/g, data.niche)
-    .replace(/\{\{PRODUCTS_JSON\}\}/g, JSON.stringify(data.products))
-    .replace(/\{\{STORE_ID\}\}/g, data._storeId ?? data.storeId ?? '')
-    .replace(/\{\{CHECKOUT_URL\}\}/g, data.checkoutUrl ?? '#checkout')
-    .replace(/\{\{PRODUCT_IMAGE_1\}\}/g, imgs[0] ?? '')
-    .replace(/\{\{PRODUCT_IMAGE_2\}\}/g, imgs[1] ?? '')
-    .replace(/\{\{PRODUCT_IMAGE_3\}\}/g, imgs[2] ?? '')
-}
-
-function copyComponents(targetDir: string, data: StoreData & { _storeId?: string }): void {
-  const componentsTarget = path.join(targetDir, 'components')
-  ensureDir(componentsTarget)
-
-  // Kopieer de shared/ map (checkout.ts, types.ts, etc.) die door componenten wordt geïmporteerd
-  const sharedSrc = path.join(COMPONENTS_DIR, 'shared')
-  if (fs.existsSync(sharedSrc)) {
-    const sharedDest = path.join(componentsTarget, 'shared')
-    ensureDir(sharedDest)
-    for (const file of fs.readdirSync(sharedSrc)) {
-      const srcFile = path.join(sharedSrc, file)
-      if (!fs.statSync(srcFile).isFile()) continue
-      fs.copyFileSync(srcFile, path.join(sharedDest, file))
-    }
-  }
-
-  for (const compName of COMPONENT_NAMES) {
-    const src = path.join(COMPONENTS_DIR, compName)
-    if (!fs.existsSync(src)) {
-      console.warn(`[store-platform] component missing: ${src}`)
-      continue
-    }
-    const dest = path.join(componentsTarget, compName)
-    ensureDir(dest)
-    for (const file of fs.readdirSync(src)) {
-      const srcFile = path.join(src, file)
-      if (!fs.statSync(srcFile).isFile()) continue
-      const ext = path.extname(file).toLowerCase()
-      if (!['.tsx', '.ts', '.jsx', '.js', '.css', '.md'].includes(ext)) continue
-      const raw = fs.readFileSync(srcFile, 'utf-8')
-      fs.writeFileSync(path.join(dest, file), applyPlaceholders(raw, data), 'utf-8')
-    }
-  }
-}
-
 // ── Layout + Font System ──────────────────────────────────────────────────────
-// Each niche deterministically maps to a layout so the same niche always
-// produces the same visual identity, but different niches look distinct.
-
-function selectLayout(niche: string): number {
-  return niche.split('').reduce((a, c) => a + c.charCodeAt(0), 0) % 5
-}
 
 const FONT_PAIRINGS = [
   { // 0 Studio — geometric, bold, modern
