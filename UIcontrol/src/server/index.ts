@@ -46,9 +46,33 @@ server.on('upgrade', (req, socket, head) => {
   }
 })
 
+const WS_TIMEOUT_MS = 60_000
+
 wss.on('connection', (ws) => {
   clients.add(ws)
-  ws.on('close', () => clients.delete(ws))
+  let lastSeen = Date.now()
+
+  ws.on('message', (raw) => {
+    try {
+      const msg = JSON.parse(raw.toString()) as { type?: string }
+      if (msg.type === 'ping') {
+        lastSeen = Date.now()
+        if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ type: 'pong' }))
+      }
+    } catch { /* ignore non-JSON */ }
+  })
+
+  const staleness = setInterval(() => {
+    if (Date.now() - lastSeen > WS_TIMEOUT_MS) {
+      ws.terminate()
+      clearInterval(staleness)
+    }
+  }, 30_000)
+
+  ws.on('close', () => {
+    clients.delete(ws)
+    clearInterval(staleness)
+  })
 })
 
 function broadcast(event: WsEvent): void {
