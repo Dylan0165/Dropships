@@ -72,7 +72,7 @@ function slugify(s: string): string {
     .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40)
 }
 
-// Call store-builder skill (deepseek-reasoner) to generate the brief
+// Call store-builder skill to generate the brief
 export async function generateBrief(input: StoreBuildInput): Promise<StoreBrief | null> {
   const result = await runAgent({
     runId: input.runId,
