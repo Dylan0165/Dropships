@@ -323,6 +323,12 @@ export function getStageOutput(runId: string, stage: string): Record<string, unk
 export function claimPort(storeId: string): number {
   const now = new Date().toISOString()
   return db.transaction(() => {
+    // Idempotent: if this storeId already has an active allocation, reuse it
+    const existing = db.prepare(
+      `SELECT port FROM port_allocations WHERE store_id = ? AND released_at IS NULL`
+    ).get(storeId) as { port: number } | undefined
+    if (existing) return existing.port
+
     const maxRow = db.prepare(
       `SELECT MAX(port) as m FROM port_allocations WHERE released_at IS NULL`
     ).get() as { m: number | null } | undefined
