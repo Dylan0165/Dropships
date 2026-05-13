@@ -27,7 +27,7 @@ export async function runReviewer(
     stage: cfg.stage,
     agentName: cfg.agentName,
     skillName: cfg.skillName,
-    model: cfg.model ?? 'deepseek-reasoner',
+    model: cfg.model ?? 'deepseek-chat',
     input: cfg.input,
     outputSchema: ReviewerOutputSchema,
     timeoutMs: 180_000,
