@@ -301,15 +301,56 @@ app.get('/api/stores', (_req, res) => {
   }
 })
 
-// Proxy to store-platform reconcile (runs on port 3002)
-app.post('/api/admin/reconcile-stores', async (_req, res) => {
+// Local reconcile: find stage_outputs deploy records that have no matching stores row
+app.post('/api/admin/reconcile-stores', (_req, res) => {
   try {
-    const PLATFORM_URL = process.env.PLATFORM_API_URL ?? 'http://localhost:3002'
-    const r = await fetch(`${PLATFORM_URL}/api/admin/reconcile-stores`, { method: 'POST' })
-    const data = await r.json()
-    res.json(data)
+    type DeployOutput = { subdomain: string; preview_url: string; port?: number; brand_name?: string }
+    type StageRow = { run_id: string; output_json: string }
+    const deployRows = db.prepare(
+      `SELECT run_id, output_json FROM stage_outputs WHERE stage = 'deploy'`
+    ).all() as StageRow[]
+
+    const added: string[] = []
+    const updated: string[] = []
+
+    for (const row of deployRows) {
+      let out: DeployOutput
+      try { out = JSON.parse(row.output_json) as DeployOutput } catch { continue }
+      if (!out.subdomain) continue
+
+      const storeId = `store-${row.run_id}`
+      const port = out.port ?? (db.prepare(
+        `SELECT port FROM port_allocations WHERE store_id = ? AND released_at IS NULL`
+      ).get(storeId) as { port: number } | undefined)?.port ?? null
+
+      const previewUrl = out.preview_url
+        || (port && process.env.STORE_SERVER_HOST
+          ? `http://${process.env.STORE_SERVER_HOST}:${port}/`
+          : port ? `http://localhost:${port}/` : '')
+
+      // Get niche from runs table
+      const runRow = db.prepare(`SELECT niche FROM runs WHERE run_id = ?`).get(row.run_id) as { niche: string } | undefined
+      const niche = runRow?.niche ?? 'unknown'
+
+      const existing = db.prepare(`SELECT store_id FROM stores WHERE store_id = ?`).get(storeId)
+      if (!existing) {
+        db.prepare(`
+          INSERT INTO stores (store_id, run_id, subdomein, niche, preview_url, port, status, created_at)
+          VALUES (?, ?, ?, ?, ?, ?, 'building', ?)
+        `).run(storeId, row.run_id, out.subdomain, niche, previewUrl, port, new Date().toISOString())
+        added.push(out.subdomain)
+      } else if (port) {
+        db.prepare(`UPDATE stores SET port = ?, preview_url = ? WHERE store_id = ? AND (port IS NULL OR preview_url = '')`).run(port, previewUrl, storeId)
+        updated.push(out.subdomain)
+      }
+    }
+
+    // Trigger immediate health poll for newly added stores
+    void pollStoreHealth()
+
+    res.json({ added: added.length, updated: updated.length, stores: [...added, ...updated] })
   } catch (err) {
-    res.status(500).json({ error: err instanceof Error ? err.message : 'reconcile proxy failed' })
+    res.status(500).json({ error: err instanceof Error ? err.message : 'reconcile failed' })
   }
 })
 
