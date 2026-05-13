@@ -1,17 +1,13 @@
-import { Workflow, Store, Package, History, BarChart2, Settings, TrendingUp, Megaphone, ActivitySquare } from 'lucide-react'
+import { Workflow, Store, History, Settings, ActivitySquare } from 'lucide-react'
 import clsx from 'clsx'
 import type { View } from '@/App'
 
 const NAV_ITEMS: { view: View; Icon: typeof Workflow; tooltip: string }[] = [
   { view: 'pipeline',      Icon: Workflow,        tooltip: 'Pipeline' },
-  { view: 'dashboard',     Icon: BarChart2,       tooltip: 'Dashboard' },
-  { view: 'trendscraper',  Icon: TrendingUp,      tooltip: 'Trendscraper' },
   { view: 'stores',        Icon: Store,           tooltip: 'Stores' },
-  { view: 'ads',           Icon: Megaphone,       tooltip: 'Ad Manager' },
   { view: 'observability', Icon: ActivitySquare,  tooltip: 'Observability' },
-  { view: 'components',    Icon: Package,         tooltip: 'Components' },
   { view: 'runs',          Icon: History,         tooltip: 'Run History' },
-  { view: 'settings',      Icon: Settings,        tooltip: 'Settings' },
+  { view: 'settings',      Icon: Settings,        tooltip: 'Instellingen' },
 ]
 
 interface Props {
