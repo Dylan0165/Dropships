@@ -198,3 +198,30 @@ export async function getHighestNginxPort(): Promise<number> {
   )
   return parseInt(res.output.trim(), 10) || 0
 }
+
+export async function scanDeployedStores(): Promise<Array<{ subdomain: string; port: number }>> {
+  const { host } = env()
+  if (!host) return []
+
+  // List all nginx site configs (exclude 'default')
+  const listRes = await runSsh(
+    `ls /etc/nginx/sites-available/ 2>/dev/null | grep -v '^default$'`,
+    15_000,
+  )
+  if (!listRes.ok || !listRes.output.trim()) return []
+
+  const names = listRes.output.trim().split('\n').map(s => s.trim()).filter(Boolean)
+  const results: Array<{ subdomain: string; port: number }> = []
+
+  for (const subdomain of names) {
+    // Extract non-80 listen port from the config
+    const portRes = await runSsh(
+      `grep -h "listen" /etc/nginx/sites-available/${subdomain} 2>/dev/null | grep -v "listen 80" | grep -oE "[0-9]{4,}" | head -1`,
+      10_000,
+    )
+    const port = parseInt(portRes.output.trim(), 10)
+    if (port > 1024) results.push({ subdomain, port })
+  }
+
+  return results
+}
