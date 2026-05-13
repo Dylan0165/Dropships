@@ -330,7 +330,7 @@ export function claimPort(storeId: string): number {
     if (existing) return existing.port
 
     const maxRow = db.prepare(
-      `SELECT MAX(port) as m FROM port_allocations WHERE released_at IS NULL`
+      `SELECT MAX(port) as m FROM port_allocations`
     ).get() as { m: number | null } | undefined
     const next = (maxRow?.m ?? 4000) + 1
     db.prepare(`INSERT INTO port_allocations (port, store_id, allocated_at) VALUES (?,?,?)`).run(next, storeId, now)
