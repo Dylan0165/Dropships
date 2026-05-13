@@ -27,7 +27,7 @@ export const AGENT_REGISTRY: Record<string, AgentRegistryEntry> = {
 
 export function getAgent(id: string): AgentRegistryEntry {
   return AGENT_REGISTRY[id] ?? {
-    id, label: id, kind: 'EX', model: EX_MODEL,
+    id, label: id, kind: 'EX', model: EX_FAST,
     timeoutMs: 120_000, maxRetries: 3, circuitBreakerThreshold: 3,
   }
 }
