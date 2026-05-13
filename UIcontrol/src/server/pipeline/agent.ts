@@ -88,14 +88,15 @@ async function callLLM(
   userPrompt: string,
   timeoutMs: number,
 ): Promise<{ content: string; inputTokens: number; outputTokens: number }> {
+  const { baseUrl, apiKey } = llmConfig()
   const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-  if (LLM_API_KEY) headers['Authorization'] = `Bearer ${LLM_API_KEY}`
+  if (apiKey) headers['Authorization'] = `Bearer ${apiKey}`
 
   const ctrl = new AbortController()
   const timer = setTimeout(() => ctrl.abort(), timeoutMs)
 
   try {
-    const res = await fetch(`${LLM_BASE_URL}/v1/chat/completions`, {
+    const res = await fetch(`${baseUrl}/chat/completions`, {
       method: 'POST',
       headers,
       signal: ctrl.signal,
