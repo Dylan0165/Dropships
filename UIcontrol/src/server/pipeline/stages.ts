@@ -95,7 +95,7 @@ async function runExecutorStage(
   agentName: string,
   skillName: string,
   schema: z.ZodTypeAny,
-  model: 'deepseek-chat' | 'deepseek-reasoner' = 'deepseek-chat',
+  model: 'deepseek-chat' = 'deepseek-chat',
 ): Promise<StageOutput> {
   const r = await runAgent({
     runId: ctx.runId, stage, agentName, skillName, model,
