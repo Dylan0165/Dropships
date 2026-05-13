@@ -1,7 +1,7 @@
 import type { AgentRegistryEntry } from './contracts.js'
 
 const EX_MODEL  = process.env.LLM_MODEL_EXECUTOR ?? process.env.LLM_MODEL ?? 'deepseek-chat'
-const RV_MODEL  = process.env.LLM_MODEL_REVIEWER ?? process.env.LLM_MODEL ?? 'deepseek-reasoner'
+const RV_MODEL  = process.env.LLM_MODEL_REVIEWER ?? process.env.LLM_MODEL ?? 'deepseek-chat'
 
 export const AGENT_REGISTRY: Record<string, AgentRegistryEntry> = {
   'trend-agent':       { id: 'trend-agent',       label: 'Trend Agent',       kind: 'EX',  model: EX_MODEL,                       timeoutMs: 120_000, maxRetries: 3, circuitBreakerThreshold: 3 },
