@@ -4,14 +4,10 @@ import { TopBar } from './components/layout/TopBar'
 import { PipelineCanvas } from './components/pipeline/PipelineCanvas'
 import { RunsView } from './components/views/RunsView'
 import { StoresView } from './components/views/StoresView'
-import { ComponentsView } from './components/views/ComponentsView'
-import { DashboardView } from './components/views/DashboardView'
 import { SettingsView } from './components/views/SettingsView'
-import { TrendScraperView } from './components/views/TrendScraperView'
-import { AdManagerView } from './components/views/AdManagerView'
 import { ObservabilityView } from './components/views/ObservabilityView'
 
-export type View = 'pipeline' | 'stores' | 'components' | 'runs' | 'dashboard' | 'settings' | 'trendscraper' | 'ads' | 'observability'
+export type View = 'pipeline' | 'stores' | 'runs' | 'settings' | 'observability'
 
 export default function App() {
   const [view, setView] = useState<View>('pipeline')
@@ -25,13 +21,9 @@ export default function App() {
 
           <div className="flex-1 flex overflow-hidden">
             {view === 'pipeline'      && <PipelineCanvas />}
-            {view === 'runs'          && <RunsView onSelectRun={() => setView('pipeline')} />}
             {view === 'stores'        && <StoresView />}
-            {view === 'ads'           && <AdManagerView />}
-            {view === 'components'    && <ComponentsView />}
-            {view === 'dashboard'     && <DashboardView />}
-            {view === 'trendscraper'  && <TrendScraperView />}
             {view === 'observability' && <ObservabilityView />}
+            {view === 'runs'          && <RunsView onSelectRun={() => setView('pipeline')} />}
             {view === 'settings'      && <SettingsView />}
           </div>
         </div>
