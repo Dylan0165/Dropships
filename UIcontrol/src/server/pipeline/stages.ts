@@ -250,6 +250,10 @@ export const STAGE_RUNNERS: Record<Stage, (ctx: StageContext) => Promise<StageOu
       preview_url: result.previewUrl,
     }
     saveStageOutput(ctx.runId, 'deploy', output)
+    upsertStore({
+      storeId, runId: ctx.runId, subdomain, niche: ctx.niche,
+      previewUrl: result.previewUrl, port: result.port, status: 'building',
+    })
     return { ok: true, output, meta: { storeId, storeUrl: result.previewUrl } }
   },
 
