@@ -18,6 +18,7 @@ import { runSkillsUpdate, recordSkillPerformance, getSkillsStats } from './skill
 import { createExperiment, assignComponentVariant, recordComponentConversion, declareWinner, getExperiments, getWinners, getExperimentStats } from './component-lab.js'
 import { runSeasonalCheck, getActiveSeasons } from './seasonal.js'
 import { getStoreBranding, generateAdsForStore, animateAdWithHiggsfield, killAd, getAdsForStore, startHiggsfieldPoller } from './ad-manager.js'
+import { scanDeployedStores } from './store-platform/deploy.js'
 import db, { getAgentOutput, listRecentRuns, aggregateCosts, getLiveStores, updateStoreHealth } from './db.js'
 import { notifyApprovalNeeded } from './whatsapp.js'
 import {
