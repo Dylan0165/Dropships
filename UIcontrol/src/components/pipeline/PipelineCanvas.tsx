@@ -163,10 +163,13 @@ export function PipelineCanvas() {
       es.push({
         id: `${cur}->${nxt}`,
         source: cur, target: nxt,
+        sourceHandle: null,
+        targetHandle: null,
         animated: isRunning,
+        type: 'smoothstep',
         style: {
-          stroke: isApproved ? '#16a34a' : isRunning ? '#3b82f6' : '#52525b',
-          strokeWidth: isRunning || isApproved ? 2.5 : 1,
+          stroke: isApproved ? '#16a34a' : isRunning ? '#3b82f6' : '#3f3f46',
+          strokeWidth: isRunning || isApproved ? 2 : 1,
         },
       })
     }
