@@ -88,7 +88,8 @@ export async function atomicDeploy(
 ): Promise<DeployResult> {
   const log = onLog ?? ((m: string) => console.log(`[deploy] ${m}`))
 
-  if (!STORE_SERVER_HOST) {
+  const { host, user } = env()
+  if (!host) {
     return { ok: false, port, releaseDir: '', error: 'STORE_SERVER_HOST not set' }
   }
 
@@ -99,7 +100,7 @@ export async function atomicDeploy(
   // 1. Create release dir + upload build artefacts
   log(`Creating release dir ${releaseDir}`)
   const mkdirRes = await runSsh(
-    `sudo mkdir -p ${releaseDir} ${storeRoot}/releases && sudo chown -R ${STORE_SERVER_USER}:${STORE_SERVER_USER} ${storeRoot}`,
+    `sudo mkdir -p ${releaseDir} ${storeRoot}/releases && sudo chown -R ${user}:${user} ${storeRoot}`,
   )
   if (!mkdirRes.ok) return { ok: false, port, releaseDir, error: `mkdir failed: ${mkdirRes.output.slice(-300)}` }
 
