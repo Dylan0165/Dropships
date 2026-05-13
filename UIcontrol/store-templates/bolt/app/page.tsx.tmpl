@@ -1,34 +1,85 @@
 'use client';
+import { useRef, useState, useEffect } from 'react';
 
 interface Product { id: string; title: string; image: string; price: number; compareAtPrice?: number; badge?: string; description?: string }
 const PRODUCTS: Product[] = {{PRODUCTS_JSON}};
 const PRIMARY = '{{PRIMARY}}';
 const ACCENT  = '{{ACCENT}}';
 
+function useReveal() {
+  const ref = useRef<HTMLDivElement>(null)
+  const [visible, setVisible] = useState(false)
+  useEffect(() => {
+    const el = ref.current; if (!el) return
+    const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setVisible(true); obs.disconnect() } }, { threshold: 0.12 })
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [])
+  return { ref, visible }
+}
+
+const reveal = (visible: boolean, i: number) => ({
+  opacity: visible ? 1 : 0,
+  transform: visible ? 'none' : 'translateY(20px)',
+  transition: `opacity 0.6s cubic-bezier(.22,1,.36,1) ${i * 110}ms, transform 0.6s cubic-bezier(.22,1,.36,1) ${i * 110}ms`,
+})
+
 export default function Home() {
+  const [heroLoaded, setHeroLoaded] = useState(false)
+  const [hoveredProduct, setHoveredProduct] = useState<number | null>(null)
+  const productsReveal = useReveal()
+  const uspReveal = useReveal()
+  const reviewsReveal = useReveal()
+
+  useEffect(() => { const t = setTimeout(() => setHeroLoaded(true), 50); return () => clearTimeout(t) }, [])
+
   const year = new Date().getFullYear();
   return (
-    <div style={{ background: '#0a0a0a', color: '#fff', minHeight: '100vh', fontFamily: 'inherit' }}>
+    <div style={{ background: '#0a0a0a', color: '#fff', minHeight: '100dvh', fontFamily: 'inherit' }}>
+
+      <style dangerouslySetInnerHTML={{ __html: `
+        @keyframes fadeUp { from { opacity:0; transform:translateY(24px) } to { opacity:1; transform:translateY(0) } }
+        .bolt-nav-link { transition: color 0.2s ease; }
+        .bolt-nav-link:hover { color: #fff !important; }
+        .bolt-btn { transition: transform 0.25s cubic-bezier(.22,1,.36,1), box-shadow 0.25s cubic-bezier(.22,1,.36,1); }
+        .bolt-btn:hover { transform: translateY(-2px); }
+        .bolt-btn:active { transform: scale(0.98); }
+        .bolt-buy-btn { transition: transform 0.25s cubic-bezier(.22,1,.36,1), box-shadow 0.25s cubic-bezier(.22,1,.36,1); }
+        .bolt-buy-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.4); }
+        .bolt-buy-btn:active { transform: scale(0.98); }
+      ` }} />
 
       {/* Nav */}
-      <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.25rem 2.5rem', background: '#111', borderBottom: `2px solid ${PRIMARY}` }}>
+      <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.25rem 2.5rem', background: 'rgba(17,17,17,0.9)', backdropFilter: 'blur(12px)', borderBottom: `2px solid ${PRIMARY}`, position: 'sticky', top: 0, zIndex: 50 }}>
         <span style={{ fontWeight: 900, fontSize: '1.2rem', letterSpacing: '-0.02em', color: PRIMARY }}>{{BRAND_NAME}}</span>
         <div style={{ display: 'flex', gap: '2rem' }}>
-          <a href="#products" style={{ color: '#ccc', fontSize: '0.75rem', letterSpacing: '0.15em', textTransform: 'uppercase', textDecoration: 'none', fontWeight: 600 }}>Shop</a>
-          <a href="#contact" style={{ color: '#ccc', fontSize: '0.75rem', letterSpacing: '0.15em', textTransform: 'uppercase', textDecoration: 'none', fontWeight: 600 }}>Contact</a>
+          <a href="#products" className="bolt-nav-link" style={{ color: '#ccc', fontSize: '0.75rem', letterSpacing: '0.15em', textTransform: 'uppercase', textDecoration: 'none', fontWeight: 600 }}>Shop</a>
+          <a href="#contact" className="bolt-nav-link" style={{ color: '#ccc', fontSize: '0.75rem', letterSpacing: '0.15em', textTransform: 'uppercase', textDecoration: 'none', fontWeight: 600 }}>Contact</a>
         </div>
       </nav>
 
-      {/* Hero — full viewport, energy */}
-      <section style={{ minHeight: '85vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '4rem 2.5rem', position: 'relative', overflow: 'hidden', background: `linear-gradient(135deg, #111 0%, #1a1a1a 100%)` }}>
-        <div style={{ position: 'absolute', top: 0, right: 0, width: '40%', height: '100%', background: `linear-gradient(to left, ${PRIMARY}22, transparent)` }} />
-        <p style={{ color: ACCENT, fontSize: '0.7rem', letterSpacing: '0.4em', textTransform: 'uppercase', marginBottom: '1rem', fontWeight: 800 }}>&#9889; Performance Gear</p>
-        <h1 style={{ fontSize: 'clamp(3rem,10vw,8rem)', fontWeight: 900, lineHeight: 0.9, letterSpacing: '-0.04em', margin: '0 0 1.5rem', textTransform: 'uppercase' }}>
+      {/* Hero */}
+      <section style={{ minHeight: '85dvh', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '4rem 2.5rem', position: 'relative', overflow: 'hidden', background: `linear-gradient(135deg, #111 0%, #1a1a1a 100%)` }}>
+        <div style={{ position: 'absolute', top: 0, right: 0, width: '40%', height: '100%', background: `linear-gradient(to left, ${PRIMARY}22, transparent)`, pointerEvents: 'none' }} />
+        <p style={{
+          color: ACCENT, fontSize: '0.7rem', letterSpacing: '0.4em', textTransform: 'uppercase', marginBottom: '1rem', fontWeight: 800,
+          opacity: heroLoaded ? 1 : 0, transform: heroLoaded ? 'none' : 'translateY(24px)',
+          transition: 'opacity 0.6s cubic-bezier(.22,1,.36,1) 0.1s, transform 0.6s cubic-bezier(.22,1,.36,1) 0.1s',
+        }}>&#9889; {{HERO_LABEL}}</p>
+        <h1 style={{
+          fontSize: 'clamp(3rem,10vw,8rem)', fontWeight: 900, lineHeight: 0.9, letterSpacing: '-0.04em', margin: '0 0 1.5rem', textTransform: 'uppercase',
+          opacity: heroLoaded ? 1 : 0, transform: heroLoaded ? 'none' : 'translateY(24px)',
+          transition: 'opacity 0.6s cubic-bezier(.22,1,.36,1) 0.2s, transform 0.6s cubic-bezier(.22,1,.36,1) 0.2s',
+        }}>
           {{HERO_HEADLINE}}
         </h1>
         <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: '1.1rem', maxWidth: '38ch', lineHeight: 1.5, marginBottom: '2.5rem' }}>{{SLOGAN}}</p>
-        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-          <a href="#products" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', background: PRIMARY, color: '#fff', fontWeight: 800, padding: '1rem 2.5rem', fontSize: '0.8rem', letterSpacing: '0.15em', textTransform: 'uppercase', textDecoration: 'none' }}>
+        <div style={{
+          display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center',
+          opacity: heroLoaded ? 1 : 0, transform: heroLoaded ? 'none' : 'translateY(24px)',
+          transition: 'opacity 0.6s cubic-bezier(.22,1,.36,1) 0.35s, transform 0.6s cubic-bezier(.22,1,.36,1) 0.35s',
+        }}>
+          <a href="#products" className="bolt-btn" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', background: PRIMARY, color: '#fff', fontWeight: 800, padding: '1rem 2.5rem', fontSize: '0.8rem', letterSpacing: '0.15em', textTransform: 'uppercase', textDecoration: 'none', boxShadow: `0 0 0 transparent` }}>
             Shop Nu &#8594;
           </a>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'rgba(255,255,255,0.4)', fontSize: '0.75rem' }}>
@@ -52,15 +103,20 @@ export default function Home() {
       {/* Products */}
       <section id="products" style={{ padding: '5rem 2.5rem' }}>
         <h2 style={{ fontSize: '2rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '-0.02em', marginBottom: '2.5rem', borderLeft: `4px solid ${PRIMARY}`, paddingLeft: '1rem' }}>Gear Up</h2>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(260px,1fr))', gap: '1.5rem' }}>
+        <div ref={productsReveal.ref} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(260px,1fr))', gap: '1.5rem' }}>
           {PRODUCTS.map((p,i) => (
-            <div key={i} style={{ background: '#111', border: '1px solid #222', overflow: 'hidden', cursor: 'pointer', transition: 'border-color 0.2s' }}
-              onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.borderColor = PRIMARY }}
-              onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.borderColor = '#222' }}>
+            <div key={i}
+              onMouseEnter={() => setHoveredProduct(i)}
+              onMouseLeave={() => setHoveredProduct(null)}
+              style={{
+                background: '#111', border: `1px solid ${hoveredProduct === i ? PRIMARY : '#222'}`, overflow: 'hidden', cursor: 'pointer',
+                ...reveal(productsReveal.visible, i),
+                transform: productsReveal.visible ? (hoveredProduct === i ? 'translateY(-4px)' : 'none') : 'translateY(20px)',
+                boxShadow: hoveredProduct === i ? `0 12px 40px ${PRIMARY}33` : 'none',
+                transition: `opacity 0.6s cubic-bezier(.22,1,.36,1) ${i * 110}ms, transform 0.4s cubic-bezier(.22,1,.36,1), box-shadow 0.4s cubic-bezier(.22,1,.36,1), border-color 0.2s`,
+              }}>
               <div style={{ aspectRatio: '1/1', overflow: 'hidden', background: '#1a1a1a', position: 'relative' }}>
-                {p.image && <img src={p.image} alt={p.title} style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.4s ease' }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLImageElement).style.transform = 'scale(1.06)' }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLImageElement).style.transform = 'scale(1)' }} />}
+                {p.image && <img src={p.image} alt={p.title} style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.4s cubic-bezier(.22,1,.36,1)', transform: hoveredProduct === i ? 'scale(1.06)' : 'scale(1)' }} />}
                 {p.badge && <span style={{ position: 'absolute', top: '0.75rem', left: '0.75rem', background: ACCENT, color: '#000', fontSize: '0.65rem', fontWeight: 800, padding: '0.2rem 0.5rem', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{p.badge}</span>}
               </div>
               <div style={{ padding: '1.25rem' }}>
@@ -70,7 +126,7 @@ export default function Home() {
                     <span style={{ fontWeight: 800, fontSize: '1.1rem', color: PRIMARY }}>&#8364;{p.price.toFixed(2)}</span>
                     {p.compareAtPrice && <span style={{ color: '#555', fontSize: '0.85rem', textDecoration: 'line-through', marginLeft: '0.5rem' }}>&#8364;{p.compareAtPrice.toFixed(2)}</span>}
                   </div>
-                  <button style={{ background: PRIMARY, color: '#fff', border: 'none', padding: '0.5rem 1rem', fontSize: '0.7rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', cursor: 'pointer' }}>
+                  <button className="bolt-buy-btn" style={{ background: PRIMARY, color: '#fff', border: 'none', padding: '0.5rem 1rem', fontSize: '0.7rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', cursor: 'pointer' }}>
                     Kopen
                   </button>
                 </div>
@@ -83,13 +139,13 @@ export default function Home() {
       {/* Reviews */}
       <section style={{ padding: '4rem 2.5rem', background: '#111', borderTop: `2px solid ${PRIMARY}` }}>
         <h2 style={{ fontSize: '1.5rem', fontWeight: 900, textTransform: 'uppercase', marginBottom: '2rem' }}>Community</h2>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))', gap: '1.5rem' }}>
+        <div ref={reviewsReveal.ref} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))', gap: '1.5rem' }}>
           {[
             { n: 'Marc R.',   s: 5, t: 'Beste aankoop van het jaar. Kwaliteit is top!' },
             { n: 'Julia K.',  s: 5, t: 'Snel geleverd, verpakking netjes, product geweldig.' },
             { n: 'Daan V.',   s: 5, t: 'Gebruik het dagelijks &#8212; echt een verschil.' },
           ].map((r,i) => (
-            <div key={i} style={{ background: '#1a1a1a', padding: '1.5rem', borderLeft: `3px solid ${PRIMARY}` }}>
+            <div key={i} style={{ background: '#1a1a1a', padding: '1.5rem', borderLeft: `3px solid ${PRIMARY}`, ...reveal(reviewsReveal.visible, i) }}>
               <div style={{ color: ACCENT, marginBottom: '0.75rem', fontSize: '0.85rem' }}>{'★'.repeat(r.s)}</div>
               <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: '0.875rem', lineHeight: 1.6, marginBottom: '0.75rem' }} dangerouslySetInnerHTML={{ __html: `"${r.t}"` }} />
               <span style={{ fontWeight: 700, fontSize: '0.8rem', color: PRIMARY }}>{r.n}</span>
