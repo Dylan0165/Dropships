@@ -260,9 +260,18 @@ export const STAGE_RUNNERS: Record<Stage, (ctx: StageContext) => Promise<StageOu
   'health-check': async (ctx) => {
     const deployOut = ctx.previous.deploy as Record<string, unknown>
     const url = deployOut?.preview_url as string
+    const storeId = deployOut?.store_id as string
     if (!url) return { ok: false, error: 'no preview_url from deploy' }
     const hc = await healthCheck(url)
     saveStageOutput(ctx.runId, 'health-check', { ...hc })
+    if (storeId) {
+      updateStoreHealth(storeId, {
+        status: hc.ok ? 'live' : 'failed',
+        healthStatus: hc.ok ? 'healthy' : 'unhealthy',
+        responseMs: hc.statusCode ? undefined : undefined,
+        error: hc.error,
+      })
+    }
     if (!hc.ok) return { ok: false, error: hc.error ?? `health check failed after ${hc.attempts} attempts` }
     return { ok: true, output: { url, attempts: hc.attempts, status_code: hc.statusCode } }
   },
