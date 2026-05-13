@@ -15,7 +15,7 @@ export interface ReviewerConfig {
   agentName: string
   skillName: string
   input: Record<string, unknown>
-  model?: 'deepseek-chat' | 'deepseek-reasoner'
+  model?: 'deepseek-chat'
   onLog?: (level: 'info' | 'warn' | 'error', msg: string) => void
 }
 
