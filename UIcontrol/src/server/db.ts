@@ -378,6 +378,15 @@ export function updateStoreHealth(storeId: string, health: {
   }
 }
 
+export function getLiveStores(): Array<{ storeId: string; previewUrl: string; port: number | null }> {
+  try {
+    return (db.prepare(`
+      SELECT store_id as storeId, preview_url as previewUrl, port
+      FROM stores WHERE status IN ('live','building') AND preview_url != ''
+    `).all() as Array<{ storeId: string; previewUrl: string; port: number | null }>)
+  } catch { return [] }
+}
+
 export function releasePort(storeId: string): void {
   try {
     db.prepare(`UPDATE port_allocations SET released_at=? WHERE store_id=? AND released_at IS NULL`)
