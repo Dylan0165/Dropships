@@ -1,35 +1,84 @@
 'use client';
+import { useRef, useState, useEffect } from 'react';
 
 interface Product { id: string; title: string; image: string; price: number; compareAtPrice?: number; badge?: string; description?: string }
 const PRODUCTS: Product[] = {{PRODUCTS_JSON}};
 const PRIMARY = '{{PRIMARY}}';
 
+function useReveal() {
+  const ref = useRef<HTMLDivElement>(null)
+  const [visible, setVisible] = useState(false)
+  useEffect(() => {
+    const el = ref.current; if (!el) return
+    const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setVisible(true); obs.disconnect() } }, { threshold: 0.12 })
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [])
+  return { ref, visible }
+}
+
+const reveal = (visible: boolean, i: number) => ({
+  opacity: visible ? 1 : 0,
+  transform: visible ? 'none' : 'translateY(20px)',
+  transition: `opacity 0.6s cubic-bezier(.22,1,.36,1) ${i * 110}ms, transform 0.6s cubic-bezier(.22,1,.36,1) ${i * 110}ms`,
+})
+
 export default function Home() {
+  const [heroLoaded, setHeroLoaded] = useState(false)
+  const [hoveredProduct, setHoveredProduct] = useState<number | null>(null)
+  const productsReveal = useReveal()
+  const uspReveal = useReveal()
+  const reviewsReveal = useReveal()
+
+  useEffect(() => { const t = setTimeout(() => setHeroLoaded(true), 50); return () => clearTimeout(t) }, [])
+
   const year = new Date().getFullYear();
   return (
-    <div style={{ background: '#fdf8f3', color: '#2d2417', minHeight: '100vh', fontFamily: 'inherit' }}>
+    <div style={{ background: '#fdf8f3', color: '#2d2417', minHeight: '100dvh', fontFamily: 'inherit' }}>
+
+      <style dangerouslySetInnerHTML={{ __html: `
+        @keyframes fadeUp { from { opacity:0; transform:translateY(24px) } to { opacity:1; transform:translateY(0) } }
+        .dusk-nav-link { transition: color 0.2s ease; }
+        .dusk-nav-link:hover { color: #2d2417 !important; }
+        .dusk-btn { transition: transform 0.25s cubic-bezier(.22,1,.36,1), box-shadow 0.25s cubic-bezier(.22,1,.36,1); }
+        .dusk-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(45,36,23,0.18); }
+        .dusk-btn:active { transform: scale(0.98); }
+      ` }} />
 
       {/* Nav */}
-      <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.5rem 3rem', background: 'rgba(253,248,243,0.95)', backdropFilter: 'blur(8px)', position: 'sticky', top: 0, zIndex: 10, borderBottom: '1px solid rgba(45,36,23,0.08)' }}>
+      <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.5rem 3rem', background: 'rgba(253,248,243,0.88)', backdropFilter: 'blur(12px)', position: 'sticky', top: 0, zIndex: 50, borderBottom: '1px solid rgba(45,36,23,0.08)' }}>
         <span style={{ fontWeight: 700, fontSize: '1.1rem', color: '#2d2417', letterSpacing: '-0.01em' }}>{{BRAND_NAME}}</span>
         <div style={{ display: 'flex', gap: '2.5rem' }}>
-          <a href="#products" style={{ color: '#8a7260', fontSize: '0.85rem', textDecoration: 'none' }}>Shop</a>
-          <a href="#over" style={{ color: '#8a7260', fontSize: '0.85rem', textDecoration: 'none' }}>Over ons</a>
-          <a href="#contact" style={{ color: '#8a7260', fontSize: '0.85rem', textDecoration: 'none' }}>Contact</a>
+          <a href="#products" className="dusk-nav-link" style={{ color: '#8a7260', fontSize: '0.85rem', textDecoration: 'none' }}>Shop</a>
+          <a href="#over" className="dusk-nav-link" style={{ color: '#8a7260', fontSize: '0.85rem', textDecoration: 'none' }}>Over ons</a>
+          <a href="#contact" className="dusk-nav-link" style={{ color: '#8a7260', fontSize: '0.85rem', textDecoration: 'none' }}>Contact</a>
         </div>
       </nav>
 
       {/* Hero */}
       <section style={{ padding: '6rem 3rem', maxWidth: '1100px', margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1.2fr', gap: '4rem', alignItems: 'center' }}>
         <div>
-          <p style={{ color: PRIMARY, fontSize: '0.75rem', letterSpacing: '0.25em', textTransform: 'uppercase', marginBottom: '1.5rem', fontWeight: 600 }}>Handgemaakt met zorg</p>
-          <h1 style={{ fontSize: 'clamp(2.5rem,5vw,4.5rem)', fontWeight: 700, lineHeight: 1.1, letterSpacing: '-0.03em', margin: '0 0 1.5rem', color: '#2d2417' }}>
+          <p style={{
+            color: PRIMARY, fontSize: '0.75rem', letterSpacing: '0.25em', textTransform: 'uppercase', marginBottom: '1.5rem', fontWeight: 600,
+            opacity: heroLoaded ? 1 : 0, transform: heroLoaded ? 'none' : 'translateY(24px)',
+            transition: 'opacity 0.6s cubic-bezier(.22,1,.36,1) 0.1s, transform 0.6s cubic-bezier(.22,1,.36,1) 0.1s',
+          }}>{{HERO_LABEL}}</p>
+          <h1 style={{
+            fontSize: 'clamp(2.5rem,5vw,4.5rem)', fontWeight: 700, lineHeight: 1.1, letterSpacing: '-0.03em', margin: '0 0 1.5rem', color: '#2d2417',
+            opacity: heroLoaded ? 1 : 0, transform: heroLoaded ? 'none' : 'translateY(24px)',
+            transition: 'opacity 0.6s cubic-bezier(.22,1,.36,1) 0.2s, transform 0.6s cubic-bezier(.22,1,.36,1) 0.2s',
+          }}>
             {{HERO_HEADLINE}}
           </h1>
           <p style={{ color: '#8a7260', fontSize: '1.05rem', lineHeight: 1.75, maxWidth: '38ch', marginBottom: '2.5rem' }}>{{SLOGAN}}</p>
-          <a href="#products" style={{ display: 'inline-block', background: '#2d2417', color: '#fdf8f3', padding: '1rem 2.5rem', fontSize: '0.85rem', letterSpacing: '0.08em', textDecoration: 'none', fontWeight: 600, borderRadius: '2px' }}>
-            Ontdek de collectie
-          </a>
+          <div style={{
+            opacity: heroLoaded ? 1 : 0, transform: heroLoaded ? 'none' : 'translateY(24px)',
+            transition: 'opacity 0.6s cubic-bezier(.22,1,.36,1) 0.35s, transform 0.6s cubic-bezier(.22,1,.36,1) 0.35s',
+          }}>
+            <a href="#products" className="dusk-btn" style={{ display: 'inline-block', background: '#2d2417', color: '#fdf8f3', padding: '1rem 2.5rem', fontSize: '0.85rem', letterSpacing: '0.08em', textDecoration: 'none', fontWeight: 600, borderRadius: '2px' }}>
+              Ontdek de collectie
+            </a>
+          </div>
         </div>
         <div style={{ borderRadius: '4px', overflow: 'hidden', background: '#efe8df' }}>
           {PRODUCTS[0]?.image
@@ -40,13 +89,13 @@ export default function Home() {
 
       {/* USPs */}
       <section style={{ background: '#fff', padding: '3rem', borderTop: '1px solid rgba(45,36,23,0.08)', borderBottom: '1px solid rgba(45,36,23,0.08)' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '2rem', maxWidth: '900px', margin: '0 auto', textAlign: 'center' }}>
+        <div ref={uspReveal.ref} style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '2rem', maxWidth: '900px', margin: '0 auto', textAlign: 'center' }}>
           {[
             { t: '{{USP_1_TITLE}}', d: '{{USP_1_DESC}}' },
             { t: '{{USP_2_TITLE}}', d: '{{USP_2_DESC}}' },
             { t: '{{USP_3_TITLE}}', d: '{{USP_3_DESC}}' },
           ].map((u,i) => (
-            <div key={i}>
+            <div key={i} style={reveal(uspReveal.visible, i)}>
               <div style={{ width: '40px', height: '2px', background: PRIMARY, margin: '0 auto 1rem' }} />
               <h3 style={{ fontSize: '0.9rem', fontWeight: 600, marginBottom: '0.5rem', color: '#2d2417' }}>{u.t}</h3>
               <p style={{ color: '#8a7260', fontSize: '0.8rem', lineHeight: 1.6, margin: 0 }}>{u.d}</p>
@@ -59,14 +108,21 @@ export default function Home() {
       <section id="products" style={{ padding: '5rem 3rem', maxWidth: '1200px', margin: '0 auto' }}>
         <h2 style={{ fontSize: '1.75rem', fontWeight: 700, letterSpacing: '-0.02em', marginBottom: '0.75rem', color: '#2d2417' }}>Onze collectie</h2>
         <p style={{ color: '#8a7260', fontSize: '0.9rem', marginBottom: '3rem' }}>Zorgvuldig samengesteld voor jou</p>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(260px,1fr))', gap: '2.5rem' }}>
+        <div ref={productsReveal.ref} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(260px,1fr))', gap: '2.5rem' }}>
           {PRODUCTS.map((p,i) => (
-            <div key={i} style={{ cursor: 'pointer' }}>
+            <div key={i}
+              onMouseEnter={() => setHoveredProduct(i)}
+              onMouseLeave={() => setHoveredProduct(null)}
+              style={{
+                cursor: 'pointer',
+                ...reveal(productsReveal.visible, i),
+                transform: productsReveal.visible ? (hoveredProduct === i ? 'translateY(-4px)' : 'none') : 'translateY(20px)',
+                boxShadow: hoveredProduct === i ? '0 8px 32px rgba(45,36,23,0.12)' : 'none',
+                transition: `opacity 0.6s cubic-bezier(.22,1,.36,1) ${i * 110}ms, transform 0.4s cubic-bezier(.22,1,.36,1), box-shadow 0.4s cubic-bezier(.22,1,.36,1)`,
+              }}>
               <div style={{ borderRadius: '4px', overflow: 'hidden', background: '#efe8df', marginBottom: '1.25rem', position: 'relative' }}>
                 {p.image
-                  ? <img src={p.image} alt={p.title} style={{ width: '100%', aspectRatio: '1/1', objectFit: 'cover', display: 'block', transition: 'transform 0.5s ease' }}
-                      onMouseEnter={e => { (e.currentTarget as HTMLImageElement).style.transform = 'scale(1.04)' }}
-                      onMouseLeave={e => { (e.currentTarget as HTMLImageElement).style.transform = 'scale(1)' }} />
+                  ? <img src={p.image} alt={p.title} style={{ width: '100%', aspectRatio: '1/1', objectFit: 'cover', display: 'block', transition: 'transform 0.5s cubic-bezier(.22,1,.36,1)', transform: hoveredProduct === i ? 'scale(1.06)' : 'scale(1)' }} />
                   : <div style={{ width: '100%', aspectRatio: '1/1', background: '#e0d5c8' }} />}
                 {p.badge && <span style={{ position: 'absolute', top: '1rem', right: '1rem', background: PRIMARY, color: '#fff', fontSize: '0.65rem', fontWeight: 700, padding: '0.2rem 0.6rem', letterSpacing: '0.1em', borderRadius: '2px', textTransform: 'uppercase' }}>{p.badge}</span>}
               </div>
@@ -83,13 +139,13 @@ export default function Home() {
       {/* Reviews */}
       <section style={{ padding: '5rem 3rem', background: '#fff', borderTop: '1px solid rgba(45,36,23,0.08)' }}>
         <h2 style={{ textAlign: 'center', fontSize: '1.5rem', fontWeight: 700, marginBottom: '3rem', color: '#2d2417' }}>Klantenverhalen</h2>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))', gap: '2rem', maxWidth: '900px', margin: '0 auto' }}>
+        <div ref={reviewsReveal.ref} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))', gap: '2rem', maxWidth: '900px', margin: '0 auto' }}>
           {[
             { n: 'Emma S.',   s: 5, t: 'Precies wat ik zocht. Natuur en duurzaamheid in &#233;&#233;n.' },
             { n: 'Pieter W.', s: 5, t: 'Mooie kwaliteit en snel geleverd. Top service!' },
             { n: 'Lisa N.',   s: 4, t: 'Blij verrast door de presentatie. Een cadeau in zichzelf.' },
           ].map((r,i) => (
-            <div key={i} style={{ padding: '2rem', background: '#fdf8f3', borderRadius: '4px' }}>
+            <div key={i} style={{ padding: '2rem', background: '#fdf8f3', borderRadius: '4px', ...reveal(reviewsReveal.visible, i) }}>
               <div style={{ display: 'flex', gap: '2px', marginBottom: '1rem' }}>
                 {Array.from({ length: r.s }).map((_,j) => <span key={j} style={{ color: PRIMARY, fontSize: '0.85rem' }}>&#9733;</span>)}
               </div>
