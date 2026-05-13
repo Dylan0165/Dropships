@@ -56,9 +56,10 @@ function runScp(localPath: string, remotePath: string, timeoutMs = 120_000): Pro
 }
 
 function nginxVhost(subdomain: string, port: number): string {
+  const { domain } = env()
   return `server {
   listen 80;
-  server_name ${subdomain}.${STORE_BASE_DOMAIN};
+  server_name ${subdomain}.${domain};
   root /var/www/stores/${subdomain}/current/out;
   index index.html;
   location / { try_files $uri $uri.html $uri/index.html =404; }
