@@ -234,7 +234,8 @@ export const STAGE_RUNNERS: Record<Stage, (ctx: StageContext) => Promise<StageOu
     const subdomain = buildOut?.subdomain as string
     if (!outDir || !subdomain) return { ok: false, error: 'no out_dir/subdomain from store-build' }
 
-    const storeId = uuid()
+    // Deterministic storeId per run so port claims are idempotent on resume
+    const storeId = `store-${ctx.runId}`
     const result = await deployStore(
       { subdomain, buildOutDir: outDir, storeId },
       ctx.onLog,
