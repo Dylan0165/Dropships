@@ -302,53 +302,59 @@ app.get('/api/stores', (_req, res) => {
   }
 })
 
-// Local reconcile: find stage_outputs deploy records that have no matching stores row
-app.post('/api/admin/reconcile-stores', (_req, res) => {
+// SSH-scan the deploy server for nginx vhosts → reconcile into stores table
+app.post('/api/admin/reconcile-stores', async (_req, res) => {
   try {
-    type DeployOutput = { subdomain: string; preview_url: string; port?: number; brand_name?: string }
-    type StageRow = { run_id: string; output_json: string }
-    const deployRows = db.prepare(
-      `SELECT run_id, output_json FROM stage_outputs WHERE stage = 'deploy'`
-    ).all() as StageRow[]
+    const scanned = await scanDeployedStores()
+    if (!scanned.length) {
+      // Fallback: try stage_outputs if SSH scan finds nothing
+      type StageRow = { run_id: string; output_json: string }
+      const rows = db.prepare(`SELECT run_id, output_json FROM stage_outputs WHERE stage='deploy'`).all() as StageRow[]
+      scanned.push(...rows.flatMap(r => {
+        try {
+          const o = JSON.parse(r.output_json) as { subdomain?: string; port?: number }
+          return o.subdomain && o.port ? [{ subdomain: o.subdomain, port: o.port }] : []
+        } catch { return [] }
+      }))
+    }
 
+    const host = process.env.STORE_SERVER_HOST ?? 'localhost'
     const added: string[] = []
     const updated: string[] = []
+    const now = new Date().toISOString()
 
-    for (const row of deployRows) {
-      let out: DeployOutput
-      try { out = JSON.parse(row.output_json) as DeployOutput } catch { continue }
-      if (!out.subdomain) continue
+    for (const { subdomain, port } of scanned) {
+      const previewUrl = `http://${host}:${port}/`
 
-      const storeId = `store-${row.run_id}`
-      const port = out.port ?? (db.prepare(
-        `SELECT port FROM port_allocations WHERE store_id = ? AND released_at IS NULL`
-      ).get(storeId) as { port: number } | undefined)?.port ?? null
+      // Find matching store by port first, then by subdomain
+      const byPort = db.prepare(`SELECT store_id, run_id FROM stores WHERE port = ?`).get(port) as { store_id: string; run_id: string } | undefined
+      const byName = db.prepare(`SELECT store_id, run_id FROM stores WHERE subdomein = ?`).get(subdomain) as { store_id: string; run_id: string } | undefined
+      const existing = byPort ?? byName
 
-      const previewUrl = out.preview_url
-        || (port && process.env.STORE_SERVER_HOST
-          ? `http://${process.env.STORE_SERVER_HOST}:${port}/`
-          : port ? `http://localhost:${port}/` : '')
+      // Try to find run_id from port_allocations → runs
+      const portRow = db.prepare(`SELECT store_id FROM port_allocations WHERE port = ?`).get(port) as { store_id: string } | undefined
+      const runId = existing?.run_id
+        ?? (portRow?.store_id.startsWith('store-') ? portRow.store_id.slice(6) : null)
+        ?? 'unknown'
 
-      // Get niche from runs table
-      const runRow = db.prepare(`SELECT niche FROM runs WHERE run_id = ?`).get(row.run_id) as { niche: string } | undefined
-      const niche = runRow?.niche ?? 'unknown'
+      const runRow = db.prepare(`SELECT niche FROM runs WHERE run_id = ?`).get(runId) as { niche: string } | undefined
+      const niche = runRow?.niche ?? subdomain
 
-      const existing = db.prepare(`SELECT store_id FROM stores WHERE store_id = ?`).get(storeId)
       if (!existing) {
+        const storeId = portRow?.store_id ?? `store-${runId}`
         db.prepare(`
           INSERT INTO stores (store_id, run_id, subdomein, niche, preview_url, port, status, created_at)
           VALUES (?, ?, ?, ?, ?, ?, 'building', ?)
-        `).run(storeId, row.run_id, out.subdomain, niche, previewUrl, port, new Date().toISOString())
-        added.push(out.subdomain)
-      } else if (port) {
-        db.prepare(`UPDATE stores SET port = ?, preview_url = ? WHERE store_id = ? AND (port IS NULL OR preview_url = '')`).run(port, previewUrl, storeId)
-        updated.push(out.subdomain)
+        `).run(storeId, runId, subdomain, niche, previewUrl, port, now)
+        added.push(subdomain)
+      } else {
+        db.prepare(`UPDATE stores SET port=?, preview_url=?, subdomein=? WHERE store_id=?`)
+          .run(port, previewUrl, subdomain, existing.store_id)
+        updated.push(subdomain)
       }
     }
 
-    // Trigger immediate health poll for newly added stores
     void pollStoreHealth()
-
     res.json({ added: added.length, updated: updated.length, stores: [...added, ...updated] })
   } catch (err) {
     res.status(500).json({ error: err instanceof Error ? err.message : 'reconcile failed' })
