@@ -285,35 +285,20 @@ app.get('/api/runs/:runId/resume', async (req, res) => {
 })
 
 app.get('/api/stores', (_req, res) => {
-  // Primair: lees uit de stores tabel in de DB (survives restarts)
   try {
-    const dbStores = db.prepare(`
-      SELECT store_id as storeId, subdomein, niche, preview_url as previewUrl,
-             created_at as createdAt, roas, status, port,
+    const rows = db.prepare(`
+      SELECT store_id as storeId, run_id as runId, subdomein, niche,
+             preview_url as previewUrl, created_at as createdAt,
+             roas, status, port,
              health_status as healthStatus, health_checked_at as healthCheckedAt,
              health_response_ms as healthResponseMs, health_error as healthError
       FROM stores ORDER BY created_at DESC
     `).all()
-    if (dbStores && (dbStores as unknown[]).length > 0) {
-      res.json(dbStores)
-      return
-    }
-  } catch {
-    // DB query failed — fall through to in-memory fallback
+    res.json(rows)
+  } catch (err) {
+    console.error('[api/stores] query failed:', err)
+    res.json([])
   }
-  // Fallback: in-memory storesLive (voor als DB leeg is)
-  const allRuns = store.getAllRuns()
-  const seen = new Set<string>()
-  const stores: unknown[] = []
-  for (const run of allRuns) {
-    for (const s of run.storesLive) {
-      if (!seen.has(s.storeId)) {
-        seen.add(s.storeId)
-        stores.push(s)
-      }
-    }
-  }
-  res.json(stores)
 })
 
 // Proxy to store-platform reconcile (runs on port 3002)
