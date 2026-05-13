@@ -10,16 +10,25 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const workspaceRoot = path.resolve(__dirname, '../../../../')
 const SKILLS_PATH = process.env.SKILLS_PATH ?? path.join(workspaceRoot, 'Skillslibrary')
 
-// DeepSeek pricing — USD per 1M tokens (2026 actuals)
+// Pricing — USD per 1M tokens
 const PRICING: Record<string, { input: number; output: number }> = {
-  'deepseek-chat':     { input: 0.27, output: 1.10 },
-  'deepseek-reasoner': { input: 0.55, output: 2.19 },
+  'deepseek-chat':                    { input: 0.27,  output: 1.10  },
+  'deepseek-reasoner':                { input: 0.55,  output: 2.19  },
+  'opencode-go/deepseek-v4-flash':    { input: 0.07,  output: 0.28  },
+  'opencode-go/deepseek-v4-pro':      { input: 0.27,  output: 1.10  },
+  'opencode-go/qwen3.5-plus':         { input: 0.07,  output: 0.28  },
+  'opencode-go/qwen3.6-plus':         { input: 0.14,  output: 0.55  },
+  'opencode-go/kimi-k2.6':            { input: 0.14,  output: 0.55  },
+  'opencode-go/minimax-m2.7':         { input: 0.14,  output: 0.55  },
+  'opencode-go/glm-5.1':              { input: 0.07,  output: 0.28  },
+  'opencode-go/mimo-v2.5-pro':        { input: 0.14,  output: 0.55  },
 }
 
 const LLM_BASE_URL = process.env.LLM_BASE_URL
   ?? process.env.DEEPSEEK_BASE_URL
   ?? 'https://api.deepseek.com'
 const LLM_API_KEY = process.env.LLM_API_KEY
+  ?? process.env.OPENCODE_API_KEY
   ?? process.env.DEEPSEEK_API_KEY
   ?? ''
 
