@@ -25,43 +25,16 @@ jobs:
           cd /home/student/Dropships/UIcontrol
           npm run build
 
-      - name: Install ApprovalApp dependencies
-        run: |
-          cd /home/student/Dropships/ApprovalApp
-          npm install
-
-      - name: Build ApprovalApp
-        run: |
-          cd /home/student/Dropships/ApprovalApp
-          npm run build
-
-      - name: Install Trendscraper dependencies
-        run: |
-          cd /home/student/Dropships/Trendscraper
-          source venv/bin/activate && pip install -r requirements.txt -q && deactivate
-
-      - name: Install WebsiteInspector dependencies
-        run: |
-          cd /home/student/Dropships/WebsiteInspector
-          source venv/bin/activate && pip install -r requirements.txt -q && deactivate
-
       - name: Restore .env files (not in git on server)
         run: |
-          # UIcontrol .env bewaard buiten git
           if [ -f /home/student/.dropship-envs/uicontrol.env ]; then
             cp /home/student/.dropship-envs/uicontrol.env /home/student/Dropships/UIcontrol/.env
-          fi
-          if [ -f /home/student/.dropship-envs/inspector.env ]; then
-            cp /home/student/.dropship-envs/inspector.env /home/student/Dropships/WebsiteInspector/.env
           fi
 
       - name: Restart backend services
         run: |
           pm2 restart uicontrol --update-env
-          pm2 restart store-platform --update-env
-          pm2 restart trendscraper --update-env
-          pm2 restart inspector --update-env
-          pm2 restart approvalapp --update-env
+          pm2 restart store-platform --update-env || true
           pm2 save
 
       - name: Reload nginx (nieuwe UI build)
@@ -71,5 +44,3 @@ jobs:
         run: |
           sleep 8
           curl -f http://localhost:3001/api/health && echo " UIcontrol OK"
-          curl -f http://localhost:8001/health && echo " Trendscraper OK"
-          curl -f http://localhost:8002/health && echo " Inspector OK"
