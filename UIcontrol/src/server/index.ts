@@ -1091,10 +1091,40 @@ function scheduleWeekly(dayOfWeek: number, hour: number, task: () => Promise<voi
 }
 
 // ── Start ──
+// ── Background store health poller ───────────────────────────────────────────
+async function pollStoreHealth() {
+  const stores = getLiveStores()
+  for (const s of stores) {
+    const url = s.previewUrl || (s.port ? `http://${process.env.STORE_SERVER_HOST ?? 'localhost'}:${s.port}/` : null)
+    if (!url) continue
+    try {
+      const ctrl = new AbortController()
+      const timer = setTimeout(() => ctrl.abort(), 6000)
+      const start = Date.now()
+      const res = await fetch(url, { signal: ctrl.signal, redirect: 'follow' }).catch(() => null)
+      clearTimeout(timer)
+      const ms = Date.now() - start
+      const up = res?.ok ?? false
+      updateStoreHealth(s.storeId, {
+        status: up ? 'live' : 'failed',
+        healthStatus: up ? 'up' : 'down',
+        responseMs: ms,
+        error: up ? undefined : `HTTP ${res?.status ?? 'timeout'}`,
+      })
+    } catch {
+      updateStoreHealth(s.storeId, { status: 'failed', healthStatus: 'down', error: 'unreachable' })
+    }
+  }
+}
+
 server.listen(PORT, () => {
   console.log(`[server] API + WS on http://localhost:${PORT}`)
   resumeInterruptedRuns()
   startHiggsfieldPoller()
+
+  // Poll deployed store health every 60s
+  setInterval(pollStoreHealth, 60_000)
+  setTimeout(pollStoreHealth, 5000) // initial check 5s after boot
 
   // Daily lifecycle check at 02:00
   scheduleDaily(2, runLifecycleCycle, 'lifecycle-cycle')
