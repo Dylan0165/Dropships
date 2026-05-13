@@ -42,8 +42,9 @@ function runSsh(command: string, timeoutMs = 30_000): Promise<{ ok: boolean; out
 }
 
 function runScp(localPath: string, remotePath: string, timeoutMs = 120_000): Promise<{ ok: boolean; output: string }> {
+  const { host, user } = env()
   return new Promise((resolve) => {
-    const args = [...sshArgs(), '-r', localPath, `${STORE_SERVER_USER}@${STORE_SERVER_HOST}:${remotePath}`]
+    const args = [...sshArgs(), '-r', localPath, `${user}@${host}:${remotePath}`]
     const child = spawn('scp', args, { shell: false })
     let out = ''
     child.stdout?.on('data', (d: Buffer) => { out += d.toString() })
