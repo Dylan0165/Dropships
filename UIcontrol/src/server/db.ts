@@ -338,6 +338,46 @@ export function claimPort(storeId: string): number {
   })()
 }
 
+export function upsertStore(store: {
+  storeId: string; runId: string; subdomain: string; niche: string
+  previewUrl: string; port: number; status?: string
+}): void {
+  try {
+    db.prepare(`
+      INSERT INTO stores (store_id, run_id, subdomein, niche, preview_url, port, status, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(store_id) DO UPDATE SET
+        preview_url = excluded.preview_url,
+        port        = excluded.port,
+        status      = excluded.status
+    `).run(
+      store.storeId, store.runId, store.subdomain, store.niche,
+      store.previewUrl, store.port, store.status ?? 'building',
+      new Date().toISOString(),
+    )
+  } catch (err) {
+    console.error('[db] upsertStore failed:', err)
+  }
+}
+
+export function updateStoreHealth(storeId: string, health: {
+  status: string; healthStatus: string; responseMs?: number; error?: string
+}): void {
+  try {
+    db.prepare(`
+      UPDATE stores SET
+        status = ?, health_status = ?, health_checked_at = ?,
+        health_response_ms = ?, health_error = ?
+      WHERE store_id = ?
+    `).run(
+      health.status, health.healthStatus, new Date().toISOString(),
+      health.responseMs ?? null, health.error ?? null, storeId,
+    )
+  } catch (err) {
+    console.error('[db] updateStoreHealth failed:', err)
+  }
+}
+
 export function releasePort(storeId: string): void {
   try {
     db.prepare(`UPDATE port_allocations SET released_at=? WHERE store_id=? AND released_at IS NULL`)
