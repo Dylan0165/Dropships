@@ -123,14 +123,30 @@ export function PipelineCanvas() {
   }, [])
 
   const { nodes, edges } = useMemo(() => {
-    const ns: Node[] = STAGES_ORDER.map((stage, i) => ({
+    // Vertical layout: 2 columns, EX left / RV right for paired stages
+    const LAYOUT: Record<Stage, { x: number; y: number }> = {
+      'trend-discovery':    { x: 0,   y: 0    },
+      'niche-review':       { x: 340, y: 0    },
+      'product-research':   { x: 0,   y: 160  },
+      'product-review':     { x: 340, y: 160  },
+      'brand-creation':     { x: 0,   y: 320  },
+      'content-generation': { x: 340, y: 320  },
+      'store-build':        { x: 0,   y: 480  },
+      'build-validate':     { x: 340, y: 480  },
+      'deploy':             { x: 0,   y: 640  },
+      'health-check':       { x: 340, y: 640  },
+      'growth':             { x: 170, y: 800  },
+    }
+
+    const ns: Node[] = STAGES_ORDER.map((stage) => ({
       id: stage,
       type: 'stage',
-      position: { x: i * 260, y: 100 },
+      position: LAYOUT[stage],
       data: {
         stage,
         label: STAGE_META[stage].label,
-        kind: STAGE_META[stage].kind,
+        kind:  STAGE_META[stage].kind,
+        model: STAGE_META[stage].model,
         state: state?.stages[stage] ?? {
           status: 'pending', retries: 0, tokensIn: 0, tokensOut: 0, costUsd: 0, durationMs: 0,
         },
