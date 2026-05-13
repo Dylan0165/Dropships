@@ -27,7 +27,7 @@ const PRICING: Record<string, { input: number; output: number }> = {
 // Read at call time so dotenv/pm2 env updates are always picked up
 function llmConfig() {
   return {
-    baseUrl: process.env.LLM_BASE_URL ?? process.env.DEEPSEEK_BASE_URL ?? 'https://api.deepseek.com',
+    baseUrl: process.env.LLM_BASE_URL ?? process.env.DEEPSEEK_BASE_URL ?? 'https://api.deepseek.com/v1',
     apiKey:  process.env.LLM_API_KEY  ?? process.env.OPENCODE_API_KEY  ?? process.env.DEEPSEEK_API_KEY ?? '',
   }
 }
