@@ -4,7 +4,7 @@ import { runReviewer, type ReviewerOutputSchema } from './reviewer.js'
 import { buildStore } from './store-builder.js'
 import { deployStore, healthCheck, buildSubdomain } from './deployer.js'
 import { validateAndBuild } from '../store-platform/build-validator.js'
-import { saveStageOutput, claimPort } from '../db.js'
+import { saveStageOutput, claimPort, upsertStore, updateStoreHealth } from '../db.js'
 import { v4 as uuid } from 'uuid'
 import type { Stage } from './types.js'
 
