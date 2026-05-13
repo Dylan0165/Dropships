@@ -267,8 +267,7 @@ export const STAGE_RUNNERS: Record<Stage, (ctx: StageContext) => Promise<StageOu
     if (storeId) {
       updateStoreHealth(storeId, {
         status: hc.ok ? 'live' : 'failed',
-        healthStatus: hc.ok ? 'healthy' : 'unhealthy',
-        responseMs: hc.statusCode ? undefined : undefined,
+        healthStatus: hc.ok ? 'up' : 'down',
         error: hc.error,
       })
     }
