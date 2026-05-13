@@ -3,11 +3,17 @@ import fs from 'fs'
 import os from 'os'
 import { spawn } from 'child_process'
 
-const STORE_SERVER_HOST = process.env.STORE_SERVER_HOST || ''
-const STORE_SERVER_USER = process.env.STORE_SERVER_USER || 'deploy'
-const STORE_SSH_KEY_PATH = process.env.STORE_SSH_KEY_PATH || ''
-const STORE_BASE_DOMAIN = process.env.STORE_BASE_DOMAIN || 'localhost'
 const MAX_RELEASES = 3
+
+// Read at call time so dotenv/config is guaranteed to have run first
+function env() {
+  return {
+    host: process.env.STORE_SERVER_HOST ?? '',
+    user: process.env.STORE_SERVER_USER ?? 'deploy',
+    key:  process.env.STORE_SSH_KEY_PATH ?? '',
+    domain: process.env.STORE_BASE_DOMAIN ?? 'localhost',
+  }
+}
 
 export interface DeployResult {
   ok: boolean
@@ -17,12 +23,14 @@ export interface DeployResult {
 }
 
 function sshArgs(): string[] {
-  return STORE_SSH_KEY_PATH ? ['-i', STORE_SSH_KEY_PATH, '-o', 'StrictHostKeyChecking=no'] : ['-o', 'StrictHostKeyChecking=no']
+  const { key } = env()
+  return key ? ['-i', key, '-o', 'StrictHostKeyChecking=no'] : ['-o', 'StrictHostKeyChecking=no']
 }
 
 function runSsh(command: string, timeoutMs = 30_000): Promise<{ ok: boolean; output: string }> {
+  const { host, user } = env()
   return new Promise((resolve) => {
-    const args = [...sshArgs(), `${STORE_SERVER_USER}@${STORE_SERVER_HOST}`, command]
+    const args = [...sshArgs(), `${user}@${host}`, command]
     const child = spawn('ssh', args, { shell: false })
     let out = ''
     child.stdout?.on('data', (d: Buffer) => { out += d.toString() })
