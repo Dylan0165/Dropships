@@ -340,6 +340,12 @@ app.post('/api/admin/reconcile-stores', async (_req, res) => {
       const runRow = db.prepare(`SELECT niche FROM runs WHERE run_id = ?`).get(runId) as { niche: string } | undefined
       const niche = runRow?.niche ?? subdomain
 
+      // Ensure the run exists (FK constraint) — create a stub if needed
+      if (!runRow) {
+        db.prepare(`INSERT OR IGNORE INTO runs (run_id, niche, status, data, started_at, updated_at) VALUES (?,?,?,?,?,?)`)
+          .run(runId, niche, 'completed', '{}', now, now)
+      }
+
       if (!existing) {
         const storeId = portRow?.store_id ?? `store-${runId}`
         db.prepare(`
