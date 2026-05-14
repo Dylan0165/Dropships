@@ -138,7 +138,7 @@ export interface RunAgentConfig<T> {
   stage: string
   agentName: string
   skillName: string
-  model: 'deepseek-chat' | 'deepseek-reasoner'
+  model: string
   input: Record<string, unknown>
   outputSchema: ZodSchema<T>
   timeoutMs?: number
