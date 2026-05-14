@@ -146,22 +146,22 @@ async function runReviewerStage(
 
 export const STAGE_RUNNERS: Record<Stage, (ctx: StageContext) => Promise<StageOutput>> = {
   'trend-discovery': (ctx) =>
-    runExecutorStage(ctx, 'trend-discovery', 'trend-agent', 'trend-agent', TrendDiscoverySchema, 'deepseek-chat'),
+    runExecutorStage(ctx, 'trend-discovery', 'trend-agent', 'trend-agent', TrendDiscoverySchema, process.env.LLM_MODEL_EXECUTOR ?? 'deepseek-v4-flash'),
 
   'niche-review': (ctx) =>
     runReviewerStage(ctx, 'niche-review', 'niche-reviewer', 'niche-reviewer'),
 
   'product-research': (ctx) =>
-    runExecutorStage(ctx, 'product-research', 'product-agent', 'product-agent', ProductResearchSchema, 'deepseek-chat'),
+    runExecutorStage(ctx, 'product-research', 'product-agent', 'product-agent', ProductResearchSchema, process.env.LLM_MODEL_EXECUTOR ?? 'deepseek-v4-flash'),
 
   'product-review': (ctx) =>
     runReviewerStage(ctx, 'product-review', 'product-reviewer', 'product-reviewer'),
 
   'brand-creation': (ctx) =>
-    runExecutorStage(ctx, 'brand-creation', 'brand-agent', 'brand-agent', BrandSchema, 'deepseek-chat'),
+    runExecutorStage(ctx, 'brand-creation', 'brand-agent', 'brand-agent', BrandSchema, process.env.LLM_MODEL_BRAND ?? 'kimi-k2.6'),
 
   'content-generation': (ctx) =>
-    runExecutorStage(ctx, 'content-generation', 'content-agent', 'content-agent', ContentSchema, 'deepseek-chat'),
+    runExecutorStage(ctx, 'content-generation', 'content-agent', 'content-agent', ContentSchema, process.env.LLM_MODEL_CONTENT ?? 'kimi-k2.5'),
 
   'store-build': async (ctx) => {
     ctx.onLog('Calling store-builder...')
