@@ -95,7 +95,7 @@ async function runExecutorStage(
   agentName: string,
   skillName: string,
   schema: z.ZodTypeAny,
-  model: 'deepseek-chat' = 'deepseek-chat',
+  model: string = process.env.LLM_MODEL_EXECUTOR ?? 'deepseek-v4-flash',
 ): Promise<StageOutput> {
   const r = await runAgent({
     runId: ctx.runId, stage, agentName, skillName, model,
