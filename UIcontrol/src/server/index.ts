@@ -633,7 +633,7 @@ Return ONLY a JSON array (no markdown):
 
     if (!response.ok) {
       const txt = await response.text()
-      res.status(502).json({ error: `DeepSeek API error: ${txt.slice(0, 200)}` })
+      res.status(502).json({ error: `LLM API error: ${txt.slice(0, 200)}` })
       return
     }
 
