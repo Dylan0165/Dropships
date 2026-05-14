@@ -596,9 +596,9 @@ app.post('/api/niches/:id/reject', async (req, res) => {
 })
 
 app.post('/api/niches/rescrape', async (_req, res) => {
-  const apiKey = process.env.DEEPSEEK_API_KEY
+  const apiKey = process.env.LLM_API_KEY
   if (!apiKey) {
-    res.status(400).json({ error: 'DEEPSEEK_API_KEY not configured — go to Settings' })
+    res.status(400).json({ error: 'LLM_API_KEY not configured — go to Settings' })
     return
   }
 
@@ -608,11 +608,11 @@ app.post('/api/niches/rescrape', async (_req, res) => {
     const excludeRows = db.prepare(`SELECT name FROM niches`).all() as { name: string }[]
     const usedNames = excludeRows.map(r => r.name)
 
-    const response = await fetch(`${process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com'}/chat/completions`, {
+    const response = await fetch(`${process.env.LLM_BASE_URL ?? 'https://opencode.ai/zen/go/v1'}/chat/completions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
       body: JSON.stringify({
-        model: process.env.LLM_MODEL ?? 'deepseek-chat',
+        model: process.env.LLM_MODEL_EXECUTOR ?? 'deepseek-v4-flash',
         messages: [{
           role: 'system',
           content: 'You are a European dropshipping trend analyst. Return ONLY valid JSON — no markdown, no explanation, just the JSON array.',
