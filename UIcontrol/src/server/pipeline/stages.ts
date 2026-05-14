@@ -276,5 +276,5 @@ export const STAGE_RUNNERS: Record<Stage, (ctx: StageContext) => Promise<StageOu
   },
 
   'growth': (ctx) =>
-    runExecutorStage(ctx, 'growth', 'growth-agent', 'growth-agent', GrowthSchema, 'deepseek-chat'),
+    runExecutorStage(ctx, 'growth', 'growth-agent', 'growth-agent', GrowthSchema, process.env.LLM_MODEL_GROWTH ?? 'qwen3.5-plus'),
 }
