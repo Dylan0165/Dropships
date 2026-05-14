@@ -1,12 +1,13 @@
 import type { AgentRegistryEntry } from './contracts.js'
 
 // Adaptive model routing — env overrides take precedence
-const EX_FAST   = process.env.LLM_MODEL_EXECUTOR ?? 'opencode-go/deepseek-v4-flash'
-const EX_BRAND  = process.env.LLM_MODEL_BRAND    ?? 'opencode-go/kimi-k2.6'
-const EX_CONTENT= process.env.LLM_MODEL_CONTENT  ?? 'opencode-go/minimax-m2.7'
-const EX_STORE  = process.env.LLM_MODEL_STORE    ?? 'opencode-go/qwen3.6-plus'
-const EX_GROWTH = process.env.LLM_MODEL_GROWTH   ?? 'opencode-go/qwen3.5-plus'
-const RV_MODEL  = process.env.LLM_MODEL_REVIEWER ?? 'opencode-go/deepseek-v4-pro'
+// Model IDs are bare (no opencode-go/ prefix) — prefix is only for CLI config
+const EX_FAST   = process.env.LLM_MODEL_EXECUTOR ?? 'deepseek-v4-flash'
+const EX_BRAND  = process.env.LLM_MODEL_BRAND    ?? 'kimi-k2.6'
+const EX_CONTENT = process.env.LLM_MODEL_CONTENT ?? 'kimi-k2.5'   // MiniMax uses Anthropic format, not OpenAI-compatible
+const EX_STORE  = process.env.LLM_MODEL_STORE    ?? 'qwen3.6-plus'
+const EX_GROWTH = process.env.LLM_MODEL_GROWTH   ?? 'qwen3.5-plus'
+const RV_MODEL  = process.env.LLM_MODEL_REVIEWER ?? 'deepseek-v4-pro'
 
 export const AGENT_REGISTRY: Record<string, AgentRegistryEntry> = {
   'trend-agent':       { id: 'trend-agent',       label: 'Trend Agent',       kind: 'EX',  model: EX_FAST,    timeoutMs: 120_000, maxRetries: 3, circuitBreakerThreshold: 3 },
