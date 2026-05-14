@@ -10,18 +10,18 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const workspaceRoot = path.resolve(__dirname, '../../../../')
 const SKILLS_PATH = process.env.SKILLS_PATH ?? path.join(workspaceRoot, 'Skillslibrary')
 
-// Pricing — USD per 1M tokens
+// Pricing — USD per 1M tokens (OpenCode Go — model IDs without prefix)
 const PRICING: Record<string, { input: number; output: number }> = {
-  'deepseek-chat':                    { input: 0.27,  output: 1.10  },
-  'deepseek-reasoner':                { input: 0.55,  output: 2.19  },
-  'opencode-go/deepseek-v4-flash':    { input: 0.07,  output: 0.28  },
-  'opencode-go/deepseek-v4-pro':      { input: 0.27,  output: 1.10  },
-  'opencode-go/qwen3.5-plus':         { input: 0.07,  output: 0.28  },
-  'opencode-go/qwen3.6-plus':         { input: 0.14,  output: 0.55  },
-  'opencode-go/kimi-k2.6':            { input: 0.14,  output: 0.55  },
-  'opencode-go/minimax-m2.7':         { input: 0.14,  output: 0.55  },
-  'opencode-go/glm-5.1':              { input: 0.07,  output: 0.28  },
-  'opencode-go/mimo-v2.5-pro':        { input: 0.14,  output: 0.55  },
+  'deepseek-chat':      { input: 0.27, output: 1.10 },
+  'deepseek-reasoner':  { input: 0.55, output: 2.19 },
+  'deepseek-v4-flash':  { input: 0.07, output: 0.28 },
+  'deepseek-v4-pro':    { input: 0.27, output: 1.10 },
+  'qwen3.5-plus':       { input: 0.07, output: 0.28 },
+  'qwen3.6-plus':       { input: 0.14, output: 0.55 },
+  'kimi-k2.5':          { input: 0.10, output: 0.40 },
+  'kimi-k2.6':          { input: 0.14, output: 0.55 },
+  'glm-5.1':            { input: 0.07, output: 0.28 },
+  'mimo-v2.5-pro':      { input: 0.14, output: 0.55 },
 }
 
 // Read at call time so dotenv/pm2 env updates are always picked up
