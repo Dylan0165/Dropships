@@ -3,7 +3,7 @@ import type { AgentRegistryEntry } from './contracts.js'
 // Adaptive model routing — env overrides take precedence
 // Model IDs are bare (no opencode-go/ prefix) — prefix is only for CLI config
 const EX_FAST   = process.env.LLM_MODEL_EXECUTOR ?? 'deepseek-v4-flash'
-const EX_BRAND  = process.env.LLM_MODEL_BRAND    ?? 'kimi-k2.6'
+const EX_BRAND  = process.env.LLM_MODEL_BRAND    ?? 'deepseek-v4-pro'
 const EX_CONTENT = process.env.LLM_MODEL_CONTENT ?? 'deepseek-v4-flash'
 const EX_STORE  = process.env.LLM_MODEL_STORE    ?? 'qwen3.6-plus'
 const EX_GROWTH = process.env.LLM_MODEL_GROWTH   ?? 'qwen3.5-plus'
