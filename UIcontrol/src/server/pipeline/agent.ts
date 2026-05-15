@@ -108,7 +108,7 @@ async function callLLM(
         ],
         temperature: 0.4,
         max_tokens: 4000,
-        response_format: { type: 'json_object' },
+        ...(model.startsWith('deepseek') || model.startsWith('qwen') ? { response_format: { type: 'json_object' } } : {}),
       }),
     })
     if (!res.ok) {
