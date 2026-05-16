@@ -107,7 +107,7 @@ async function callLLM(
           { role: 'user',   content: userPrompt },
         ],
         temperature: 0.4,
-        max_tokens: 4000,
+        max_tokens: 8000,
         ...(model.startsWith('deepseek') || model.startsWith('qwen') || model.startsWith('glm') ? { response_format: { type: 'json_object' } } : {}),
       }),
     })
