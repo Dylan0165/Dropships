@@ -36,13 +36,8 @@ products the product-agent has selected and the brand tone set by the brand-agen
     {
       "id": "string (same id as input product)",
       "title": "string (max 60 chars, benefit-driven)",
-      "description": "string (80-160 chars, persuasive single paragraph)",
-      "bullets": ["string", "string", "string"],
-      "seo_title": "string (50-60 chars, optional)",
-      "seo_description": "string (140-160 chars, optional)",
-      "faq": [
-        { "q": "string", "a": "string" }
-      ]
+      "description": "string (max 120 chars, persuasive)",
+      "bullets": ["string", "string", "string"]
     }
   ]
 }
@@ -52,9 +47,6 @@ products the product-agent has selected and the brand tone set by the brand-agen
 
 - Output ONE product object per input product. Match ids exactly.
 - All copy in Dutch (nl-NL), no English filler.
-- `description` must be 80–160 characters, no fluff.
-- `bullets` must be exactly 3, each a concrete benefit (not a feature).
-- `faq` is optional but recommended (3 items max).
-- No emoji, no hashtags, no all-caps. Be specific, not generic.
-- Mirror the `tone_of_voice` from `brand_agent`.
+- `bullets` must be exactly 3, each a concrete benefit.
+- No emoji, no hashtags. Mirror the `tone_of_voice` from `brand_agent`.
 - Return ONLY the JSON object. No markdown fences, no explanation.
