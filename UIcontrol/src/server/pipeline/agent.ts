@@ -116,11 +116,12 @@ async function callLLM(
       throw new Error(`LLM ${res.status}: ${txt.slice(0, 200)}`)
     }
     const json = await res.json() as {
-      choices: Array<{ message: { content: string } }>
+      choices: Array<{ message: { content: string; reasoning_content?: string } }>
       usage?: { prompt_tokens: number; completion_tokens: number }
     }
+    const msg = json.choices[0]?.message
     return {
-      content: json.choices[0]?.message?.content ?? '',
+      content: msg?.content || msg?.reasoning_content || '',
       inputTokens: json.usage?.prompt_tokens ?? 0,
       outputTokens: json.usage?.completion_tokens ?? 0,
     }
