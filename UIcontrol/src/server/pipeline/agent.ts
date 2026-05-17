@@ -108,7 +108,7 @@ async function callLLM(
         ],
         temperature: 0.4,
         max_tokens: 8000,
-        ...(model.startsWith('deepseek') || model.startsWith('qwen') || model.startsWith('glm') ? { response_format: { type: 'json_object' } } : {}),
+        ...(model.startsWith('deepseek') || model.startsWith('qwen') || model.startsWith('glm') || model.startsWith('kimi') || model.startsWith('mimo') ? { response_format: { type: 'json_object' } } : {}),
       }),
     })
     if (!res.ok) {
