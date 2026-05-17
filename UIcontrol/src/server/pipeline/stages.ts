@@ -161,7 +161,7 @@ export const STAGE_RUNNERS: Record<Stage, (ctx: StageContext) => Promise<StageOu
     runExecutorStage(ctx, 'brand-creation', 'brand-agent', 'brand-agent', BrandSchema, process.env.LLM_MODEL_BRAND ?? 'kimi-k2.6'),
 
   'content-generation': (ctx) =>
-    runExecutorStage(ctx, 'content-generation', 'content-agent', 'content-agent', ContentSchema, process.env.LLM_MODEL_CONTENT ?? 'kimi-k2.5'),
+    runExecutorStage(ctx, 'content-generation', 'content-agent', 'content-agent', ContentSchema, process.env.LLM_MODEL_CONTENT ?? 'deepseek-v4-flash'),
 
   'store-build': async (ctx) => {
     ctx.onLog('Calling store-builder...')
