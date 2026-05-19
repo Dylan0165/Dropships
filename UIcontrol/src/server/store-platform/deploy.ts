@@ -24,34 +24,109 @@ export interface DeployResult {
 
 function sshArgs(): string[] {
   const { key } = env()
-  return key ? ['-i', key, '-o', 'StrictHostKeyChecking=no'] : ['-o', 'StrictHostKeyChecking=no']
+  const base = [
+    '-o', 'StrictHostKeyChecking=no',
+    '-o', 'BatchMode=yes',          // fail fast if a password/passphrase would be prompted
+    '-o', 'ConnectTimeout=10',
+    '-o', 'ServerAliveInterval=5',
+    '-o', 'ServerAliveCountMax=2',
+  ]
+  return key ? ['-i', key, ...base] : base
 }
 
-function runSsh(command: string, timeoutMs = 30_000): Promise<{ ok: boolean; output: string }> {
+function truncate(s: string, max = 500): string {
+  if (s.length <= max) return s
+  return `${s.slice(0, max / 2)}…${s.slice(-max / 2)} (${s.length}b total)`
+}
+
+function runSsh(
+  command: string,
+  timeoutMs = 30_000,
+  onLog?: (msg: string) => void,
+): Promise<{ ok: boolean; output: string; durationMs: number; exitCode: number | null }> {
   const { host, user } = env()
+  const log = onLog ?? (() => {})
+  const start = Date.now()
   return new Promise((resolve) => {
     const args = [...sshArgs(), `${user}@${host}`, command]
+    log(`$ ssh ${user}@${host} '${truncate(command, 200)}'`)
     const child = spawn('ssh', args, { shell: false })
     let out = ''
-    child.stdout?.on('data', (d: Buffer) => { out += d.toString() })
-    child.stderr?.on('data', (d: Buffer) => { out += d.toString() })
-    const timer = setTimeout(() => { child.kill('SIGKILL'); resolve({ ok: false, output: out + '\n[timeout]' }) }, timeoutMs)
-    child.on('error', (err: Error) => { clearTimeout(timer); resolve({ ok: false, output: out + `\n[spawn error: ${err.message}]` }) })
-    child.on('close', (code: number | null) => { clearTimeout(timer); resolve({ ok: code === 0, output: out }) })
+    let stderr = ''
+    child.stdout?.on('data', (d: Buffer) => {
+      const t = d.toString()
+      out += t
+      t.split('\n').filter(Boolean).forEach(line => log(`  ssh> ${line}`))
+    })
+    child.stderr?.on('data', (d: Buffer) => {
+      const t = d.toString()
+      stderr += t
+      out += t
+      t.split('\n').filter(Boolean).forEach(line => log(`  ssh! ${line}`))
+    })
+    const timer = setTimeout(() => {
+      child.kill('SIGKILL')
+      const durationMs = Date.now() - start
+      log(`  ssh ✗ TIMEOUT after ${(durationMs / 1000).toFixed(1)}s — stderr so far: ${truncate(stderr) || '<empty>'}`)
+      resolve({ ok: false, output: out + `\n[timeout after ${(durationMs / 1000).toFixed(1)}s]`, durationMs, exitCode: null })
+    }, timeoutMs)
+    child.on('error', (err: Error) => {
+      clearTimeout(timer)
+      const durationMs = Date.now() - start
+      log(`  ssh ✗ spawn error: ${err.message}`)
+      resolve({ ok: false, output: out + `\n[spawn error: ${err.message}]`, durationMs, exitCode: null })
+    })
+    child.on('close', (code: number | null) => {
+      clearTimeout(timer)
+      const durationMs = Date.now() - start
+      const ok = code === 0
+      log(`  ssh ${ok ? '✓' : '✗'} exit=${code} duration=${(durationMs / 1000).toFixed(1)}s${ok ? '' : ` stderr=${truncate(stderr) || '<empty>'}`}`)
+      resolve({ ok, output: out, durationMs, exitCode: code })
+    })
   })
 }
 
-function runScp(localPath: string, remotePath: string, timeoutMs = 120_000): Promise<{ ok: boolean; output: string }> {
+function runScp(
+  localPath: string,
+  remotePath: string,
+  timeoutMs = 120_000,
+  onLog?: (msg: string) => void,
+): Promise<{ ok: boolean; output: string; durationMs: number; exitCode: number | null }> {
   const { host, user } = env()
+  const log = onLog ?? (() => {})
+  const start = Date.now()
   return new Promise((resolve) => {
     const args = [...sshArgs(), '-r', localPath, `${user}@${host}:${remotePath}`]
+    log(`$ scp -r ${localPath} ${user}@${host}:${remotePath}`)
     const child = spawn('scp', args, { shell: false })
     let out = ''
+    let stderr = ''
     child.stdout?.on('data', (d: Buffer) => { out += d.toString() })
-    child.stderr?.on('data', (d: Buffer) => { out += d.toString() })
-    const timer = setTimeout(() => { child.kill('SIGKILL'); resolve({ ok: false, output: out + '\n[scp timeout]' }) }, timeoutMs)
-    child.on('error', (err: Error) => { clearTimeout(timer); resolve({ ok: false, output: out + `\n[scp error: ${err.message}]` }) })
-    child.on('close', (code: number | null) => { clearTimeout(timer); resolve({ ok: code === 0, output: out }) })
+    child.stderr?.on('data', (d: Buffer) => {
+      const t = d.toString()
+      stderr += t
+      out += t
+      t.split('\n').filter(Boolean).forEach(line => log(`  scp! ${line}`))
+    })
+    const timer = setTimeout(() => {
+      child.kill('SIGKILL')
+      const durationMs = Date.now() - start
+      log(`  scp ✗ TIMEOUT after ${(durationMs / 1000).toFixed(1)}s — stderr so far: ${truncate(stderr) || '<empty>'}`)
+      resolve({ ok: false, output: out + `\n[scp timeout after ${(durationMs / 1000).toFixed(1)}s]`, durationMs, exitCode: null })
+    }, timeoutMs)
+    child.on('error', (err: Error) => {
+      clearTimeout(timer)
+      const durationMs = Date.now() - start
+      log(`  scp ✗ spawn error: ${err.message}`)
+      resolve({ ok: false, output: out + `\n[scp error: ${err.message}]`, durationMs, exitCode: null })
+    })
+    child.on('close', (code: number | null) => {
+      clearTimeout(timer)
+      const durationMs = Date.now() - start
+      const ok = code === 0
+      log(`  scp ${ok ? '✓' : '✗'} exit=${code} duration=${(durationMs / 1000).toFixed(1)}s${ok ? '' : ` stderr=${truncate(stderr) || '<empty>'}`}`)
+      resolve({ ok, output: out, durationMs, exitCode: code })
+    })
   })
 }
 
