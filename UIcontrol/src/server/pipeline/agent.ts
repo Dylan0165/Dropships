@@ -10,25 +10,17 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const workspaceRoot = path.resolve(__dirname, '../../../../')
 const SKILLS_PATH = process.env.SKILLS_PATH ?? path.join(workspaceRoot, 'Skillslibrary')
 
-// Pricing — USD per 1M tokens (OpenCode Go — model IDs without prefix)
+// Pricing — USD per 1M tokens (DeepSeek native API)
 const PRICING: Record<string, { input: number; output: number }> = {
-  'deepseek-chat':      { input: 0.27, output: 1.10 },
-  'deepseek-reasoner':  { input: 0.55, output: 2.19 },
-  'deepseek-v4-flash':  { input: 0.07, output: 0.28 },
-  'deepseek-v4-pro':    { input: 0.27, output: 1.10 },
-  'qwen3.5-plus':       { input: 0.07, output: 0.28 },
-  'qwen3.6-plus':       { input: 0.14, output: 0.55 },
-  'kimi-k2.5':          { input: 0.10, output: 0.40 },
-  'kimi-k2.6':          { input: 0.14, output: 0.55 },
-  'glm-5.1':            { input: 0.07, output: 0.28 },
-  'mimo-v2.5-pro':      { input: 0.14, output: 0.55 },
+  'deepseek-chat':     { input: 0.27, output: 1.10 },
+  'deepseek-reasoner': { input: 0.55, output: 2.19 },
 }
 
 // Read at call time so dotenv/pm2 env updates are always picked up
 function llmConfig() {
   return {
     baseUrl: process.env.LLM_BASE_URL ?? process.env.DEEPSEEK_BASE_URL ?? 'https://api.deepseek.com/v1',
-    apiKey:  process.env.LLM_API_KEY  ?? process.env.OPENCODE_API_KEY  ?? process.env.DEEPSEEK_API_KEY ?? '',
+    apiKey:  process.env.LLM_API_KEY  ?? process.env.DEEPSEEK_API_KEY  ?? '',
   }
 }
 
