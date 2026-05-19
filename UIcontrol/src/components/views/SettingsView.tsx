@@ -153,20 +153,20 @@ export function SettingsView() {
             <div>
               <label className="block text-xs text-slate-500 mb-1.5">Executor Model</label>
               <select
-                value={settings.deepseek_model ?? 'deepseek-v4-flash'}
+                value={settings.deepseek_model ?? 'deepseek-chat'}
                 onChange={(e) => save('deepseek_model', e.target.value)}
                 className="w-full bg-[#030712] border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-violet-500/50"
               >
-                <option value="deepseek-v4-flash">deepseek-v4-flash — $0.14/$0.28 per M</option>
-                <option value="deepseek-v4-pro">deepseek-v4-pro — $0.435/$0.87 per M</option>
+                <option value="deepseek-chat">deepseek-chat — $0.27/$1.10 per M</option>
+                <option value="deepseek-reasoner">deepseek-reasoner — $0.55/$2.19 per M</option>
               </select>
             </div>
             <div>
               <label className="block text-xs text-slate-500 mb-1.5">Reviewer Model</label>
               <div className="bg-[#030712] border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-slate-400">
-                deepseek-v4-pro — vast
+                deepseek-reasoner — vast
               </div>
-              <p className="text-xs text-slate-600 mt-1">Reviewers gebruiken altijd V4 Pro voor diepere analyse</p>
+              <p className="text-xs text-slate-600 mt-1">Reviewers gebruiken altijd deepseek-reasoner voor diepere analyse</p>
             </div>
           </div>
         </section>
