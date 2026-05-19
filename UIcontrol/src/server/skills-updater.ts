@@ -114,9 +114,9 @@ async function improveSkillFile(agentId: string, records: SkillPerformanceRecord
     .map(([e, c]) => `- "${e}" (${c}x)`)
     .join('\n')
 
-  const llmBaseUrl = process.env.LLM_BASE_URL ?? 'http://localhost:11434/v1'
-  const llmModel   = process.env.LLM_MODEL    ?? 'qwen2.5:14b'
-  const llmApiKey  = process.env.LLM_API_KEY  ?? 'ollama'
+  const llmBaseUrl = process.env.LLM_BASE_URL ?? 'https://api.deepseek.com/v1'
+  const llmModel   = process.env.LLM_MODEL    ?? 'deepseek-chat'
+  const llmApiKey  = process.env.LLM_API_KEY  ?? process.env.DEEPSEEK_API_KEY ?? ''
 
   const prompt = `You are improving a skill/system-prompt file for an AI agent.
 
