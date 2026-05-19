@@ -671,7 +671,7 @@ app.get('/api/settings', (_req, res) => {
   settings.deepseek_api_key = process.env.DEEPSEEK_API_KEY
     ? `sk-...${process.env.DEEPSEEK_API_KEY.slice(-6)}`
     : ''
-  settings.deepseek_model = settings.deepseek_model ?? 'deepseek-v4-flash'
+  settings.deepseek_model = settings.deepseek_model ?? 'deepseek-chat'
   settings.budget_limit_eur = settings.budget_limit_eur ?? '10.00'
   res.json(settings)
 })
