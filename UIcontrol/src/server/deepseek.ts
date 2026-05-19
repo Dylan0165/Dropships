@@ -79,7 +79,7 @@ export function estimateCost(
   inputTokens: number,
   outputTokens: number,
 ): DeepSeekCostEstimate {
-  const pricing = PRICING[model] || PRICING['deepseek-v4-flash']
+  const pricing = PRICING[model] || PRICING['deepseek-chat']
   const costUsd =
     (inputTokens / 1_000_000) * pricing.input +
     (outputTokens / 1_000_000) * pricing.output
