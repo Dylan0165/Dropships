@@ -22,7 +22,7 @@ export const AGENT_REGISTRY: Record<string, AgentRegistryEntry> = {
   'ads-agent':         { id: 'ads-agent',          label: 'Ads Agent',         kind: 'EX',  model: EX_GROWTH,  timeoutMs: 120_000, maxRetries: 3, circuitBreakerThreshold: 3 },
   'ads-reviewer':      { id: 'ads-reviewer',       label: 'Ads Reviewer',      kind: 'RV',  model: RV_MODEL,   timeoutMs: 120_000, maxRetries: 3, circuitBreakerThreshold: 3 },
   'growth-agent':      { id: 'growth-agent',       label: 'Growth Agent',      kind: 'AN',  model: EX_GROWTH,  timeoutMs: 120_000, maxRetries: 2, circuitBreakerThreshold: 3 },
-  'security-agent':    { id: 'security-agent',     label: 'Security Agent',    kind: 'SEC', model: EX_FAST,    timeoutMs: 120_000, maxRetries: 2, circuitBreakerThreshold: 3 },
+  'security-agent':    { id: 'security-agent',     label: 'Security Agent',    kind: 'SEC', model: RV_MODEL,   timeoutMs: 120_000, maxRetries: 2, circuitBreakerThreshold: 3 },
 }
 
 export function getAgent(id: string): AgentRegistryEntry {
