@@ -42,7 +42,7 @@ const VERDICT_STYLE: Record<string, string> = {
 
 function shortModel(model?: string): string | null {
   if (!model) return null
-  const m = model.replace('opencode-go/', '').replace('deepseek-', 'DS ').replace('-plus', '+').replace('-pro', ' Pro').replace('-flash', ' Flash').replace('kimi-', 'Kimi ').replace('minimax-', 'MiniMax ').replace('qwen', 'Qwen ').replace('glm-', 'GLM ').replace('mimo-', 'MiMo ')
+  const m = model.replace('deepseek-chat', 'DS Chat').replace('deepseek-reasoner', 'DS Reasoner')
   return m.length > 12 ? m.slice(0, 12) : m
 }
 
