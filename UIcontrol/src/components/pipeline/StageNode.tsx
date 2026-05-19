@@ -151,15 +151,15 @@ export const StageNode = memo(StageNodeComponent)
 StageNode.displayName = 'StageNode'
 
 export const STAGE_META: Record<Stage, { label: string; kind: 'EX' | 'RV' | 'AN' | 'OP'; model?: string }> = {
-  'trend-discovery':    { label: 'Trend Discovery',  kind: 'EX', model: 'deepseek-v4-pro' },
-  'niche-review':       { label: 'Niche Review',     kind: 'RV', model: 'deepseek-v4-pro' },
-  'product-research':   { label: 'Product Research', kind: 'EX', model: 'deepseek-v4-pro' },
-  'product-review':     { label: 'Product Review',   kind: 'RV', model: 'deepseek-v4-pro' },
-  'brand-creation':     { label: 'Brand Creation',   kind: 'EX', model: 'deepseek-v4-pro' },
-  'content-generation': { label: 'Content Gen',      kind: 'EX', model: 'deepseek-v4-pro' },
-  'store-build':        { label: 'Store Build',      kind: 'EX', model: 'deepseek-v4-pro' },
-  'build-validate':     { label: 'Build Validate',   kind: 'OP'                           },
-  'deploy':             { label: 'Deploy',           kind: 'OP'                           },
-  'health-check':       { label: 'Health Check',     kind: 'OP'                           },
-  'growth':             { label: 'Growth',           kind: 'AN', model: 'deepseek-v4-pro' },
+  'trend-discovery':    { label: 'Trend Discovery',  kind: 'EX', model: 'deepseek-chat'     },
+  'niche-review':       { label: 'Niche Review',     kind: 'RV', model: 'deepseek-reasoner' },
+  'product-research':   { label: 'Product Research', kind: 'EX', model: 'deepseek-chat'     },
+  'product-review':     { label: 'Product Review',   kind: 'RV', model: 'deepseek-reasoner' },
+  'brand-creation':     { label: 'Brand Creation',   kind: 'EX', model: 'deepseek-chat'     },
+  'content-generation': { label: 'Content Gen',      kind: 'EX', model: 'deepseek-chat'     },
+  'store-build':        { label: 'Store Build',      kind: 'EX', model: 'deepseek-reasoner' },
+  'build-validate':     { label: 'Build Validate',   kind: 'OP'                             },
+  'deploy':             { label: 'Deploy',           kind: 'OP'                             },
+  'health-check':       { label: 'Health Check',     kind: 'OP'                             },
+  'growth':             { label: 'Growth',           kind: 'AN', model: 'deepseek-chat'     },
 }
