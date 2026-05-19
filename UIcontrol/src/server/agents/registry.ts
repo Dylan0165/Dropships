@@ -5,7 +5,7 @@ const EX_FAST    = process.env.LLM_MODEL_EXECUTOR ?? 'deepseek-chat'
 const EX_BRAND   = process.env.LLM_MODEL_BRAND    ?? 'deepseek-chat'
 const EX_CONTENT = process.env.LLM_MODEL_CONTENT  ?? 'deepseek-chat'
 const EX_STORE   = process.env.LLM_MODEL_STORE    ?? 'deepseek-reasoner'
-const EX_GROWTH  = process.env.LLM_MODEL_GROWTH   ?? 'deepseek-chat'
+const EX_GROWTH  = process.env.LLM_MODEL_GROWTH   ?? 'deepseek-reasoner'
 const RV_MODEL   = process.env.LLM_MODEL_REVIEWER ?? 'deepseek-reasoner'
 
 export const AGENT_REGISTRY: Record<string, AgentRegistryEntry> = {
