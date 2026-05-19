@@ -95,7 +95,7 @@ async function runExecutorStage(
   agentName: string,
   skillName: string,
   schema: z.ZodTypeAny,
-  model: string = process.env.LLM_MODEL_EXECUTOR ?? 'deepseek-v4-flash',
+  model: string = process.env.LLM_MODEL_EXECUTOR ?? 'deepseek-chat',
 ): Promise<StageOutput> {
   const r = await runAgent({
     runId: ctx.runId, stage, agentName, skillName, model,
@@ -146,13 +146,13 @@ async function runReviewerStage(
 
 export const STAGE_RUNNERS: Record<Stage, (ctx: StageContext) => Promise<StageOutput>> = {
   'trend-discovery': (ctx) =>
-    runExecutorStage(ctx, 'trend-discovery', 'trend-agent', 'trend-agent', TrendDiscoverySchema, process.env.LLM_MODEL_EXECUTOR ?? 'deepseek-v4-flash'),
+    runExecutorStage(ctx, 'trend-discovery', 'trend-agent', 'trend-agent', TrendDiscoverySchema, process.env.LLM_MODEL_EXECUTOR ?? 'deepseek-chat'),
 
   'niche-review': (ctx) =>
     runReviewerStage(ctx, 'niche-review', 'niche-reviewer', 'niche-reviewer'),
 
   'product-research': (ctx) =>
-    runExecutorStage(ctx, 'product-research', 'product-agent', 'product-agent', ProductResearchSchema, process.env.LLM_MODEL_EXECUTOR ?? 'deepseek-v4-flash'),
+    runExecutorStage(ctx, 'product-research', 'product-agent', 'product-agent', ProductResearchSchema, process.env.LLM_MODEL_EXECUTOR ?? 'deepseek-chat'),
 
   'product-review': (ctx) =>
     runReviewerStage(ctx, 'product-review', 'product-reviewer', 'product-reviewer'),
