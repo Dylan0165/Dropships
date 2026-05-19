@@ -79,7 +79,7 @@ export async function generateBrief(input: StoreBuildInput): Promise<StoreBrief 
     stage: 'store-build',
     agentName: 'store-builder',
     skillName: 'store-builder',
-    model: process.env.LLM_MODEL_STORE ?? 'qwen3.6-plus',
+    model: process.env.LLM_MODEL_STORE ?? 'deepseek-reasoner',
     input: {
       niche: input.niche,
       previous_agent_output: { brand: input.brand, products: input.products },
