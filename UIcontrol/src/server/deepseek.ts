@@ -22,8 +22,8 @@ interface DeepSeekCostEstimate {
 }
 
 const PRICING: Record<string, { input: number; output: number }> = {
-  'deepseek-v4-flash': { input: 0.14, output: 0.28 },
-  'deepseek-v4-pro':   { input: 0.435, output: 0.87 },
+  'deepseek-chat':     { input: 0.27, output: 1.10 },
+  'deepseek-reasoner': { input: 0.55, output: 2.19 },
 }
 
 const USD_TO_EUR = 0.92
@@ -31,7 +31,7 @@ const USD_TO_EUR = 0.92
 /**
  * Check if the DeepSeek API is reachable and responding.
  */
-export async function checkHealth(model = 'deepseek-v4-flash'): Promise<DeepSeekHealthStatus> {
+export async function checkHealth(model = 'deepseek-chat'): Promise<DeepSeekHealthStatus> {
   const apiKey = process.env.DEEPSEEK_API_KEY
   if (!apiKey) {
     return { status: 'down', latencyMs: 0, model, error: 'DEEPSEEK_API_KEY not set' }
