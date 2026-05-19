@@ -99,24 +99,24 @@ export function estimateCost(
 export function getAvailableModels() {
   return [
     {
-      id: 'deepseek-v4-flash',
-      name: 'DeepSeek V4 Flash',
+      id: 'deepseek-chat',
+      name: 'DeepSeek Chat',
       description: 'Fast executor — tool calling, code generation, store building',
-      contextWindow: 1_000_000,
+      contextWindow: 64_000,
       maxOutput: 8_192,
       supportsTools: true,
       role: 'executor',
-      pricing: PRICING['deepseek-v4-flash'],
+      pricing: PRICING['deepseek-chat'],
     },
     {
-      id: 'deepseek-v4-pro',
-      name: 'DeepSeek V4 Pro',
+      id: 'deepseek-reasoner',
+      name: 'DeepSeek Reasoner',
       description: 'Deep thinker — reviews, analytics, strategic analysis',
-      contextWindow: 1_000_000,
+      contextWindow: 64_000,
       maxOutput: 8_192,
       supportsTools: true,
       role: 'reviewer',
-      pricing: PRICING['deepseek-v4-pro'],
+      pricing: PRICING['deepseek-reasoner'],
     },
   ]
 }
