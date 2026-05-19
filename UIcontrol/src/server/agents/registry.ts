@@ -1,13 +1,12 @@
 import type { AgentRegistryEntry } from './contracts.js'
 
-// Adaptive model routing — env overrides take precedence
-// Model IDs are bare (no opencode-go/ prefix) — prefix is only for CLI config
-const EX_FAST   = process.env.LLM_MODEL_EXECUTOR ?? 'deepseek-v4-flash'
-const EX_BRAND  = process.env.LLM_MODEL_BRAND    ?? 'deepseek-v4-pro'
-const EX_CONTENT = process.env.LLM_MODEL_CONTENT ?? 'deepseek-v4-flash'
-const EX_STORE  = process.env.LLM_MODEL_STORE    ?? 'qwen3.6-plus'
-const EX_GROWTH = process.env.LLM_MODEL_GROWTH   ?? 'qwen3.5-plus'
-const RV_MODEL  = process.env.LLM_MODEL_REVIEWER ?? 'deepseek-v4-pro'
+// Model routing — env overrides take precedence (DeepSeek only)
+const EX_FAST    = process.env.LLM_MODEL_EXECUTOR ?? 'deepseek-chat'
+const EX_BRAND   = process.env.LLM_MODEL_BRAND    ?? 'deepseek-chat'
+const EX_CONTENT = process.env.LLM_MODEL_CONTENT  ?? 'deepseek-chat'
+const EX_STORE   = process.env.LLM_MODEL_STORE    ?? 'deepseek-reasoner'
+const EX_GROWTH  = process.env.LLM_MODEL_GROWTH   ?? 'deepseek-chat'
+const RV_MODEL   = process.env.LLM_MODEL_REVIEWER ?? 'deepseek-reasoner'
 
 export const AGENT_REGISTRY: Record<string, AgentRegistryEntry> = {
   'trend-agent':       { id: 'trend-agent',       label: 'Trend Agent',       kind: 'EX',  model: EX_FAST,    timeoutMs: 120_000, maxRetries: 3, circuitBreakerThreshold: 3 },
