@@ -163,9 +163,29 @@ export async function atomicDeploy(
 ): Promise<DeployResult> {
   const log = onLog ?? ((m: string) => console.log(`[deploy] ${m}`))
 
-  const { host, user } = env()
+  const { host, user, key, domain } = env()
   if (!host) {
     return { ok: false, port, releaseDir: '', error: 'STORE_SERVER_HOST not set' }
+  }
+
+  log(`Deploy target: ${user}@${host} subdomain="${subdomain}" port=${port}`)
+  log(`SSH key: ${key || '(default agent/identity)'} | base domain: ${domain}`)
+  log(`Build dir: ${builtOutDir}`)
+
+  // 0. Pre-flight: can we even SSH and run a no-op?
+  log(`Pre-flight: SSH connectivity probe...`)
+  const probe = await runSsh(`whoami && hostname && sudo -n true 2>&1 || echo NO_SUDO`, 15_000, log)
+  if (!probe.ok) {
+    return {
+      ok: false, port, releaseDir: '',
+      error: `SSH probe failed (exit=${probe.exitCode}, ${(probe.durationMs / 1000).toFixed(1)}s) — kan niet verbinden met ${user}@${host}. Check key/host/network. stderr: ${probe.output.slice(-300) || '<empty>'}`,
+    }
+  }
+  if (probe.output.includes('NO_SUDO')) {
+    return {
+      ok: false, port, releaseDir: '',
+      error: `Passwordless sudo niet beschikbaar voor ${user}@${host}. mkdir/chown etc. zullen hangen op password prompt. Fix: voeg '${user} ALL=(ALL) NOPASSWD:ALL' toe aan /etc/sudoers.d/${user} op de store server.`,
+    }
   }
 
   const ts = Date.now()
@@ -173,60 +193,63 @@ export async function atomicDeploy(
   const releaseDir = `${storeRoot}/releases/${ts}`
 
   // 1. Create release dir + upload build artefacts
-  log(`Creating release dir ${releaseDir}`)
+  log(`Step 1/5: create release dir ${releaseDir}`)
   const mkdirRes = await runSsh(
     `sudo mkdir -p ${releaseDir} ${storeRoot}/releases && sudo chown -R ${user}:${user} ${storeRoot}`,
+    30_000,
+    log,
   )
-  if (!mkdirRes.ok) return { ok: false, port, releaseDir, error: `mkdir failed: ${mkdirRes.output.slice(-300)}` }
+  if (!mkdirRes.ok) return { ok: false, port, releaseDir, error: `mkdir failed (exit=${mkdirRes.exitCode}, ${(mkdirRes.durationMs / 1000).toFixed(1)}s): ${mkdirRes.output.slice(-300) || '<no output>'}` }
 
-  log(`Uploading build artefacts...`)
-  const scpRes = await runScp(builtOutDir, `${releaseDir}/`)
-  if (!scpRes.ok) return { ok: false, port, releaseDir, error: `scp failed: ${scpRes.output.slice(-300)}` }
+  log(`Step 2/5: upload build artefacts via scp`)
+  const scpRes = await runScp(builtOutDir, `${releaseDir}/`, 120_000, log)
+  if (!scpRes.ok) return { ok: false, port, releaseDir, error: `scp failed (exit=${scpRes.exitCode}, ${(scpRes.durationMs / 1000).toFixed(1)}s): ${scpRes.output.slice(-300) || '<no output>'}` }
 
   // 2. Health check on the artefacts (ensure index.html exists)
-  const healthRes = await runSsh(`test -f ${releaseDir}/out/index.html && echo ok`)
+  log(`Step 3/5: verify index.html in uploaded artefacts`)
+  const healthRes = await runSsh(`test -f ${releaseDir}/out/index.html && echo ok`, 15_000, log)
   if (!healthRes.ok || !healthRes.output.includes('ok')) {
-    await runSsh(`sudo rm -rf ${releaseDir}`)
-    return { ok: false, port, releaseDir, error: 'health check: index.html missing in out/' }
+    await runSsh(`sudo rm -rf ${releaseDir}`, 15_000, log)
+    return { ok: false, port, releaseDir, error: 'health check: index.html ontbreekt in out/ — heeft `next build` wel `out/` gegenereerd?' }
   }
 
-  // 3. Atomic symlink swap  current → new release
-  log(`Switching symlink to release ${ts}`)
+  // 3. Atomic symlink swap — current → new release
+  log(`Step 4/5: atomic symlink swap → release ${ts}`)
   const swapRes = await runSsh(
     `sudo ln -sfn ${releaseDir} ${storeRoot}/current_new && sudo mv -T ${storeRoot}/current_new ${storeRoot}/current`,
+    20_000,
+    log,
   )
   if (!swapRes.ok) {
-    // Rollback: keep the existing current if swap failed
-    await runSsh(`sudo rm -rf ${releaseDir}`)
-    return { ok: false, port, releaseDir, error: `symlink swap failed: ${swapRes.output.slice(-300)}` }
+    await runSsh(`sudo rm -rf ${releaseDir}`, 15_000, log)
+    return { ok: false, port, releaseDir, error: `symlink swap failed (exit=${swapRes.exitCode}): ${swapRes.output.slice(-300) || '<no output>'}` }
   }
 
   // 4. Write nginx vhost + reload
-  log(`Writing nginx vhost for port ${port}`)
+  log(`Step 5/5: nginx vhost write + reload on port ${port}`)
   const vhostContent = nginxVhost(subdomain, port)
   const vhostPath = `/tmp/${subdomain}.nginx.conf`
 
-  // Write vhost locally then scp
   const tmpVhost = path.join(os.tmpdir(), `${subdomain}.nginx.conf`)
   fs.writeFileSync(tmpVhost, vhostContent, 'utf-8')
-  const vhostScp = await runScp(tmpVhost, vhostPath)
+  const vhostScp = await runScp(tmpVhost, vhostPath, 30_000, log)
   fs.unlinkSync(tmpVhost)
 
-  if (!vhostScp.ok) return { ok: false, port, releaseDir, error: `vhost scp failed: ${vhostScp.output.slice(-200)}` }
+  if (!vhostScp.ok) return { ok: false, port, releaseDir, error: `vhost scp failed (exit=${vhostScp.exitCode}): ${vhostScp.output.slice(-200) || '<no output>'}` }
 
   const nginxRes = await runSsh(
     `sudo mv ${vhostPath} /etc/nginx/sites-available/${subdomain} && ` +
     `sudo ln -sf /etc/nginx/sites-available/${subdomain} /etc/nginx/sites-enabled/${subdomain} && ` +
     `sudo nginx -t && sudo systemctl reload nginx`,
     45_000,
+    log,
   )
   if (!nginxRes.ok) {
     log(`nginx reload failed — rolling back`)
     await rollback(subdomain, onLog)
-    return { ok: false, port, releaseDir, error: `nginx reload failed: ${nginxRes.output.slice(-300)}` }
+    return { ok: false, port, releaseDir, error: `nginx reload failed (exit=${nginxRes.exitCode}): ${nginxRes.output.slice(-300) || '<no output>'}` }
   }
 
-  // 5. Prune old releases (keep MAX_RELEASES)
   log(`Pruning old releases (keep ${MAX_RELEASES})`)
   await pruneOldReleases(subdomain)
 
