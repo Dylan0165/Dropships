@@ -2,7 +2,7 @@ import type { AgentConfig, AgentId } from '@/types'
 
 // ═══════ Agent configuration (static, shared between client & server) ═══════
 // Model wordt gelezen uit env: LLM_MODEL_EXECUTOR en LLM_MODEL_REVIEWER
-// Standaard: qwen2.5:14b (Ollama lokaal) — voor productie: deepseek-v4-flash / deepseek-v4-pro
+// DeepSeek native: deepseek-chat (executors) / deepseek-reasoner (reviewers)
 const EXECUTOR_MODEL = (typeof process !== 'undefined' ? process.env.LLM_MODEL_EXECUTOR : undefined) ?? (typeof process !== 'undefined' ? process.env.LLM_MODEL : undefined) ?? 'deepseek-chat'
 const REVIEWER_MODEL = (typeof process !== 'undefined' ? process.env.LLM_MODEL_REVIEWER : undefined) ?? (typeof process !== 'undefined' ? process.env.LLM_MODEL : undefined) ?? 'deepseek-reasoner'
 
