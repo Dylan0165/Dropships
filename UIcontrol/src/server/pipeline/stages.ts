@@ -158,7 +158,7 @@ export const STAGE_RUNNERS: Record<Stage, (ctx: StageContext) => Promise<StageOu
     runReviewerStage(ctx, 'product-review', 'product-reviewer', 'product-reviewer'),
 
   'brand-creation': (ctx) =>
-    runExecutorStage(ctx, 'brand-creation', 'brand-agent', 'brand-agent', BrandSchema, process.env.LLM_MODEL_BRAND ?? 'kimi-k2.6'),
+    runExecutorStage(ctx, 'brand-creation', 'brand-agent', 'brand-agent', BrandSchema, process.env.LLM_MODEL_BRAND ?? 'deepseek-chat'),
 
   'content-generation': (ctx) =>
     runExecutorStage(ctx, 'content-generation', 'content-agent', 'content-agent', ContentSchema, process.env.LLM_MODEL_CONTENT ?? 'deepseek-v4-flash'),
