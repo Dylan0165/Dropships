@@ -155,8 +155,20 @@ export default function Home() {
                     <span style={{ fontWeight: 800, fontSize: '1.1rem', color: PRIMARY }}>&#8364;{p.price.toFixed(2)}</span>
                     {p.compareAtPrice && <span style={{ color: '#555', fontSize: '0.85rem', textDecoration: 'line-through', marginLeft: '0.5rem' }}>&#8364;{p.compareAtPrice.toFixed(2)}</span>}
                   </div>
-                  <button className="bolt-buy-btn" style={{ background: PRIMARY, color: '#fff', border: 'none', padding: '0.5rem 1rem', fontSize: '0.7rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', cursor: 'pointer' }}>
-                    Kopen
+                  <button
+                    type="button"
+                    disabled={loadingId === p.id}
+                    onClick={(e) => { e.stopPropagation(); startCheckout(p, setLoadingId); }}
+                    className="bolt-buy-btn"
+                    style={{
+                      background: PRIMARY, color: '#fff', border: 'none',
+                      padding: '0.5rem 1rem', fontSize: '0.7rem', fontWeight: 800,
+                      textTransform: 'uppercase', letterSpacing: '0.1em',
+                      cursor: loadingId === p.id ? 'wait' : 'pointer',
+                      opacity: loadingId === p.id ? 0.6 : 1,
+                    }}
+                  >
+                    {loadingId === p.id ? 'Bezig...' : 'Kopen'}
                   </button>
                 </div>
               </div>
