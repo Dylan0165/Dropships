@@ -28,6 +28,11 @@ export interface TemplateVars {
   FONT_URL: string
   HEADING_FONT: string
   BODY_FONT: string
+  // Checkout context — used by Bestel button in each template
+  CHECKOUT_API_URL: string
+  STORE_ID: string
+  SUBDOMAIN: string
+  RUN_ID: string
 }
 
 function esc(s: string): string {
