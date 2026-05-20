@@ -26,8 +26,6 @@ export const PIPELINE_EDGES: { source: string; target: string; dashed?: boolean;
   { source: 'product-reviewer', target: 'brand-agent' },
   { source: 'brand-agent',      target: 'store-builder' },
   { source: 'store-builder',    target: 'store-reviewer' },
-  { source: 'store-builder',    target: 'growth-agent',   dashed: true, label: 'weekly' },
-  { source: 'store-builder',    target: 'security-agent', dashed: true, label: 'continuous' },
 ]
 
 export const ALL_AGENT_IDS: AgentId[] = AGENT_CONFIGS.map(c => c.id)
