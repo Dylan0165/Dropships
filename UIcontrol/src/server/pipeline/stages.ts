@@ -57,15 +57,6 @@ const ContentSchema = z.object({
   })).min(1),
 }).passthrough()
 
-const GrowthSchema = z.object({
-  ad_hooks: z.array(z.string()).min(3),
-  targeting: z.object({
-    age_range: z.string().optional(),
-    interests: z.array(z.string()).optional(),
-    geo: z.array(z.string()).optional(),
-  }).passthrough(),
-  budget_eur_per_day: z.number().nonnegative().optional(),
-}).passthrough()
 
 // ─── Stage definitions ───────────────────────────────────────────────────────
 
