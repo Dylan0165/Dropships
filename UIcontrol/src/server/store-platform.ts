@@ -184,6 +184,9 @@ async function writeNextScaffold(targetDir: string, data: StoreData): Promise<vo
     fontUrl:      font.url,
     headingFont:  font.heading,
     bodyFont:     font.body,
+    storeId:      data.storeId ?? (data.subdomain ? `store-${data.subdomain}` : 'store'),
+    subdomain:    data.subdomain ?? '',
+    runId:        data.runId ?? '',
   })
 
   // 1. Schrijf shared files (package.json, tsconfig, layout.tsx, globals.css)
