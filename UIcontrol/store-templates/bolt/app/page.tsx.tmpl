@@ -6,6 +6,34 @@ const PRODUCTS: Product[] = {{PRODUCTS_JSON}};
 const PRIMARY = '{{PRIMARY}}';
 const ACCENT  = '{{ACCENT}}';
 
+const CHECKOUT_API = '{{CHECKOUT_API_URL}}';
+const STORE_ID = '{{STORE_ID}}';
+const SUBDOMAIN = '{{SUBDOMAIN}}';
+const RUN_ID = '{{RUN_ID}}';
+
+async function startCheckout(p: Product, setLoading: (id: string | null) => void): Promise<void> {
+  setLoading(p.id);
+  try {
+    const r = await fetch(CHECKOUT_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        storeId: STORE_ID, subdomain: SUBDOMAIN, runId: RUN_ID,
+        amountEur: p.price, description: p.title,
+        items: [{ id: p.id, title: p.title, price: p.price }],
+      }),
+    });
+    if (!r.ok) throw new Error('checkout failed');
+    const data = await r.json() as { checkoutUrl?: string };
+    if (data.checkoutUrl) window.location.href = data.checkoutUrl;
+    else throw new Error('geen checkout url');
+  } catch (err) {
+    console.error('[checkout]', err);
+    alert('Er ging iets mis bij het afrekenen. Probeer het opnieuw.');
+    setLoading(null);
+  }
+}
+
 function useReveal() {
   const ref = useRef<HTMLDivElement>(null)
   const [visible, setVisible] = useState(false)
