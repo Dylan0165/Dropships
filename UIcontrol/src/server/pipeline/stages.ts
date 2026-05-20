@@ -266,6 +266,4 @@ export const STAGE_RUNNERS: Record<Stage, (ctx: StageContext) => Promise<StageOu
     return { ok: true, output: { url, attempts: hc.attempts, status_code: hc.statusCode } }
   },
 
-  'growth': (ctx) =>
-    runExecutorStage(ctx, 'growth', 'growth-agent', 'growth-agent', GrowthSchema, process.env.LLM_MODEL_GROWTH ?? 'deepseek-chat'),
 }
