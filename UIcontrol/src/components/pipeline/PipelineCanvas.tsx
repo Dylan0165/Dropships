@@ -32,7 +32,7 @@ const nodeTypes = { stage: StageNode }
 const STAGES_ORDER: Stage[] = [
   'trend-discovery', 'niche-review', 'product-research', 'product-review',
   'brand-creation', 'content-generation', 'store-build', 'build-validate',
-  'deploy', 'health-check', 'growth',
+  'deploy', 'health-check',
 ]
 
 export function PipelineCanvas() {
