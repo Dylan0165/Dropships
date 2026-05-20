@@ -14,8 +14,9 @@ export const AGENT_CONFIGS: AgentConfig[] = [
   { id: 'brand-agent',      label: 'Brand Agent',       category: 'executor',   model: EXECUTOR_MODEL, description: 'Generates brand identity',        position: { x: 1040, y: 0   } },
   { id: 'store-builder',    label: 'Store Builder',     category: 'executor',   model: EXECUTOR_MODEL, description: 'Assembles Next.js store',         position: { x: 1300, y: 0   } },
   { id: 'store-reviewer',   label: 'Store Reviewer',    category: 'reviewer',   model: REVIEWER_MODEL, description: 'UI/UX quality check',             position: { x: 1560, y: 0   } },
-  { id: 'growth-agent',     label: 'Growth Agent',      category: 'analytics',  model: EXECUTOR_MODEL, description: 'Weekly performance analysis',     position: { x: 1300, y: 220 } },
-  { id: 'security-agent',   label: 'Security Agent',    category: 'security',   model: EXECUTOR_MODEL, description: 'Continuous security monitoring',  position: { x: 0,    y: 220 } },
+  // growth-agent en security-agent zijn niet meer onderdeel van de standaard pipeline.
+  // Ze blijven in de agent registry (registry.ts) zodat een toekomstige aparte tool
+  // ze on-demand kan aanroepen.
 ]
 
 export const PIPELINE_EDGES: { source: string; target: string; dashed?: boolean; label?: string }[] = [
