@@ -832,7 +832,22 @@ app.post('/api/cost-estimate', (req, res) => {
 
 // ═══════ Mollie Checkout ═══════
 
+// CORS for checkout endpoint — stores call this from a different origin
+function setCheckoutCors(req: express.Request, res: express.Response): void {
+  const origin = req.headers.origin
+  if (origin) res.setHeader('Access-Control-Allow-Origin', origin)
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
+  res.setHeader('Access-Control-Max-Age', '86400')
+}
+
+app.options('/api/checkout/session', (req, res) => {
+  setCheckoutCors(req, res)
+  res.sendStatus(204)
+})
+
 app.post('/api/checkout/session', async (req, res) => {
+  setCheckoutCors(req, res)
   try {
     const { storeId, subdomain, runId, amountEur, description, items } = req.body as {
       storeId: string; subdomain: string; runId?: string
