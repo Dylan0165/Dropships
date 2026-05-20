@@ -11,7 +11,6 @@ const STAGES = [
   'build-validate',
   'deploy',
   'health-check',
-  'growth',
 ] as const
 
 export type Stage = typeof STAGES[number]
