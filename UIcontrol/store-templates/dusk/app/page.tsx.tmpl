@@ -156,10 +156,24 @@ export default function Home() {
                 {p.badge && <span style={{ position: 'absolute', top: '1rem', right: '1rem', background: PRIMARY, color: '#fff', fontSize: '0.65rem', fontWeight: 700, padding: '0.2rem 0.6rem', letterSpacing: '0.1em', borderRadius: '2px', textTransform: 'uppercase' }}>{p.badge}</span>}
               </div>
               <h3 style={{ fontSize: '0.95rem', fontWeight: 600, margin: '0 0 0.4rem', color: '#2d2417' }}>{p.title}</h3>
-              <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+              <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', marginBottom: '0.9rem' }}>
                 <span style={{ fontWeight: 700, color: '#2d2417' }}>&#8364;{p.price.toFixed(2)}</span>
                 {p.compareAtPrice && <span style={{ color: '#bba99a', fontSize: '0.85rem', textDecoration: 'line-through' }}>&#8364;{p.compareAtPrice.toFixed(2)}</span>}
               </div>
+              <button
+                type="button"
+                disabled={loadingId === p.id}
+                onClick={(e) => { e.stopPropagation(); startCheckout(p, setLoadingId); }}
+                style={{
+                  width: '100%', padding: '0.75rem 1rem',
+                  background: PRIMARY, color: '#fff', border: 'none', borderRadius: '4px',
+                  fontSize: '0.8rem', fontWeight: 600, letterSpacing: '0.03em',
+                  cursor: loadingId === p.id ? 'wait' : 'pointer',
+                  opacity: loadingId === p.id ? 0.6 : 1,
+                }}
+              >
+                {loadingId === p.id ? 'Bezig...' : 'Bestel nu'}
+              </button>
             </div>
           ))}
         </div>
