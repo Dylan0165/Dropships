@@ -177,8 +177,20 @@ export default function Home() {
                     <span style={{ fontWeight: 700, color: PRIMARY }}>&#8364;{p.price.toFixed(2)}</span>
                     {p.compareAtPrice && <span style={{ color: '#484f58', fontSize: '0.8rem', textDecoration: 'line-through', marginLeft: '0.5rem' }}>&#8364;{p.compareAtPrice.toFixed(2)}</span>}
                   </div>
-                  <button className="grid-buy-btn" style={{ background: 'transparent', border: `1px solid ${PRIMARY}`, color: PRIMARY, padding: '0.35rem 0.875rem', fontSize: '0.75rem', fontWeight: 700, borderRadius: '4px', cursor: 'pointer' }}>
-                    Kopen
+                  <button
+                    type="button"
+                    disabled={loadingId === p.id}
+                    onClick={(e) => { e.stopPropagation(); startCheckout(p, setLoadingId); }}
+                    className="grid-buy-btn"
+                    style={{
+                      background: 'transparent', border: `1px solid ${PRIMARY}`, color: PRIMARY,
+                      padding: '0.35rem 0.875rem', fontSize: '0.75rem', fontWeight: 700,
+                      borderRadius: '4px',
+                      cursor: loadingId === p.id ? 'wait' : 'pointer',
+                      opacity: loadingId === p.id ? 0.6 : 1,
+                    }}
+                  >
+                    {loadingId === p.id ? 'Bezig...' : 'Kopen'}
                   </button>
                 </div>
               </div>
