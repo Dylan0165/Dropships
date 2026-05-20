@@ -181,7 +181,13 @@ export function buildTemplateVars(opts: {
   fontUrl: string
   headingFont: string
   bodyFont: string
+  storeId: string
+  subdomain: string
+  runId: string
 }): TemplateVars {
+  const checkoutApiUrl = process.env.UICONTROL_PUBLIC_URL
+    ? `${process.env.UICONTROL_PUBLIC_URL.replace(/\/+$/, '')}/api/checkout/session`
+    : `http://192.168.121.133:3001/api/checkout/session`
   return {
     BRAND_NAME:       esc(opts.brandName),
     BRAND_NAME_UPPER: esc(opts.brandName).toUpperCase(),
@@ -202,5 +208,9 @@ export function buildTemplateVars(opts: {
     FONT_URL:         opts.fontUrl,
     HEADING_FONT:     opts.headingFont,
     BODY_FONT:        opts.bodyFont,
+    CHECKOUT_API_URL: checkoutApiUrl,
+    STORE_ID:         opts.storeId,
+    SUBDOMAIN:        opts.subdomain,
+    RUN_ID:           opts.runId,
   }
 }
