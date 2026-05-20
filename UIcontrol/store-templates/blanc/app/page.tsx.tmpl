@@ -158,10 +158,25 @@ export default function Home() {
               </div>
               <div style={{ padding: '1.25rem 0' }}>
                 <p style={{ margin: '0 0 0.4rem', fontSize: '0.9rem', fontWeight: 500 }}>{p.title}</p>
-                <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', marginBottom: '0.9rem' }}>
                   <span style={{ fontWeight: 600, color: '#0f0f0f' }}>&#8364;{p.price.toFixed(2)}</span>
                   {p.compareAtPrice && <span style={{ color: '#bbb', fontSize: '0.85rem', textDecoration: 'line-through' }}>&#8364;{p.compareAtPrice.toFixed(2)}</span>}
                 </div>
+                <button
+                  type="button"
+                  disabled={loadingId === p.id}
+                  onClick={(e) => { e.stopPropagation(); startCheckout(p, setLoadingId); }}
+                  style={{
+                    width: '100%', padding: '0.75rem 1rem',
+                    background: PRIMARY, color: '#fff', border: 'none',
+                    fontSize: '0.8rem', fontWeight: 600, letterSpacing: '0.05em',
+                    textTransform: 'uppercase', cursor: loadingId === p.id ? 'wait' : 'pointer',
+                    opacity: loadingId === p.id ? 0.6 : 1,
+                    transition: 'opacity 0.2s, transform 0.2s',
+                  }}
+                >
+                  {loadingId === p.id ? 'Bezig...' : 'Bestel nu'}
+                </button>
               </div>
             </div>
           ))}
