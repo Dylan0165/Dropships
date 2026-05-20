@@ -135,7 +135,6 @@ export function PipelineCanvas() {
       'build-validate':     { x: 340, y: 480  },
       'deploy':             { x: 0,   y: 640  },
       'health-check':       { x: 340, y: 640  },
-      'growth':             { x: 170, y: 800  },
     }
 
     const ns: Node[] = STAGES_ORDER.map((stage) => ({
