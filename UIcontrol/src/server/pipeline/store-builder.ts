@@ -129,6 +129,9 @@ export function renderStore(input: StoreBuildInput, brief: StoreBrief): StoreBui
     fontUrl:       'https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Playfair+Display:wght@700&display=swap',
     headingFont:   '"Playfair Display", serif',
     bodyFont:      '"Inter", system-ui, sans-serif',
+    storeId:       `store-${input.runId}`,
+    subdomain,
+    runId:         input.runId,
   })
 
   applyTemplate(buildDir, templateName, vars)
