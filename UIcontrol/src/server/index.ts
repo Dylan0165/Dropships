@@ -1180,10 +1180,10 @@ server.listen(PORT, () => {
   setInterval(pollStoreHealth, 60_000)
   setTimeout(pollStoreHealth, 5000) // initial check 5s after boot
 
-  // Daily lifecycle check at 02:00
-  scheduleDaily(2, runLifecycleCycle, 'lifecycle-cycle')
-  // Weekly skills update — Monday 03:00
-  scheduleWeekly(1, 3, runSkillsUpdate, 'skills-update')
-  // Daily seasonal check at 07:00
-  scheduleDaily(7, runSeasonalCheck, 'seasonal-check')
+  // Schedulers disabled — user wants pipeline to be manual-only to control costs.
+  // skills-update gebruikt LLM calls; lifecycle en seasonal kunnen extern API verkeer veroorzaken.
+  // Te herstarten vanuit een aparte ops/admin tool wanneer nodig.
+  // scheduleDaily(2, runLifecycleCycle, 'lifecycle-cycle')
+  // scheduleWeekly(1, 3, runSkillsUpdate, 'skills-update')
+  // scheduleDaily(7, runSeasonalCheck, 'seasonal-check')
 })
