@@ -161,5 +161,4 @@ export const STAGE_META: Record<Stage, { label: string; kind: 'EX' | 'RV' | 'AN'
   'build-validate':     { label: 'Build Validate',   kind: 'OP'                             },
   'deploy':             { label: 'Deploy',           kind: 'OP'                             },
   'health-check':       { label: 'Health Check',     kind: 'OP'                             },
-  'growth':             { label: 'Growth',           kind: 'AN', model: 'deepseek-chat'     },
 }
