@@ -55,9 +55,14 @@ tone of voice, color palette, and 3 USPs — tuned to the target-audience person
 
 ## Rules
 
-- `brand_name` must NOT be generic ("ShopX", "BestStore", "TopNiche").
+- **All text (brand_name, slogan, tone_of_voice, USPs) in English.**
+- Tune everything to the persona: a young urban audience, a premium 40+ audience
+  and a wellness audience should yield clearly different names, tones and colors.
+- `brand_name` must NOT be generic ("ShopX", "BestStore", "TopNiche"). Make it
+  distinctive for THIS persona — vary the naming style between stores (invented
+  word, compound, evocative noun) rather than always the same pattern.
 - `slogan` ≤ 6 words. No filler ("premium", "quality", "best", "great").
-- Colors: pick deliberately for the niche.
+- Colors: pick deliberately for the niche AND persona.
   - Fitness → energetic (electric blue `#0066ff`, signal red `#e63946`).
   - Beauty → soft (deep rose `#c9184a`, champagne `#e9c46a`).
   - Tech → cool (slate navy `#1e3a5f`, electric cyan `#00b4d8`).
