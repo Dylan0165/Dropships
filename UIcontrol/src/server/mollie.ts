@@ -1,4 +1,5 @@
 import db from './db.js'
+import { fulfillOrderForPayment } from './fulfillment.js'
 
 const MOLLIE_API = 'https://api.mollie.com/v2'
 const MOLLIE_API_KEY = () => process.env.MOLLIE_API_KEY || ''
