@@ -899,6 +899,147 @@ app.get('/api/checkout/orders', (_req, res) => {
   res.json(getCheckoutOrders(100))
 })
 
+// ═══════ Orders & Fulfillment ═══════
+
+app.get('/api/orders', (_req, res) => {
+  try {
+    res.json(listOrders(100))
+  } catch (err) {
+    res.status(500).json({ error: err instanceof Error ? err.message : 'orders ophalen mislukt' })
+  }
+})
+
+// Handmatige (re)fulfillment — bv. na fulfillment_failed of manual_required
+app.post('/api/orders/:id/fulfill', async (req, res) => {
+  const id = parseInt(req.params.id, 10)
+  if (Number.isNaN(id)) { res.status(400).json({ error: 'id moet numeriek zijn' }); return }
+  try {
+    const result = await fulfillOrder(id)
+    res.json(result)
+  } catch (err) {
+    res.status(500).json({ error: err instanceof Error ? err.message : 'fulfillment mislukt' })
+  }
+})
+
+app.get('/api/orders/:id/tracking', async (req, res) => {
+  const id = parseInt(req.params.id, 10)
+  if (Number.isNaN(id)) { res.status(400).json({ error: 'id moet numeriek zijn' }); return }
+  try {
+    res.json(await getOrderTracking(id))
+  } catch (err) {
+    res.status(500).json({ error: err instanceof Error ? err.message : 'tracking ophalen mislukt' })
+  }
+})
+
+// ═══════ Suppliers (CJ Dropshipping) ═══════
+
+app.get('/api/suppliers', (_req, res) => {
+  res.json(listSuppliers())
+})
+
+app.get('/api/suppliers/cj/search', async (req, res) => {
+  const { q, limit } = req.query as { q?: string; limit?: string }
+  if (!q || !q.trim()) { res.status(400).json({ error: 'q (zoekterm) is verplicht' }); return }
+  try {
+    const adapter = getSupplier('cj')
+    const products = await adapter.searchProducts(q.trim(), {
+      maxResults: Math.min(parseInt(limit ?? '30', 10) || 30, 60),
+    })
+    res.json({ products, isMock: adapter.isMock })
+  } catch (err) {
+    res.status(502).json({ error: err instanceof Error ? err.message : 'CJ zoeken mislukt' })
+  }
+})
+
+app.get('/api/suppliers/cj/product/:pid', async (req, res) => {
+  try {
+    const product = await getSupplier('cj').getProduct(req.params.pid)
+    if (!product) { res.status(404).json({ error: 'Product niet gevonden bij CJ' }); return }
+    res.json(product)
+  } catch (err) {
+    res.status(502).json({ error: err instanceof Error ? err.message : 'CJ product ophalen mislukt' })
+  }
+})
+
+app.get('/api/suppliers/cj/inventory/:pid', async (req, res) => {
+  try {
+    res.json(await getSupplier('cj').getInventory(req.params.pid))
+  } catch (err) {
+    res.status(502).json({ error: err instanceof Error ? err.message : 'CJ voorraad ophalen mislukt' })
+  }
+})
+
+// ═══════ Store-wizard ═══════
+
+app.post('/api/wizard/questions', async (req, res) => {
+  const { idea } = req.body as { idea?: string }
+  if (!idea?.trim()) { res.status(400).json({ error: 'idea is verplicht' }); return }
+  try {
+    res.json(await generateQuestions(idea.trim()))
+  } catch (err) {
+    res.status(502).json({ error: err instanceof Error ? err.message : 'AI vragen genereren mislukt' })
+  }
+})
+
+app.post('/api/wizard/directions', async (req, res) => {
+  const { idea, answers } = req.body as { idea?: string; answers?: Record<string, string> }
+  if (!idea?.trim()) { res.status(400).json({ error: 'idea is verplicht' }); return }
+  try {
+    res.json(await generateDirections(idea.trim(), answers ?? {}))
+  } catch (err) {
+    res.status(502).json({ error: err instanceof Error ? err.message : 'AI richtingen genereren mislukt' })
+  }
+})
+
+app.post('/api/wizard/shortlist', async (req, res) => {
+  const { niche, persona } = req.body as { niche?: string; persona?: WizardPersona }
+  if (!niche?.trim() || !persona) { res.status(400).json({ error: 'niche en persona zijn verplicht' }); return }
+  try {
+    res.json(await buildShortlist(niche.trim(), persona))
+  } catch (err) {
+    res.status(502).json({ error: err instanceof Error ? err.message : 'Shortlist bouwen mislukt' })
+  }
+})
+
+app.post('/api/wizard/structure', async (req, res) => {
+  const { idea, persona, productCount } = req.body as { idea?: string; persona?: WizardPersona; productCount?: number }
+  if (!idea?.trim() || !persona) { res.status(400).json({ error: 'idea en persona zijn verplicht' }); return }
+  try {
+    res.json(await proposeStructure(idea.trim(), persona, productCount ?? 1))
+  } catch (err) {
+    res.status(502).json({ error: err instanceof Error ? err.message : 'Site-structuur voorstel mislukt' })
+  }
+})
+
+// ═══════ Store deletion ═══════
+// Verwijdert de store van de store server (nginx vhost + files), geeft de poort
+// vrij en ruimt de DB-rijen op. Werkt ook voor stores die alleen in de DB staan.
+
+app.delete('/api/stores/:storeId', async (req, res) => {
+  try {
+    const store = db.prepare(`SELECT store_id, subdomein, status FROM stores WHERE store_id = ?`)
+      .get(req.params.storeId) as { store_id: string; subdomein: string; status: string } | undefined
+    if (!store) { res.status(404).json({ error: 'Store niet gevonden' }); return }
+
+    // 1 — van de store server verwijderen (no-op in lokale modus)
+    const remote = await removeDeployedStore(store.subdomein, (m) => console.log(`[store-delete] ${m}`))
+    if (!remote.ok) {
+      res.status(502).json({ error: `Store server opruimen mislukt: ${remote.error}` })
+      return
+    }
+
+    // 2 — poort vrijgeven + DB opruimen
+    releasePort(store.store_id)
+    db.prepare(`DELETE FROM stores WHERE store_id = ?`).run(store.store_id)
+
+    console.log(`[store-delete] ${store.subdomein} (${store.store_id}) verwijderd`)
+    res.json({ deleted: true, storeId: store.store_id, subdomain: store.subdomein })
+  } catch (err) {
+    console.error('[server] store delete mislukt:', err)
+    res.status(500).json({ error: err instanceof Error ? err.message : 'Store verwijderen mislukt' })
+  }
+})
+
 // ═══════ Meta Ads ═══════
 
 app.post('/api/ads/launch', async (req, res) => {
