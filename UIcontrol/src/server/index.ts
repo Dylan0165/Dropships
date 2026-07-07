@@ -123,7 +123,7 @@ pipelineEvents.on('event', (event) => {
 // ═══════ API Endpoints ═══════
 
 app.post('/api/pipeline/start', async (req, res) => {
-  const { niche } = req.body as { niche: string }
+  const { niche, wizardConfig } = req.body as { niche: string; wizardConfig?: WizardConfig }
   if (!niche || typeof niche !== 'string' || !niche.trim()) {
     res.status(400).json({ error: 'niche is required' })
     return
