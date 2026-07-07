@@ -119,6 +119,9 @@ export function renderStore(input: StoreBuildInput, brief: StoreBrief): StoreBui
     badge:          p.badge ?? (i === 0 ? 'Bestseller' : i === 1 ? 'Nieuw' : ''),
     description:    p.description ?? '',
     bullets:        p.bullets ?? [],
+    supplier:           p.supplier,
+    supplierProductId:  p.supplierProductId,
+    supplierVariantId:  p.supplierVariantId,
   }))
 
   const vars = buildTemplateVars({
