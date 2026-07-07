@@ -268,6 +268,13 @@ export function PipelineCanvas() {
           onClose={() => setSelectedStage(null)}
         />
       )}
+
+      {wizardOpen && (
+        <StoreWizard
+          onClose={() => setWizardOpen(false)}
+          onStarted={onWizardStarted}
+        />
+      )}
     </div>
   )
 }
