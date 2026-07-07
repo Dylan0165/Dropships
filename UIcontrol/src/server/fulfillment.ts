@@ -98,7 +98,7 @@ export async function fulfillOrder(orderId: number): Promise<{ ok: boolean; stat
   }
 
   let items: CheckoutItem[] = []
-  try { items = JSON.parse(order.items_json) as CheckooutItemsGuard } catch { /* leeg laten */ }
+  try { items = JSON.parse(order.items_json) as CheckoutItem[] } catch { /* leeg laten */ }
 
   let customer: Record<string, string> = {}
   try { customer = JSON.parse(order.customer_json || '{}') as Record<string, string> } catch { /* leeg */ }
