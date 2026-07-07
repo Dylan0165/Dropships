@@ -146,18 +146,64 @@ async function runReviewerStage(
 
 // ─── Per-stage runners ───────────────────────────────────────────────────────
 
+// ── Wizard short-circuits ─────────────────────────────────────────────────────
+// Bij een wizard-run zijn niche, doelgroep en producten al door de gebruiker
+// gekozen en gevalideerd → de research/review stages slaan het LLM over en
+// leveren de wizard-data direct als stage-output op.
+
+function wizardTrendOutput(ctx: StageContext): StageOutput {
+  const output = {
+    niches: [{ name: ctx.niche, trending_score: 100, reasoning: 'Handmatig gekozen via de store-wizard' }],
+    source: 'wizard',
+    persona: ctx.config?.persona,
+  }
+  saveStageOutput(ctx.runId, 'trend-discovery', output)
+  ctx.onLog('Wizard-run: trend-discovery overgeslagen (niche door gebruiker gekozen)')
+  return { ok: true, output }
+}
+
+function wizardApproved(ctx: StageContext, stage: Stage, reason: string): StageOutput {
+  const output = { verdict: 'APPROVED', reason, score: 100, suggestions: [], source: 'wizard' }
+  saveStageOutput(ctx.runId, stage, output)
+  ctx.onLog(`Wizard-run: ${stage} auto-approved (${reason})`)
+  return { ok: true, output, verdict: 'APPROVED', reason }
+}
+
+function wizardProductsOutput(ctx: StageContext): StageOutput {
+  const products = (ctx.config?.products ?? []).map(p => ({
+    id: p.productId,
+    title: p.title,
+    description: p.description ?? '',
+    price: p.priceEur,
+    cost_price: p.costPriceUsd ? Math.round(p.costPriceUsd * 0.92 * 100) / 100 : undefined,
+    compare_at_price: p.compareAtPriceEur,
+    image: p.image ?? '',
+    supplier: p.supplier ?? 'cj',
+    supplierProductId: p.productId,
+    supplierVariantId: p.variantId,
+  }))
+  const output = { products, source: 'wizard' }
+  saveStageOutput(ctx.runId, 'product-research', output)
+  ctx.onLog(`Wizard-run: ${products.length} producten uit de wizard overgenomen (CJ)`)
+  return { ok: true, output }
+}
+
 export const STAGE_RUNNERS: Record<Stage, (ctx: StageContext) => Promise<StageOutput>> = {
-  'trend-discovery': (ctx) =>
-    runExecutorStage(ctx, 'trend-discovery', 'trend-agent', 'trend-agent', TrendDiscoverySchema, process.env.LLM_MODEL_EXECUTOR ?? 'deepseek-chat'),
+  'trend-discovery': (ctx) => ctx.config
+    ? Promise.resolve(wizardTrendOutput(ctx))
+    : runExecutorStage(ctx, 'trend-discovery', 'trend-agent', 'trend-agent', TrendDiscoverySchema, process.env.LLM_MODEL_EXECUTOR ?? 'deepseek-chat'),
 
-  'niche-review': (ctx) =>
-    runReviewerStage(ctx, 'niche-review', 'niche-reviewer', 'niche-reviewer'),
+  'niche-review': (ctx) => ctx.config
+    ? Promise.resolve(wizardApproved(ctx, 'niche-review', 'Niche en doelgroep door gebruiker bevestigd in de wizard'))
+    : runReviewerStage(ctx, 'niche-review', 'niche-reviewer', 'niche-reviewer'),
 
-  'product-research': (ctx) =>
-    runExecutorStage(ctx, 'product-research', 'product-agent', 'product-agent', ProductResearchSchema, process.env.LLM_MODEL_EXECUTOR ?? 'deepseek-chat'),
+  'product-research': (ctx) => ctx.config?.products?.length
+    ? Promise.resolve(wizardProductsOutput(ctx))
+    : runExecutorStage(ctx, 'product-research', 'product-agent', 'product-agent', ProductResearchSchema, process.env.LLM_MODEL_EXECUTOR ?? 'deepseek-chat'),
 
-  'product-review': (ctx) =>
-    runReviewerStage(ctx, 'product-review', 'product-reviewer', 'product-reviewer'),
+  'product-review': (ctx) => ctx.config?.products?.length
+    ? Promise.resolve(wizardApproved(ctx, 'product-review', 'Producten door gebruiker gekozen uit CJ shortlist'))
+    : runReviewerStage(ctx, 'product-review', 'product-reviewer', 'product-reviewer'),
 
   'brand-creation': (ctx) =>
     runExecutorStage(ctx, 'brand-creation', 'brand-agent', 'brand-agent', BrandSchema, process.env.LLM_MODEL_BRAND ?? 'deepseek-chat'),
