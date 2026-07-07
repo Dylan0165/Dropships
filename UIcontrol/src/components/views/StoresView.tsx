@@ -433,11 +433,13 @@ function FlowView({ stores, onEdit }: { stores: StoreInfoEx[]; onEdit: (s: Store
 
 // ── Detailed card view ────────────────────────────────────────────────────────
 
-function StoreCard({ store, expanded, onToggle, onEdit }: {
+function StoreCard({ store, expanded, onToggle, onEdit, onDelete, deleting }: {
   store: StoreInfoEx
   expanded: boolean
   onToggle: () => void
   onEdit: () => void
+  onDelete: () => void
+  deleting: boolean
 }) {
   const health   = store.healthStatus ?? 'unknown'
   const isUp     = health === 'up'
