@@ -65,6 +65,10 @@ export interface StoreProduct {
   price: number
   compareAtPrice?: number
   badge?: string
+  // Supplier koppeling voor automatische fulfillment
+  supplier?: string
+  supplierProductId?: string
+  supplierVariantId?: string
 }
 
 export interface StoreData {
