@@ -99,7 +99,7 @@ async function callLLM(
           { role: 'system', content: systemPrompt },
           { role: 'user',   content: userPrompt },
         ],
-        temperature: 0.4,
+        temperature,
         max_tokens: 8000,
         ...(model.startsWith('deepseek') ? { response_format: { type: 'json_object' } } : {}),
       }),
