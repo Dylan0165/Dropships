@@ -148,6 +148,57 @@ img { max-width: 100%; display: block; }
   }, null, 2), 'utf-8')
 }
 
+// ─── Tailwind build guard ─────────────────────────────────────────────────────
+// De templates gebruiken bewust inline styles (geen Tailwind), maar zodra er
+// tailwind-directives of -classes in gegenereerde code terechtkomen (bv. via
+// LLM-gegenereerde pagina's of CMS-componenten) faalde `next build` omdat de
+// dependencies en configs ontbraken. Deze guard detecteert dat en maakt de
+// build alsnog werkend door tailwind + postcss config en deps toe te voegen.
+
+export function ensureTailwindSupport(targetDir: string): boolean {
+  const appDir = path.join(targetDir, 'app')
+  if (!fs.existsSync(appDir)) return false
+
+  const tailwindPattern = /@tailwind\s+(base|components|utilities)|@apply\s|from\s+['"]tailwindcss/
+  let needsTailwind = false
+
+  const scan = (dir: string): void => {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      if (needsTailwind) return
+      const p = path.join(dir, entry.name)
+      if (entry.isDirectory()) { scan(p); continue }
+      if (!/\.(tsx?|css|jsx?)$/.test(entry.name)) continue
+      if (tailwindPattern.test(fs.readFileSync(p, 'utf-8'))) needsTailwind = true
+    }
+  }
+  scan(appDir)
+  if (!needsTailwind) return false
+
+  console.log('[template-engine] Tailwind-gebruik gedetecteerd in gegenereerde store — configs + deps toevoegen')
+
+  // tailwind.config.js + postcss.config.js
+  fs.writeFileSync(path.join(targetDir, 'tailwind.config.js'),
+    `module.exports = {\n  content: ['./app/**/*.{js,ts,jsx,tsx}'],\n  theme: { extend: {} },\n  plugins: [],\n};\n`, 'utf-8')
+  fs.writeFileSync(path.join(targetDir, 'postcss.config.js'),
+    `module.exports = { plugins: { tailwindcss: {}, autoprefixer: {} } };\n`, 'utf-8')
+
+  // devDependencies bijwerken in de gegenereerde package.json
+  const pkgPath = path.join(targetDir, 'package.json')
+  if (fs.existsSync(pkgPath)) {
+    const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf-8')) as {
+      devDependencies?: Record<string, string>
+    }
+    pkg.devDependencies = {
+      ...pkg.devDependencies,
+      tailwindcss: '^3.4.0',
+      postcss: '^8.4.0',
+      autoprefixer: '^10.4.0',
+    }
+    fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2), 'utf-8')
+  }
+  return true
+}
+
 // ─── Checkout + info pagina's ─────────────────────────────────────────────────
 // Gegenereerd voor elke store, template-onafhankelijk (neutrale styling met
 // de brand-kleuren). De checkout-pagina verzamelt het verzendadres — verplicht
