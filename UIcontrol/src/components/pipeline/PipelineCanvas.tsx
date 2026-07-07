@@ -40,9 +40,8 @@ export function PipelineCanvas() {
   const [runs, setRuns] = useState<RunSummary[]>([])
   const [selectedRunId, setSelectedRunId] = useState<string | null>(null)
   const [selectedStage, setSelectedStage] = useState<Stage | null>(null)
-  const [niche, setNiche] = useState('')
   const [costs, setCosts] = useState<CostSummary | null>(null)
-  const [starting, setStarting] = useState(false)
+  const [wizardOpen, setWizardOpen] = useState(false)
 
   const { state, isConnected, lastEvent, logs } = usePipelineSocket({ runId: selectedRunId })
 
