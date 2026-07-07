@@ -99,6 +99,22 @@ Reviewer output schema (locked): `{ verdict: "APPROVED"|"REJECTED"|"UNCERTAIN", 
 
 **SSH key voor deploy:** `/home/student/.ssh/deploy_key` (user: `student`)
 
+## Store generatie & variatie (sinds juli 2026)
+- Stores worden NIET meer uit 5 vaste `.tmpl` templates gekozen, maar programmatisch
+  gegenereerd door `server/design/`:
+  - `tokens.ts` — design-DNA per store (palette/typografie/radius/spacing/**tone**) afgeleid
+    van de persona (prijsklasse/leeftijd/niche/interesses), seeded op runId → reproduceerbaar
+  - `layout.ts` — hero/product/sectie-varianten + **anti-herhaling** via `layout_history` tabel
+  - `render-page.ts` — genereert `app/page.tsx`; 5 hero-varianten, 4 product-weergaven,
+    6 sectie-volgordes, 3 nav- + 3 footer-stijlen. Structuur verschilt letterlijk per store.
+  - `content-en.ts` — Engelse reviews/story/cta/badges/nav (seeded)
+- **Alle klant-facing content is Engelstalig**, ook bij Nederlandse wizard-input. Skill-prompts
+  (brand/content/store-builder) zeggen expliciet "all text in English" + anti-generiek.
+- Per-stage temperature in `agent.ts`: creatief (brand 0.95 / content 0.85 / store-build 0.9),
+  data laag (product 0.3). `renderStore` en `writeNextScaffold` (CMS-rebuild) delen dezelfde renderer.
+- `design-dna.json` wordt per store weggeschreven (debug/reproduceerbaarheid).
+- Store slugs zijn Engels: `/checkout/ /thank-you/ /about/ /contact/ /faq/ /returns/`.
+
 ## Supplier / checkout flow (sinds juli 2026)
 - `CJ_EMAIL`/`CJ_API_KEY`/`CJ_ENV` in .env — geen key = mock-modus; `sandbox` = orders aanmaken maar nooit betalen; `production` = payBalance na createOrderV2
 - Checkout: store `/checkout/` pagina (adresformulier) → POST `/api/checkout/session` (met `customer` + `redirectUrl`) → Mollie → webhook paid → `fulfillment.ts` → `getSupplier('cj').placeOrder()`
