@@ -33,6 +33,16 @@ import { validateAndBuild } from './store-platform/build-validator.js'
 import { atomicDeploy, getHighestNginxPort } from './store-platform/deploy.js'
 void _saveAgentOutput
 
+// ── Supplier Adapter Pattern ──────────────────────────────────────────────────
+// De supplier-laag (CJ Dropshipping e.a.) leeft in ./suppliers/ en wordt hier
+// ge-re-exporteerd zodat store-platform het canonieke importpunt is:
+//   import { getSupplier, type SupplierAdapter } from './store-platform.js'
+export { getSupplier, listSuppliers, CJAdapter } from './suppliers/index.js'
+export type {
+  SupplierAdapter, SupplierProduct, SupplierOrderData,
+  PlacedOrder, TrackingInfo, InventoryInfo, ProductSearchOptions,
+} from './suppliers/index.js'
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const workspaceRoot = path.resolve(__dirname, '../../../')
 const PORT = parseInt(process.env.PLATFORM_PORT ?? '3002', 10)
