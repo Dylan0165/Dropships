@@ -233,6 +233,8 @@ export function StoresView() {
           <CompactList
             stores={stores}
             onEdit={setEditingStore}
+            onDelete={deleteStore}
+            deletingId={deletingId}
           />
         ) : viewMode === 'flow' ? (
           <FlowView stores={stores} onEdit={setEditingStore} />
@@ -245,6 +247,8 @@ export function StoresView() {
                 expanded={selected === store.storeId}
                 onToggle={() => setSelected(selected === store.storeId ? null : store.storeId)}
                 onEdit={() => setEditingStore(store)}
+                onDelete={() => deleteStore(store)}
+                deleting={deletingId === store.storeId}
               />
             ))}
           </div>
