@@ -61,11 +61,16 @@ to fill in the brand brief that the template engine uses.
 ## Rules
 
 - Carry through `brand_name`, `slogan`, `colors`, `usps` exactly from `brand_agent`.
-- `hero_headline` ≤ 8 words. Direct value claim, not the brand name.
+- `hero_headline` ≤ 8 words. Direct value claim, not the brand name. Speak to the
+  persona's `problem`/`buyingMotivation` — make the pitch feel written for THEM.
 - `hero_subheadline` 6–15 words. Concrete benefit, no fluff.
-- `hero_cta` 2–4 words. Action verb ("Bestel nu", "Shop nu", "Bekijk collectie").
+- `hero_cta` 2–4 words. Action verb ("Shop now", "Get yours", "Browse the range").
 - `usps` must be EXACTLY 3 items. Re-use brand-agent USPs verbatim if good.
 - `icon` is a single emoji or short symbol — keep it minimal.
 - `footer_tagline` ≤ 10 words. Brand essence in one line.
-- All text in Dutch (nl-NL).
+- **ALL text MUST be in English**, even if the niche or persona input is in Dutch
+  or another language. Never output Dutch.
+- **Avoid generic patterns.** Don't default to the same hero structure or the
+  identical "free shipping / 30-day returns / secure payment" USP trio unless it
+  genuinely fits — vary the angle per store and per persona.
 - Return ONLY the JSON object — no markdown, no preamble.
