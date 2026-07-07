@@ -216,6 +216,8 @@ import { useEffect, useState } from 'react';
 interface Product {
   id: string; title: string; image: string; price: number; compareAtPrice?: number;
   description?: string; supplier?: string; supplierProductId?: string; supplierVariantId?: string;
+  // PRODUCTS_JSON kan extra velden bevatten (badge, bullets, ...) — die negeren we hier
+  [key: string]: unknown;
 }
 const PRODUCTS: Product[] = ${vars.PRODUCTS_JSON};
 const PRIMARY = '${vars.PRIMARY}';
