@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { RefreshCw, ExternalLink, Store, Activity, AlertCircle, CheckCircle, Clock, DownloadCloud, Pencil, X, LayoutList, LayoutGrid, GitBranch } from 'lucide-react'
+import { RefreshCw, ExternalLink, Store, Activity, AlertCircle, CheckCircle, Clock, DownloadCloud, Pencil, X, LayoutList, LayoutGrid, GitBranch, Trash2, Loader2 } from 'lucide-react'
 import clsx from 'clsx'
 import { getStores } from '@/lib/api'
 import type { StoreInfo } from '@/types'
