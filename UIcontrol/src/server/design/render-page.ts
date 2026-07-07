@@ -365,7 +365,7 @@ const DNA: any = ${j(dnaObj)};
 const CONTENT: any = ${j(content)};
 const CSS: string = ${j(css)};
 
-// Design-token style helpers (afgeleid van het per-store design-DNA)
+// Design-token style helpers (derived from the per-store design DNA)
 const S: any = {
   label: { color: DNA.accent, fontSize: '.72rem', letterSpacing: '.28em', textTransform: 'uppercase', fontWeight: 700, marginBottom: '1.25rem', display: 'block' },
   h1: { fontFamily: DNA.heading, fontWeight: DNA.headingWeight, fontSize: 'clamp(2.4rem, ' + (5 * DNA.headingScale) + 'vw, ' + (4.6 * DNA.headingScale) + 'rem)', lineHeight: 1.06, letterSpacing: DNA.headingLetterSpacing, textTransform: DNA.headingTransform, margin: '0 0 1.5rem' },
