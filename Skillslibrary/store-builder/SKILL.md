@@ -22,6 +22,11 @@ to fill in the brand brief that the template engine uses.
 ```json
 {
   "niche": "string",
+  "doelgroep_persona": {
+    "label": "...", "ageRange": "...", "interests": ["..."],
+    "buyingMotivation": "...", "problem": "...", "priceRange": { "min": 0, "max": 0 }, "tone": "..."
+  },
+  "site_structuur": { "nicheType": "impulse|considered", "pages": [...], "extras": [...] },
   "previous_agent_output": {
     "brand_agent": {
       "brand_name": "...", "slogan": "...", "tone_of_voice": "...",
