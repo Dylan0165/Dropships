@@ -8,10 +8,11 @@ import {
   type Edge,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
-import { Play, Pause, Square, RotateCw, Trash2 } from 'lucide-react'
+import { Pause, Square, RotateCw, Trash2, Sparkles } from 'lucide-react'
 import { usePipelineSocket, type Stage } from '@/hooks/usePipelineSocket'
 import { StageNode, STAGE_META } from './StageNode'
 import { StageDrawer } from './StageDrawer'
+import { StoreWizard } from '../wizard/StoreWizard'
 
 interface RunSummary {
   runId: string
