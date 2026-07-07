@@ -126,9 +126,13 @@ img { max-width: 100%; display: block; }
     devDependencies: { typescript: '^5.4.0', '@types/react': '^18.3.0', '@types/react-dom': '^18.3.0', '@types/node': '^20.0.0' },
   }, null, 2), 'utf-8')
 
-  // next.config.js
+  // next.config.js — trailingSlash zodat /checkout/ e.d. als map met index.html
+  // geëxporteerd worden en nginx' try_files ze direct kan serveren
   fs.writeFileSync(path.join(targetDir, 'next.config.js'),
-    `module.exports = { output: 'export', images: { unoptimized: true } };\n`, 'utf-8')
+    `module.exports = { output: 'export', trailingSlash: true, images: { unoptimized: true } };\n`, 'utf-8')
+
+  // Checkout + bedankt + info pagina's (over/contact/faq/retour)
+  buildCheckoutAndInfoPages(targetDir, vars)
 
   // tsconfig.json
   fs.writeFileSync(path.join(targetDir, 'tsconfig.json'), JSON.stringify({
