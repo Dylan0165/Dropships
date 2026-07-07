@@ -276,22 +276,22 @@ export default function CheckoutPage() {
             supplierVariantId: product.supplierVariantId,
           }],
           customer: form,
-          redirectUrl: window.location.origin + '/bedankt/',
+          redirectUrl: window.location.origin + '/thank-you/',
         }),
       });
       if (!r.ok) throw new Error('checkout request failed');
       const data = await r.json() as { checkoutUrl?: string };
-      if (!data.checkoutUrl) throw new Error('geen checkout url');
+      if (!data.checkoutUrl) throw new Error('no checkout url');
       window.location.href = data.checkoutUrl;
     } catch (err) {
       console.error('[checkout]', err);
-      setError('Er ging iets mis bij het starten van de betaling. Probeer het opnieuw.');
+      setError('Something went wrong starting your payment. Please try again.');
       setBusy(false);
     }
   }
 
   if (!product) {
-    return <main style={{ padding: '4rem 2rem', textAlign: 'center', fontFamily: 'inherit' }}>Laden…</main>;
+    return <main style={{ padding: '4rem 2rem', textAlign: 'center', fontFamily: 'inherit' }}>Loading…</main>;
   }
 
   const total = Math.round(product.price * qty * 100) / 100;
