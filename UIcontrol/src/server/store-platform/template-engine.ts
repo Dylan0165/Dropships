@@ -257,7 +257,7 @@ export default function CheckoutPage() {
     e.preventDefault();
     if (!product) return;
     if (!form.name || !form.email || !form.street || !form.zip || !form.city) {
-      setError('Vul alle verplichte velden in.');
+      setError('Please fill in all required fields.');
       return;
     }
     setBusy(true);
