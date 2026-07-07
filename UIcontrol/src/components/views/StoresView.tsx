@@ -74,6 +74,29 @@ export function StoresView() {
   }
 
   const dismissToast = (id: string) => setToasts(t => t.filter(x => x.id !== id))
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+
+  // Store volledig verwijderen: nginx vhost + files op de store server, poort vrij, DB-rij weg
+  const deleteStore = async (store: StoreInfoEx) => {
+    const name = store.subdomein ?? store.storeId
+    if (!confirm(`Store "${name}" definitief verwijderen?\n\nDit verwijdert de site van de store server (nginx + bestanden) en uit het dashboard. Dit kan niet ongedaan worden gemaakt.`)) return
+    setDeletingId(store.storeId)
+    try {
+      const res = await fetch(`/api/stores/${store.storeId}`, { method: 'DELETE' })
+      const data = await res.json() as { deleted?: boolean; error?: string }
+      if (!res.ok || data.error) {
+        setSyncResult(`Verwijderen mislukt: ${data.error ?? res.statusText}`)
+        setTimeout(() => setSyncResult(null), 8000)
+      } else {
+        setStores(s => s.filter(x => x.storeId !== store.storeId))
+      }
+    } catch (err) {
+      setSyncResult(`Verwijderen mislukt: ${err instanceof Error ? err.message : 'netwerk fout'}`)
+      setTimeout(() => setSyncResult(null), 8000)
+    } finally {
+      setDeletingId(null)
+    }
+  }
 
   const fetchStores = async () => {
     setLoading(true)
