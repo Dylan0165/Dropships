@@ -48,7 +48,6 @@ function flatDNA(dna: DesignDNA) {
     : dna.shape.buttonStyle === 'sharp' ? '0px'
     : dna.shape.radiusMd
   return {
-    mode: dna.palette.mode,
     ...dna.palette,
     heading: dna.typography.heading,
     body: dna.typography.body,
