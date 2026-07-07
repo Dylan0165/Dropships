@@ -21,7 +21,7 @@ function updateStage(state: PipelineState, stage: Stage, patch: Partial<typeof s
 
 // ─── Public API ──────────────────────────────────────────────────────────────
 
-export async function startRun(runId: string, niche: string): Promise<PipelineState> {
+export async function startRun(runId: string, niche: string, config?: WizardConfig): Promise<PipelineState> {
   if (activeRuns.has(runId)) {
     return activeRuns.get(runId)!.state
   }
@@ -32,7 +32,7 @@ export async function startRun(runId: string, niche: string): Promise<PipelineSt
     VALUES (?, ?, 'running', '{}', ?, ?)
   `).run(runId, niche, now, now)
 
-  const state = initialState(runId, niche)
+  const state = initialState(runId, niche, config)
   persist(state)
   emit({ type: 'pipeline:started', runId, fullState: state })
   startEngine(state)
