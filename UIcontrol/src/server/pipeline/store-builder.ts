@@ -2,8 +2,15 @@ import path from 'path'
 import fs from 'fs'
 import os from 'os'
 import { runAgent, z } from './agent.js'
-import { applyTemplate, buildLayoutSharedFiles, buildTemplateVars, ensureTailwindSupport, selectTemplate } from '../store-platform/template-engine.js'
+import { buildLayoutSharedFiles, buildTemplateVars, buildCheckoutAndInfoPages, ensureTailwindSupport, selectTemplate } from '../store-platform/template-engine.js'
 import type { TemplateName } from '../store-platform/template-engine.js'
+import { deriveDesignDNA, fallbackPersona, type PersonaLike } from '../design/tokens.js'
+import { selectLayout, recordLayout } from '../design/layout.js'
+import { renderStorePage, type RenderProduct } from '../design/render-page.js'
+import {
+  generateReviews, generateStory, generateCtaBand,
+  buildNavLinks, buildFooterLinks, heroLabel, badgeFor,
+} from '../design/content-en.js'
 
 // ─── Brief schema ─────────────────────────────────────────────────────────────
 export const StoreBriefSchema = z.object({
