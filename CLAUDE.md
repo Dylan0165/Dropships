@@ -43,6 +43,7 @@ d:\Dropshippingv0.1tool\          ← Windows dev machine
 │   │   │   ├── component-lab.ts   ← A/B testing componenten
 │   │   │   └── skills-updater.ts  ← Agent performance tracking
 │   │   ├── components/
+│   │   │   ├── wizard/            ← StoreWizard (4-staps AI wizard, vervangt niche-input)
 │   │   │   ├── pipeline/          ← PipelineCanvas, StageNode, StageDrawer (@xyflow/react)
 │   │   │   ├── trendscraper/      ← TrendScraper UI (5 componenten)
 │   │   │   └── views/             ← PipelineCanvas, RunsView, StoresView, AdManagerView,
