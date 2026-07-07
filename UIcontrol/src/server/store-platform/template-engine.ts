@@ -148,6 +148,273 @@ img { max-width: 100%; display: block; }
   }, null, 2), 'utf-8')
 }
 
+// ─── Checkout + info pagina's ─────────────────────────────────────────────────
+// Gegenereerd voor elke store, template-onafhankelijk (neutrale styling met
+// de brand-kleuren). De checkout-pagina verzamelt het verzendadres — verplicht
+// voor automatische supplier fulfillment (CJ) — en stuurt daarna door naar Mollie.
+
+export function buildCheckoutAndInfoPages(targetDir: string, vars: TemplateVars): void {
+  const appDir = path.join(targetDir, 'app')
+
+  // ── /checkout ──
+  const checkoutDir = path.join(appDir, 'checkout')
+  if (!fs.existsSync(checkoutDir)) fs.mkdirSync(checkoutDir, { recursive: true })
+  fs.writeFileSync(path.join(checkoutDir, 'page.tsx'), `'use client';
+import { useEffect, useState } from 'react';
+
+interface Product {
+  id: string; title: string; image: string; price: number; compareAtPrice?: number;
+  description?: string; supplier?: string; supplierProductId?: string; supplierVariantId?: string;
+}
+const PRODUCTS: Product[] = ${vars.PRODUCTS_JSON};
+const PRIMARY = '${vars.PRIMARY}';
+const CHECKOUT_API = '${vars.CHECKOUT_API_URL}';
+const STORE_ID = '${vars.STORE_ID}';
+const SUBDOMAIN = '${vars.SUBDOMAIN}';
+const RUN_ID = '${vars.RUN_ID}';
+
+const COUNTRIES: Array<[string, string]> = [['NL', 'Nederland'], ['BE', 'België'], ['DE', 'Duitsland'], ['FR', 'Frankrijk']];
+
+const inputStyle: React.CSSProperties = {
+  width: '100%', padding: '0.7rem 0.9rem', border: '1px solid #ddd', borderRadius: 8,
+  fontSize: '0.9rem', fontFamily: 'inherit', boxSizing: 'border-box', background: '#fff',
+};
+const labelStyle: React.CSSProperties = {
+  display: 'block', fontSize: '0.75rem', fontWeight: 600, marginBottom: '0.3rem', color: '#333',
+};
+
+export default function CheckoutPage() {
+  const [product, setProduct] = useState<Product | null>(null);
+  const [qty, setQty] = useState(1);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [form, setForm] = useState({
+    name: '', email: '', phone: '', street: '', houseNumber: '', zip: '', city: '', countryCode: 'NL',
+  });
+
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get('product');
+    setProduct(PRODUCTS.find(p => p.id === id) ?? PRODUCTS[0] ?? null);
+  }, []);
+
+  const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+    setForm(f => ({ ...f, [k]: e.target.value }));
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!product) return;
+    if (!form.name || !form.email || !form.street || !form.zip || !form.city) {
+      setError('Vul alle verplichte velden in.');
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      const r = await fetch(CHECKOUT_API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          storeId: STORE_ID, subdomain: SUBDOMAIN, runId: RUN_ID,
+          amountEur: Math.round(product.price * qty * 100) / 100,
+          description: qty + 'x ' + product.title,
+          items: [{
+            id: product.id, title: product.title, price: product.price, quantity: qty,
+            supplier: product.supplier, supplierProductId: product.supplierProductId,
+            supplierVariantId: product.supplierVariantId,
+          }],
+          customer: form,
+          redirectUrl: window.location.origin + '/bedankt/',
+        }),
+      });
+      if (!r.ok) throw new Error('checkout request failed');
+      const data = await r.json() as { checkoutUrl?: string };
+      if (!data.checkoutUrl) throw new Error('geen checkout url');
+      window.location.href = data.checkoutUrl;
+    } catch (err) {
+      console.error('[checkout]', err);
+      setError('Er ging iets mis bij het starten van de betaling. Probeer het opnieuw.');
+      setBusy(false);
+    }
+  }
+
+  if (!product) {
+    return <main style={{ padding: '4rem 2rem', textAlign: 'center', fontFamily: 'inherit' }}>Laden…</main>;
+  }
+
+  const total = Math.round(product.price * qty * 100) / 100;
+
+  return (
+    <main style={{ minHeight: '100dvh', background: '#fafafa', color: '#111', padding: '2rem 1rem' }}>
+      <div style={{ maxWidth: 960, margin: '0 auto' }}>
+        <a href="/" style={{ fontSize: '0.8rem', color: '#666', textDecoration: 'none' }}>&larr; Terug naar ${vars.BRAND_NAME}</a>
+        <h1 style={{ fontSize: '1.6rem', margin: '1rem 0 2rem', fontWeight: 700 }}>Afrekenen</h1>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem', alignItems: 'start' }}>
+
+          {/* Bestelling */}
+          <section style={{ background: '#fff', border: '1px solid #eee', borderRadius: 12, padding: '1.5rem' }}>
+            <h2 style={{ fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#888', margin: '0 0 1rem' }}>Je bestelling</h2>
+            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+              {product.image && <img src={product.image} alt={product.title} style={{ width: 72, height: 72, objectFit: 'cover', borderRadius: 8, background: '#f2f2f2' }} />}
+              <div style={{ flex: 1 }}>
+                <p style={{ margin: 0, fontWeight: 600, fontSize: '0.95rem' }}>{product.title}</p>
+                <p style={{ margin: '0.25rem 0 0', color: '#666', fontSize: '0.85rem' }}>&euro;{product.price.toFixed(2)} per stuk</p>
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '1.25rem' }}>
+              <span style={{ fontSize: '0.8rem', color: '#555' }}>Aantal</span>
+              <button type="button" onClick={() => setQty(q => Math.max(1, q - 1))} style={{ width: 30, height: 30, borderRadius: 6, border: '1px solid #ddd', background: '#fff', cursor: 'pointer' }}>&minus;</button>
+              <span style={{ minWidth: 20, textAlign: 'center', fontWeight: 600 }}>{qty}</span>
+              <button type="button" onClick={() => setQty(q => Math.min(10, q + 1))} style={{ width: 30, height: 30, borderRadius: 6, border: '1px solid #ddd', background: '#fff', cursor: 'pointer' }}>+</button>
+            </div>
+            <div style={{ borderTop: '1px solid #eee', marginTop: '1.25rem', paddingTop: '1rem', display: 'flex', justifyContent: 'space-between', fontWeight: 700 }}>
+              <span>Totaal</span>
+              <span>&euro;{total.toFixed(2)}</span>
+            </div>
+            <p style={{ fontSize: '0.75rem', color: '#999', marginTop: '0.75rem' }}>Gratis verzending &middot; Veilig betalen via iDEAL, Bancontact, creditcard of PayPal</p>
+          </section>
+
+          {/* Verzendgegevens */}
+          <form onSubmit={submit} style={{ background: '#fff', border: '1px solid #eee', borderRadius: 12, padding: '1.5rem' }}>
+            <h2 style={{ fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#888', margin: '0 0 1rem' }}>Verzendgegevens</h2>
+            <div style={{ display: 'grid', gap: '0.9rem' }}>
+              <div>
+                <label style={labelStyle}>Volledige naam *</label>
+                <input style={inputStyle} value={form.name} onChange={set('name')} autoComplete="name" required />
+              </div>
+              <div>
+                <label style={labelStyle}>E-mailadres *</label>
+                <input style={inputStyle} type="email" value={form.email} onChange={set('email')} autoComplete="email" required />
+              </div>
+              <div>
+                <label style={labelStyle}>Telefoon (voor bezorging)</label>
+                <input style={inputStyle} type="tel" value={form.phone} onChange={set('phone')} autoComplete="tel" />
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '0.75rem' }}>
+                <div>
+                  <label style={labelStyle}>Straat *</label>
+                  <input style={inputStyle} value={form.street} onChange={set('street')} autoComplete="address-line1" required />
+                </div>
+                <div>
+                  <label style={labelStyle}>Huisnr.</label>
+                  <input style={inputStyle} value={form.houseNumber} onChange={set('houseNumber')} />
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '0.75rem' }}>
+                <div>
+                  <label style={labelStyle}>Postcode *</label>
+                  <input style={inputStyle} value={form.zip} onChange={set('zip')} autoComplete="postal-code" required />
+                </div>
+                <div>
+                  <label style={labelStyle}>Plaats *</label>
+                  <input style={inputStyle} value={form.city} onChange={set('city')} autoComplete="address-level2" required />
+                </div>
+              </div>
+              <div>
+                <label style={labelStyle}>Land *</label>
+                <select style={inputStyle} value={form.countryCode} onChange={set('countryCode')}>
+                  {COUNTRIES.map(([code, name]) => <option key={code} value={code}>{name}</option>)}
+                </select>
+              </div>
+            </div>
+
+            {error && <p style={{ color: '#c0392b', fontSize: '0.85rem', marginTop: '1rem' }}>{error}</p>}
+
+            <button
+              type="submit"
+              disabled={busy}
+              style={{
+                width: '100%', marginTop: '1.25rem', padding: '0.9rem',
+                background: busy ? '#999' : PRIMARY, color: '#fff', border: 'none', borderRadius: 8,
+                fontSize: '0.9rem', fontWeight: 700, letterSpacing: '0.03em',
+                cursor: busy ? 'wait' : 'pointer',
+              }}
+            >
+              {busy ? 'Bezig…' : 'Betaal €' + total.toFixed(2)}
+            </button>
+            <p style={{ fontSize: '0.7rem', color: '#aaa', marginTop: '0.75rem', textAlign: 'center' }}>
+              Je wordt doorgestuurd naar onze beveiligde betaalpagina (Mollie).
+            </p>
+          </form>
+        </div>
+      </div>
+    </main>
+  );
+}
+`, 'utf-8')
+
+  // ── /bedankt ──
+  const bedanktDir = path.join(appDir, 'bedankt')
+  if (!fs.existsSync(bedanktDir)) fs.mkdirSync(bedanktDir, { recursive: true })
+  fs.writeFileSync(path.join(bedanktDir, 'page.tsx'), `export default function BedanktPage() {
+  return (
+    <main style={{ minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fafafa', color: '#111', padding: '2rem' }}>
+      <div style={{ maxWidth: 480, textAlign: 'center' }}>
+        <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>&#10003;</div>
+        <h1 style={{ fontSize: '1.5rem', fontWeight: 700, margin: '0 0 0.75rem' }}>Bedankt voor je bestelling!</h1>
+        <p style={{ color: '#666', lineHeight: 1.7, margin: '0 0 2rem' }}>
+          Zodra je betaling is verwerkt ontvang je een bevestiging per e-mail.
+          Je bestelling wordt binnen 1-2 werkdagen verzonden vanuit ons Europese magazijn.
+        </p>
+        <a href="/" style={{ display: 'inline-block', background: '#111', color: '#fff', padding: '0.75rem 2rem', borderRadius: 8, textDecoration: 'none', fontWeight: 600, fontSize: '0.85rem' }}>
+          Terug naar ${vars.BRAND_NAME}
+        </a>
+      </div>
+    </main>
+  );
+}
+`, 'utf-8')
+
+  // ── Info pagina's: /over /contact /faq /retour (footer-links in de templates) ──
+  const infoPages: Array<{ slug: string; title: string; body: string }> = [
+    {
+      slug: 'over', title: 'Over ons',
+      body: `<p>${vars.BRAND_NAME} — ${vars.SLOGAN}</p>
+        <p>Wij geloven dat kwaliteit niet ingewikkeld hoeft te zijn. Daarom selecteren we onze producten zorgvuldig en verzenden we alles vanuit Europese magazijnen: snelle levering, geen verrassingen bij de douane.</p>
+        <p>Vragen? Neem gerust <a href="/contact/">contact</a> met ons op.</p>`,
+    },
+    {
+      slug: 'contact', title: 'Contact',
+      body: `<p>We helpen je graag. Ons supportteam reageert binnen 24 uur op werkdagen.</p>
+        <p><strong>E-mail:</strong> support@${vars.SUBDOMAIN || 'store'}.example</p>
+        <p><strong>Retouren:</strong> zie onze <a href="/retour/">retourpagina</a>.</p>`,
+    },
+    {
+      slug: 'faq', title: 'Veelgestelde vragen',
+      body: `<h3>Hoe lang duurt de levering?</h3>
+        <p>Bestellingen worden binnen 1-2 werkdagen verzonden vanuit ons Europese magazijn. De levertijd is doorgaans 3-8 werkdagen.</p>
+        <h3>Kan ik mijn bestelling volgen?</h3>
+        <p>Ja — zodra je bestelling verzonden is ontvang je een track &amp; trace code per e-mail.</p>
+        <h3>Hoe kan ik betalen?</h3>
+        <p>Via iDEAL, Bancontact, creditcard of PayPal. Betalingen verlopen beveiligd via Mollie.</p>
+        <h3>Wat als ik niet tevreden ben?</h3>
+        <p>Je hebt 30 dagen bedenktijd. Zie onze <a href="/retour/">retourpagina</a>.</p>`,
+    },
+    {
+      slug: 'retour', title: 'Retourneren',
+      body: `<p>Niet tevreden? Je mag je bestelling binnen <strong>30 dagen</strong> na ontvangst retourneren.</p>
+        <p>Stuur een e-mail met je ordernummer en we sturen je de retourinstructies. Na ontvangst van je retour storten we het volledige aankoopbedrag binnen 5 werkdagen terug.</p>
+        <p>Het product dient ongebruikt en in de originele verpakking te zijn.</p>`,
+    },
+  ]
+
+  for (const page of infoPages) {
+    const dir = path.join(appDir, page.slug)
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
+    fs.writeFileSync(path.join(dir, 'page.tsx'), `export default function Page() {
+  return (
+    <main style={{ minHeight: '100dvh', background: '#fafafa', color: '#111', padding: '3rem 1.5rem' }}>
+      <div style={{ maxWidth: 640, margin: '0 auto' }}>
+        <a href="/" style={{ fontSize: '0.8rem', color: '#666', textDecoration: 'none' }}>&larr; ${vars.BRAND_NAME}</a>
+        <h1 style={{ fontSize: '1.75rem', fontWeight: 700, margin: '1rem 0 1.5rem' }}>${page.title}</h1>
+        <div style={{ lineHeight: 1.8, color: '#333', fontSize: '0.95rem' }} dangerouslySetInnerHTML={{ __html: ${JSON.stringify(page.body)} }} />
+      </div>
+    </main>
+  );
+}
+`, 'utf-8')
+  }
+}
+
 export function validateNoForbiddenImports(pageTsx: string): string[] {
   const errors: string[] = []
   const lines = pageTsx.split('\n')
