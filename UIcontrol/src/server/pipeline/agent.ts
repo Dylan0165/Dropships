@@ -137,6 +137,12 @@ export interface RunAgentConfig<T> {
   outputSchema: ZodSchema<T>
   timeoutMs?: number
   retries?: number
+  /**
+   * Sampling temperature. Laag (~0.3) voor data/technische stages (trend, product,
+   * reviewers) → consistent + parseerbaar. Hoog (~0.9) voor creatieve stages
+   * (brand, content, store-build) → variatie tussen stores. Default 0.4.
+   */
+  temperature?: number
   onLog?: (level: 'info' | 'warn' | 'error', msg: string) => void
 }
 
