@@ -854,9 +854,11 @@ app.options('/api/checkout/session', (req, res) => {
 app.post('/api/checkout/session', async (req, res) => {
   setCheckoutCors(req, res)
   try {
-    const { storeId, subdomain, runId, amountEur, description, items } = req.body as {
+    const { storeId, subdomain, runId, amountEur, description, items, customer, redirectUrl } = req.body as {
       storeId: string; subdomain: string; runId?: string
       amountEur: number; description: string; items?: unknown[]
+      customer?: Record<string, string>
+      redirectUrl?: string
     }
     if (!storeId || !subdomain || !amountEur) {
       res.status(400).json({ error: 'storeId, subdomain en amountEur zijn verplicht' })
@@ -869,9 +871,12 @@ app.post('/api/checkout/session', async (req, res) => {
       runId,
       amountEur: Number(amountEur),
       description: description ?? `Bestelling ${subdomain}`,
-      redirectUrl: `${origin}/bedankt?store=${subdomain}`,
+      // De store stuurt zijn eigen /bedankt/ URL mee zodat de klant na betaling
+      // terugkomt in de webshop i.p.v. op de UIcontrol server
+      redirectUrl: redirectUrl ?? `${origin}/bedankt?store=${subdomain}`,
       webhookUrl: `${origin}/api/webhooks/mollie`,
       items,
+      customer,
     })
     res.json({ checkoutUrl })
   } catch (err) {
