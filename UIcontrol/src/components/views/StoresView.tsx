@@ -473,6 +473,14 @@ function StoreCard({ store, expanded, onToggle, onEdit, onDelete, deleting }: {
                     <ExternalLink size={12} />
                   </a>
                 )}
+                <button
+                  onClick={e => { e.stopPropagation(); onDelete() }}
+                  disabled={deleting}
+                  className="text-zinc-600 hover:text-red-400 transition-colors disabled:opacity-40"
+                  title="Store verwijderen"
+                >
+                  {deleting ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
+                </button>
               </div>
             </div>
             <p className="text-[11px] text-zinc-500 mt-0.5 truncate">{store.niche}</p>
