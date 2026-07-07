@@ -104,10 +104,15 @@ export async function generateBrief(input: StoreBuildInput): Promise<StoreBrief 
     input: {
       niche: input.niche,
       previous_agent_output: { brand: input.brand, products: input.products },
+      // Persona + site-structuur uit de wizard sturen de creatieve richting
+      ...(input.persona ? { doelgroep_persona: input.persona } : {}),
+      ...(input.siteStructure ? { site_structuur: input.siteStructure } : {}),
     },
     outputSchema: StoreBriefSchema,
     timeoutMs: 240_000,
     retries: 3,
+    // Creatieve stap → hogere temperature voor meer variatie tussen stores
+    temperature: 0.9,
     onLog: input.onLog ? (lvl, m) => input.onLog!(`[${lvl}] ${m}`) : undefined,
   })
 
