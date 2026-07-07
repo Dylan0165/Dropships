@@ -74,29 +74,12 @@ export function PipelineCanvas() {
       .catch(() => setCosts(null))
   }, [selectedRunId, lastEvent])
 
-  const onStart = useCallback(async () => {
-    const value = niche.trim()
-    if (!value) return
-    setStarting(true)
-    try {
-      const r = await fetch('/api/pipeline/start', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ niche: value }),
-      })
-      if (!r.ok) {
-        const err = await r.json().catch(() => ({ error: 'start failed' })) as { error?: string }
-        alert(err.error ?? 'Pipeline start mislukt')
-        return
-      }
-      const data = await r.json() as { runId: string }
-      setSelectedRunId(data.runId)
-      setNiche('')
-      refreshRuns()
-    } finally {
-      setStarting(false)
-    }
-  }, [niche, refreshRuns])
+  // De store-wizard (multi-step, AI-gestuurd) vervangt het oude niche-invoerveld
+  const onWizardStarted = useCallback((runId: string) => {
+    setWizardOpen(false)
+    setSelectedRunId(runId)
+    refreshRuns()
+  }, [refreshRuns])
 
   const onPause = useCallback(async () => {
     if (!selectedRunId) return
