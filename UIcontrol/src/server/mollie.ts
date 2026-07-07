@@ -35,7 +35,7 @@ export interface MolliePaymentParams {
 export async function createPayment(params: MolliePaymentParams): Promise<string> {
   const {
     storeId, subdomain, runId = '', amountEur, description,
-    redirectUrl, webhookUrl, items = [],
+    redirectUrl, webhookUrl, items = [], customer = {},
   } = params
 
   const apiKey = MOLLIE_API_KEY()
@@ -44,9 +44,9 @@ export async function createPayment(params: MolliePaymentParams): Promise<string
     console.log(`[mollie] mock: payment aangemaakt voor ${subdomain} €${amountEur.toFixed(2)}`)
     const mockId = `mock_${Date.now()}`
     db.prepare(
-      `INSERT INTO checkout_orders (mollie_payment_id, store_id, subdomain, run_id, amount_eur, items_json, status, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, 'open', ?)`,
-    ).run(mockId, storeId, subdomain, runId, amountEur, JSON.stringify(items), new Date().toISOString())
+      `INSERT INTO checkout_orders (mollie_payment_id, store_id, subdomain, run_id, amount_eur, items_json, customer_json, status, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, 'open', ?)`,
+    ).run(mockId, storeId, subdomain, runId, amountEur, JSON.stringify(items), JSON.stringify(customer), new Date().toISOString())
     return 'https://mollie.com/checkout/test'
   }
 
