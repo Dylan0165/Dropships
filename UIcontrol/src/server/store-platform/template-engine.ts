@@ -226,7 +226,7 @@ const STORE_ID = '${vars.STORE_ID}';
 const SUBDOMAIN = '${vars.SUBDOMAIN}';
 const RUN_ID = '${vars.RUN_ID}';
 
-const COUNTRIES: Array<[string, string]> = [['NL', 'Nederland'], ['BE', 'België'], ['DE', 'Duitsland'], ['FR', 'Frankrijk']];
+const COUNTRIES: Array<[string, string]> = [['NL', 'Netherlands'], ['BE', 'Belgium'], ['DE', 'Germany'], ['FR', 'France']];
 
 const inputStyle: React.CSSProperties = {
   width: '100%', padding: '0.7rem 0.9rem', border: '1px solid #ddd', borderRadius: 8,
