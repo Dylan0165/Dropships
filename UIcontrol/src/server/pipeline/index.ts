@@ -3,4 +3,4 @@ export { startRun, pauseRun, resumeRun, stopRun, getRunState, resumePersistedRun
 export { pipelineEvents } from './events.js'
 export type { PipelineEvent, PipelineEventType } from './events.js'
 export { STAGES } from './types.js'
-export type { Stage, StageStatus, StageState, PipelineState } from './types.js'
+export type { Stage, StageStatus, StageState, PipelineState, WizardConfig, WizardProduct } from './types.js'
