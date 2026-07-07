@@ -6,7 +6,7 @@ import { deployStore, healthCheck, buildSubdomain } from './deployer.js'
 import { validateAndBuild } from '../store-platform/build-validator.js'
 import { saveStageOutput, claimPort, upsertStore, updateStoreHealth } from '../db.js'
 import { v4 as uuid } from 'uuid'
-import type { Stage } from './types.js'
+import type { Stage, WizardConfig } from './types.js'
 
 // ─── Schemas per executor stage ──────────────────────────────────────────────
 
