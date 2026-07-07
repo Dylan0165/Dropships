@@ -188,7 +188,7 @@ VORIGE POGING WAS ONGELDIG. Fout: ${lastErr}
 Stuur nu uitsluitend valide JSON volgens schema.`
 
       const { content, inputTokens, outputTokens } =
-        await callLLM(cfg.model, systemPrompt, promptForAttempt, timeoutMs)
+        await callLLM(cfg.model, systemPrompt, promptForAttempt, timeoutMs, cfg.temperature ?? 0.4)
 
       totalInTok += inputTokens
       totalOutTok += outputTokens
