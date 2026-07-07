@@ -250,9 +250,13 @@ export const STAGE_RUNNERS: Record<Stage, (ctx: StageContext) => Promise<StageOu
       brand: {
         name: brand.brand_name as string ?? brand.name as string,
         slogan: brand.slogan as string,
+        tone: brand.tone_of_voice as string | undefined,
         colors: brand.colors as { primary?: string; secondary?: string; accent?: string },
       },
       products,
+      // Persona + site-structuur uit de wizard bepalen design-DNA en sectie-volgorde
+      persona: ctx.config?.persona,
+      siteStructure: ctx.config?.siteStructure,
       onLog: (m) => ctx.onLog(m),
     })
 
