@@ -2,7 +2,7 @@ import path from 'path'
 import fs from 'fs'
 import os from 'os'
 import { runAgent, z } from './agent.js'
-import { applyTemplate, buildLayoutSharedFiles, buildTemplateVars, selectTemplate } from '../store-platform/template-engine.js'
+import { applyTemplate, buildLayoutSharedFiles, buildTemplateVars, ensureTailwindSupport, selectTemplate } from '../store-platform/template-engine.js'
 import type { TemplateName } from '../store-platform/template-engine.js'
 
 // ─── Brief schema ─────────────────────────────────────────────────────────────
