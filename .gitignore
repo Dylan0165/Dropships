@@ -28,11 +28,11 @@ Trendscraper/logs/
 Trendscraper/.env
 
 # ── Env files ─────────────────────────────────────────────────
-# Private repo — .env files ARE committed so teammates can pull
-# Uncomment these lines if you ever make this repo public:
-# .env
-# .env.local
-# .env.*.local
+# .env bevat echte API keys en mag NOOIT gecommit worden.
+# Gebruik .env.example als template (zie README → Environment Setup).
+.env
+.env.local
+.env.*.local
 
 # ── SQLite databases ─────────────────────────────────────────
 *.db
