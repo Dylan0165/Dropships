@@ -118,8 +118,8 @@ export async function handleWebhook(body: URLSearchParams): Promise<void> {
     .run(payment.status, payment.id)
 
   if (payment.status === 'paid') {
-    console.log(`[mollie] payment ${payment.id} betaald (winkel: ${payment.metadata?.subdomain ?? 'onbekend'})`)
-    // Future: trigger CJ fulfillment via Trendscraper POST /orders
+    console.log(`[mollie] payment ${payment.id} betaald (winkel: ${payment.metadata?.subdomain ?? 'onbekend'}) — fulfillment starten`)
+    fulfillOrderForPayment(payment.id).catch(err => console.error('[mollie] fulfillment mislukt:', err))
   }
 }
 
