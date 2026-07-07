@@ -89,6 +89,7 @@ async function runExecutorStage(
   skillName: string,
   schema: z.ZodTypeAny,
   model: string = process.env.LLM_MODEL_EXECUTOR ?? 'deepseek-chat',
+  temperature = 0.4,
 ): Promise<StageOutput> {
   const r = await runAgent({
     runId: ctx.runId, stage, agentName, skillName, model,
@@ -103,6 +104,7 @@ async function runExecutorStage(
       } : {}),
     },
     outputSchema: schema,
+    temperature,
     onLog: (lvl, m) => ctx.onLog(`[${lvl}] ${m}`),
   })
   if (!r.ok || !r.output) {
