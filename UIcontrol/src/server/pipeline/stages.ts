@@ -65,6 +65,8 @@ export interface StageContext {
   niche: string
   previous: Record<string, unknown>
   onLog: (msg: string) => void
+  /** Aanwezig bij runs die vanuit de store-wizard gestart zijn */
+  config?: WizardConfig
 }
 
 export interface StageOutput {
