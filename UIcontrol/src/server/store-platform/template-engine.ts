@@ -395,21 +395,21 @@ export default function CheckoutPage() {
 }
 `, 'utf-8')
 
-  // ── /bedankt ──
-  const bedanktDir = path.join(appDir, 'bedankt')
-  if (!fs.existsSync(bedanktDir)) fs.mkdirSync(bedanktDir, { recursive: true })
-  fs.writeFileSync(path.join(bedanktDir, 'page.tsx'), `export default function BedanktPage() {
+  // ── /thank-you ──
+  const thankYouDir = path.join(appDir, 'thank-you')
+  if (!fs.existsSync(thankYouDir)) fs.mkdirSync(thankYouDir, { recursive: true })
+  fs.writeFileSync(path.join(thankYouDir, 'page.tsx'), `export default function ThankYouPage() {
   return (
     <main style={{ minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fafafa', color: '#111', padding: '2rem' }}>
       <div style={{ maxWidth: 480, textAlign: 'center' }}>
         <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>&#10003;</div>
-        <h1 style={{ fontSize: '1.5rem', fontWeight: 700, margin: '0 0 0.75rem' }}>Bedankt voor je bestelling!</h1>
+        <h1 style={{ fontSize: '1.5rem', fontWeight: 700, margin: '0 0 0.75rem' }}>Thank you for your order!</h1>
         <p style={{ color: '#666', lineHeight: 1.7, margin: '0 0 2rem' }}>
-          Zodra je betaling is verwerkt ontvang je een bevestiging per e-mail.
-          Je bestelling wordt binnen 1-2 werkdagen verzonden vanuit ons Europese magazijn.
+          As soon as your payment is processed you'll receive a confirmation by email.
+          Your order ships within 1-2 business days from our European warehouse.
         </p>
         <a href="/" style={{ display: 'inline-block', background: '#111', color: '#fff', padding: '0.75rem 2rem', borderRadius: 8, textDecoration: 'none', fontWeight: 600, fontSize: '0.85rem' }}>
-          Terug naar ${vars.BRAND_NAME}
+          Back to ${vars.BRAND_NAME}
         </a>
       </div>
     </main>
@@ -417,36 +417,36 @@ export default function CheckoutPage() {
 }
 `, 'utf-8')
 
-  // ── Info pagina's: /over /contact /faq /retour (footer-links in de templates) ──
+  // ── Info pages: /about /contact /faq /returns (linked from nav + footer) ──
   const infoPages: Array<{ slug: string; title: string; body: string }> = [
     {
-      slug: 'over', title: 'Over ons',
+      slug: 'about', title: 'About us',
       body: `<p>${vars.BRAND_NAME} — ${vars.SLOGAN}</p>
-        <p>Wij geloven dat kwaliteit niet ingewikkeld hoeft te zijn. Daarom selecteren we onze producten zorgvuldig en verzenden we alles vanuit Europese magazijnen: snelle levering, geen verrassingen bij de douane.</p>
-        <p>Vragen? Neem gerust <a href="/contact/">contact</a> met ons op.</p>`,
+        <p>We believe quality shouldn't be complicated. That's why we hand-pick every product and ship everything from European warehouses: fast delivery and no surprises at customs.</p>
+        <p>Questions? Feel free to <a href="/contact/">get in touch</a>.</p>`,
     },
     {
       slug: 'contact', title: 'Contact',
-      body: `<p>We helpen je graag. Ons supportteam reageert binnen 24 uur op werkdagen.</p>
-        <p><strong>E-mail:</strong> support@${vars.SUBDOMAIN || 'store'}.example</p>
-        <p><strong>Retouren:</strong> zie onze <a href="/retour/">retourpagina</a>.</p>`,
+      body: `<p>We're happy to help. Our support team responds within 24 hours on business days.</p>
+        <p><strong>Email:</strong> support@${vars.SUBDOMAIN || 'store'}.example</p>
+        <p><strong>Returns:</strong> see our <a href="/returns/">returns page</a>.</p>`,
     },
     {
-      slug: 'faq', title: 'Veelgestelde vragen',
-      body: `<h3>Hoe lang duurt de levering?</h3>
-        <p>Bestellingen worden binnen 1-2 werkdagen verzonden vanuit ons Europese magazijn. De levertijd is doorgaans 3-8 werkdagen.</p>
-        <h3>Kan ik mijn bestelling volgen?</h3>
-        <p>Ja — zodra je bestelling verzonden is ontvang je een track &amp; trace code per e-mail.</p>
-        <h3>Hoe kan ik betalen?</h3>
-        <p>Via iDEAL, Bancontact, creditcard of PayPal. Betalingen verlopen beveiligd via Mollie.</p>
-        <h3>Wat als ik niet tevreden ben?</h3>
-        <p>Je hebt 30 dagen bedenktijd. Zie onze <a href="/retour/">retourpagina</a>.</p>`,
+      slug: 'faq', title: 'Frequently asked questions',
+      body: `<h3>How long does delivery take?</h3>
+        <p>Orders ship within 1-2 business days from our European warehouse. Delivery usually takes 3-8 business days.</p>
+        <h3>Can I track my order?</h3>
+        <p>Yes — as soon as your order ships you'll receive a track &amp; trace code by email.</p>
+        <h3>How can I pay?</h3>
+        <p>Via iDEAL, Bancontact, credit card or PayPal. Payments are processed securely through Mollie.</p>
+        <h3>What if I'm not satisfied?</h3>
+        <p>You have 30 days to change your mind. See our <a href="/returns/">returns page</a>.</p>`,
     },
     {
-      slug: 'retour', title: 'Retourneren',
-      body: `<p>Niet tevreden? Je mag je bestelling binnen <strong>30 dagen</strong> na ontvangst retourneren.</p>
-        <p>Stuur een e-mail met je ordernummer en we sturen je de retourinstructies. Na ontvangst van je retour storten we het volledige aankoopbedrag binnen 5 werkdagen terug.</p>
-        <p>Het product dient ongebruikt en in de originele verpakking te zijn.</p>`,
+      slug: 'returns', title: 'Returns',
+      body: `<p>Not satisfied? You may return your order within <strong>30 days</strong> of receipt.</p>
+        <p>Email us with your order number and we'll send you the return instructions. Once we receive your return we'll refund the full purchase amount within 5 business days.</p>
+        <p>The product must be unused and in its original packaging.</p>`,
     },
   ]
 
