@@ -28,6 +28,8 @@ export interface MolliePaymentParams {
   redirectUrl: string
   webhookUrl: string
   items?: unknown[]
+  /** Verzendgegevens van de klant — vereist voor automatische supplier fulfillment */
+  customer?: Record<string, string>
 }
 
 export async function createPayment(params: MolliePaymentParams): Promise<string> {
