@@ -299,71 +299,71 @@ export default function CheckoutPage() {
   return (
     <main style={{ minHeight: '100dvh', background: '#fafafa', color: '#111', padding: '2rem 1rem' }}>
       <div style={{ maxWidth: 960, margin: '0 auto' }}>
-        <a href="/" style={{ fontSize: '0.8rem', color: '#666', textDecoration: 'none' }}>&larr; Terug naar ${vars.BRAND_NAME}</a>
-        <h1 style={{ fontSize: '1.6rem', margin: '1rem 0 2rem', fontWeight: 700 }}>Afrekenen</h1>
+        <a href="/" style={{ fontSize: '0.8rem', color: '#666', textDecoration: 'none' }}>&larr; Back to ${vars.BRAND_NAME}</a>
+        <h1 style={{ fontSize: '1.6rem', margin: '1rem 0 2rem', fontWeight: 700 }}>Checkout</h1>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem', alignItems: 'start' }}>
 
-          {/* Bestelling */}
+          {/* Order summary */}
           <section style={{ background: '#fff', border: '1px solid #eee', borderRadius: 12, padding: '1.5rem' }}>
-            <h2 style={{ fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#888', margin: '0 0 1rem' }}>Je bestelling</h2>
+            <h2 style={{ fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#888', margin: '0 0 1rem' }}>Your order</h2>
             <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
               {product.image && <img src={product.image} alt={product.title} style={{ width: 72, height: 72, objectFit: 'cover', borderRadius: 8, background: '#f2f2f2' }} />}
               <div style={{ flex: 1 }}>
                 <p style={{ margin: 0, fontWeight: 600, fontSize: '0.95rem' }}>{product.title}</p>
-                <p style={{ margin: '0.25rem 0 0', color: '#666', fontSize: '0.85rem' }}>&euro;{product.price.toFixed(2)} per stuk</p>
+                <p style={{ margin: '0.25rem 0 0', color: '#666', fontSize: '0.85rem' }}>&euro;{product.price.toFixed(2)} each</p>
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '1.25rem' }}>
-              <span style={{ fontSize: '0.8rem', color: '#555' }}>Aantal</span>
+              <span style={{ fontSize: '0.8rem', color: '#555' }}>Quantity</span>
               <button type="button" onClick={() => setQty(q => Math.max(1, q - 1))} style={{ width: 30, height: 30, borderRadius: 6, border: '1px solid #ddd', background: '#fff', cursor: 'pointer' }}>&minus;</button>
               <span style={{ minWidth: 20, textAlign: 'center', fontWeight: 600 }}>{qty}</span>
               <button type="button" onClick={() => setQty(q => Math.min(10, q + 1))} style={{ width: 30, height: 30, borderRadius: 6, border: '1px solid #ddd', background: '#fff', cursor: 'pointer' }}>+</button>
             </div>
             <div style={{ borderTop: '1px solid #eee', marginTop: '1.25rem', paddingTop: '1rem', display: 'flex', justifyContent: 'space-between', fontWeight: 700 }}>
-              <span>Totaal</span>
+              <span>Total</span>
               <span>&euro;{total.toFixed(2)}</span>
             </div>
-            <p style={{ fontSize: '0.75rem', color: '#999', marginTop: '0.75rem' }}>Gratis verzending &middot; Veilig betalen via iDEAL, Bancontact, creditcard of PayPal</p>
+            <p style={{ fontSize: '0.75rem', color: '#999', marginTop: '0.75rem' }}>Free shipping &middot; Secure payment via iDEAL, Bancontact, credit card or PayPal</p>
           </section>
 
-          {/* Verzendgegevens */}
+          {/* Shipping details */}
           <form onSubmit={submit} style={{ background: '#fff', border: '1px solid #eee', borderRadius: 12, padding: '1.5rem' }}>
-            <h2 style={{ fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#888', margin: '0 0 1rem' }}>Verzendgegevens</h2>
+            <h2 style={{ fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#888', margin: '0 0 1rem' }}>Shipping details</h2>
             <div style={{ display: 'grid', gap: '0.9rem' }}>
               <div>
-                <label style={labelStyle}>Volledige naam *</label>
+                <label style={labelStyle}>Full name *</label>
                 <input style={inputStyle} value={form.name} onChange={set('name')} autoComplete="name" required />
               </div>
               <div>
-                <label style={labelStyle}>E-mailadres *</label>
+                <label style={labelStyle}>Email address *</label>
                 <input style={inputStyle} type="email" value={form.email} onChange={set('email')} autoComplete="email" required />
               </div>
               <div>
-                <label style={labelStyle}>Telefoon (voor bezorging)</label>
+                <label style={labelStyle}>Phone (for delivery)</label>
                 <input style={inputStyle} type="tel" value={form.phone} onChange={set('phone')} autoComplete="tel" />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '0.75rem' }}>
                 <div>
-                  <label style={labelStyle}>Straat *</label>
+                  <label style={labelStyle}>Street *</label>
                   <input style={inputStyle} value={form.street} onChange={set('street')} autoComplete="address-line1" required />
                 </div>
                 <div>
-                  <label style={labelStyle}>Huisnr.</label>
+                  <label style={labelStyle}>No.</label>
                   <input style={inputStyle} value={form.houseNumber} onChange={set('houseNumber')} />
                 </div>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '0.75rem' }}>
                 <div>
-                  <label style={labelStyle}>Postcode *</label>
+                  <label style={labelStyle}>Postal code *</label>
                   <input style={inputStyle} value={form.zip} onChange={set('zip')} autoComplete="postal-code" required />
                 </div>
                 <div>
-                  <label style={labelStyle}>Plaats *</label>
+                  <label style={labelStyle}>City *</label>
                   <input style={inputStyle} value={form.city} onChange={set('city')} autoComplete="address-level2" required />
                 </div>
               </div>
               <div>
-                <label style={labelStyle}>Land *</label>
+                <label style={labelStyle}>Country *</label>
                 <select style={inputStyle} value={form.countryCode} onChange={set('countryCode')}>
                   {COUNTRIES.map(([code, name]) => <option key={code} value={code}>{name}</option>)}
                 </select>
@@ -382,10 +382,10 @@ export default function CheckoutPage() {
                 cursor: busy ? 'wait' : 'pointer',
               }}
             >
-              {busy ? 'Bezig…' : 'Betaal €' + total.toFixed(2)}
+              {busy ? 'One moment…' : 'Pay €' + total.toFixed(2)}
             </button>
             <p style={{ fontSize: '0.7rem', color: '#aaa', marginTop: '0.75rem', textAlign: 'center' }}>
-              Je wordt doorgestuurd naar onze beveiligde betaalpagina (Mollie).
+              You'll be redirected to our secure payment page (Mollie).
             </p>
           </form>
         </div>
