@@ -166,20 +166,11 @@ export function PipelineCanvas() {
     <div className="flex-1 flex flex-col bg-zinc-950 text-zinc-100">
       {/* Toolbar */}
       <div className="border-b border-zinc-800 px-4 py-2.5 flex items-center gap-2">
-        <input
-          type="text"
-          placeholder="Niche (bv. 'portable blender bottles')…"
-          value={niche}
-          onChange={(e) => setNiche(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && onStart()}
-          className="px-3 py-1.5 bg-zinc-900 border border-zinc-800 rounded text-sm w-72 focus:outline-none focus:border-blue-500"
-        />
         <button
-          onClick={onStart}
-          disabled={starting || !niche.trim()}
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 disabled:bg-zinc-800 disabled:text-zinc-500 text-white text-xs rounded font-medium"
+          onClick={() => setWizardOpen(true)}
+          className="flex items-center gap-1.5 px-4 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs rounded font-medium"
         >
-          <Play size={13} /> Start
+          <Sparkles size={13} /> Nieuwe store
         </button>
         <div className="w-px h-6 bg-zinc-800 mx-1" />
         <button
