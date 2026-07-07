@@ -78,9 +78,9 @@ export async function createPayment(params: MolliePaymentParams): Promise<string
   const data = await resp.json() as { id: string; _links: { checkout: { href: string } } }
 
   db.prepare(
-    `INSERT INTO checkout_orders (mollie_payment_id, store_id, subdomain, run_id, amount_eur, items_json, status, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, 'open', ?)`,
-  ).run(data.id, storeId, subdomain, runId, amountEur, JSON.stringify(items), new Date().toISOString())
+    `INSERT INTO checkout_orders (mollie_payment_id, store_id, subdomain, run_id, amount_eur, items_json, customer_json, status, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, 'open', ?)`,
+  ).run(data.id, storeId, subdomain, runId, amountEur, JSON.stringify(items), JSON.stringify(customer), new Date().toISOString())
 
   return data._links.checkout.href
 }
