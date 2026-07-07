@@ -115,7 +115,11 @@ export async function generateBrief(input: StoreBuildInput): Promise<StoreBrief 
   return result.parsed
 }
 
-// Render the brief into a Next.js project on disk
+// Render the brief into a Next.js project on disk.
+// Elke store krijgt een uniek design-DNA (kleur/typografie/vorm/toon) + een
+// layout-plan (hero/product/sectie-varianten met anti-herhaling). De pagina wordt
+// programmatisch gegenereerd i.p.v. uit een van 5 vaste templates → aantoonbaar
+// verschillende output per persona. Alle content is Engelstalig.
 export function renderStore(input: StoreBuildInput, brief: StoreBrief): StoreBuildOutput {
   const ws = ensureWorkspace()
   const brandName = brief.brand_name || input.brand.name || input.niche
@@ -125,14 +129,29 @@ export function renderStore(input: StoreBuildInput, brief: StoreBrief): StoreBui
   if (fs.existsSync(buildDir)) fs.rmSync(buildDir, { recursive: true, force: true })
   fs.mkdirSync(buildDir, { recursive: true })
 
-  const templateName = selectTemplate(input.niche)
-  const products = input.products.slice(0, 3).map((p, i) => ({
+  // ── 1. Design-DNA uit persona ───────────────────────────────────────────────
+  const persona = input.persona ?? fallbackPersona(input.niche, input.brand.tone)
+  const dna = deriveDesignDNA({
+    persona,
+    niche: input.niche,
+    seed: input.runId,
+    brandPrimary: brief.colors?.primary,
+  })
+
+  // ── 2. Layout-plan (met anti-herhaling t.o.v. eerdere stores) ────────────────
+  const layout = selectLayout({ tone: dna.tone, seed: dna.seed, siteStructure: input.siteStructure })
+  recordLayout(layout, dna.tone, subdomain)
+
+  const year = new Date().getFullYear()
+
+  // ── 3. Producten (badges Engels, toon-afhankelijk) ──────────────────────────
+  const products: RenderProduct[] = input.products.slice(0, 3).map((p, i) => ({
     id:             p.id ?? `product-${i + 1}`,
     title:          p.title,
     price:          p.price,
     compareAtPrice: p.compareAtPrice,
     image:          p.image ?? '',
-    badge:          p.badge ?? (i === 0 ? 'Bestseller' : i === 1 ? 'Nieuw' : ''),
+    badge:          p.badge ?? badgeFor(dna.tone, i, dna.seed),
     description:    p.description ?? '',
     bullets:        p.bullets ?? [],
     supplier:           p.supplier,
@@ -140,27 +159,57 @@ export function renderStore(input: StoreBuildInput, brief: StoreBrief): StoreBui
     supplierVariantId:  p.supplierVariantId,
   }))
 
+  // ── 4. Engelse content ──────────────────────────────────────────────────────
+  const content = {
+    brandName,
+    slogan:          brief.slogan,
+    heroLabel:       heroLabel(dna.tone, dna.seed, year),
+    heroHeadline:    brief.hero_headline,
+    heroSubheadline: brief.hero_subheadline,
+    heroCta:         brief.hero_cta,
+    usps:            brief.usps.map(u => ({ title: u.title, desc: u.desc })),
+    footerTagline:   brief.footer_tagline,
+    story:           generateStory({ brandName, niche: input.niche, persona, tone: dna.tone, seed: dna.seed }),
+    ctaBand:         generateCtaBand(dna.seed),
+    reviews:         generateReviews(dna.seed),
+    navLinks:        buildNavLinks(),
+    footerLinks:     buildFooterLinks(),
+  }
+
+  // ── 5. Template vars (voor layout/globals + checkout/info pagina's) ──────────
   const vars = buildTemplateVars({
     brandName,
     slogan:        brief.slogan,
     niche:         input.niche,
-    primary:       brief.colors.primary,
-    secondary:     brief.colors.secondary,
-    accent:        brief.colors.accent,
+    primary:       dna.palette.primary,
+    secondary:     dna.palette.secondary,
+    accent:        dna.palette.accent,
     products,
-    usps:          brief.usps.map(u => ({ title: u.title, desc: u.desc })),
+    usps:          content.usps,
     heroHeadline:  brief.hero_headline,
-    fontUrl:       'https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Playfair+Display:wght@700&display=swap',
-    headingFont:   '"Playfair Display", serif',
-    bodyFont:      '"Inter", system-ui, sans-serif',
+    fontUrl:       dna.typography.fontUrl,
+    headingFont:   dna.typography.heading,
+    bodyFont:      dna.typography.body,
     storeId:       `store-${input.runId}`,
     subdomain,
     runId:         input.runId,
   })
 
-  applyTemplate(buildDir, templateName, vars)
+  // ── 6. Schrijf de gegenereerde page + shared files ──────────────────────────
+  const appDir = path.join(buildDir, 'app')
+  fs.mkdirSync(appDir, { recursive: true })
+  fs.writeFileSync(path.join(appDir, 'page.tsx'), renderStorePage(dna, layout, content, products), 'utf-8')
+
   buildLayoutSharedFiles(buildDir, vars)
+  buildCheckoutAndInfoPages(buildDir, vars)
   ensureTailwindSupport(buildDir)
+
+  // ── 7. Design-DNA + layout persisteren (debug/reproduceerbaarheid) ──────────
+  fs.writeFileSync(path.join(buildDir, 'design-dna.json'),
+    JSON.stringify({ tone: dna.tone, palette: dna.palette, typography: dna.typography, shape: dna.shape, layout, seed: dna.seed }, null, 2), 'utf-8')
+
+  // templateName behouden we voor backward-compat logging (niet meer bepalend)
+  const templateName = selectTemplate(input.niche)
 
   return {
     ok: true,
