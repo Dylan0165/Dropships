@@ -44,6 +44,11 @@ export interface StoreBuildInput {
     price: number
     compareAtPrice?: number
     image?: string
+    // Supplier koppeling — nodig voor automatische fulfillment na checkout
+    supplier?: string
+    supplierProductId?: string
+    supplierVariantId?: string
+    costPrice?: number
   }>
   onLog?: (msg: string) => void
 }
