@@ -209,7 +209,10 @@ async function writeNextScaffold(targetDir: string, data: StoreData): Promise<vo
   // 2. Kopieer template page.tsx.tmpl + vul placeholders in
   applyTemplate(targetDir, templateName, vars)
 
-  // 3. Valideer gegenereerde page.tsx op verboden imports
+  // 3. Tailwind build guard: configs + deps toevoegen als gegenereerde code tailwind gebruikt
+  ensureTailwindSupport(targetDir)
+
+  // 4. Valideer gegenereerde page.tsx op verboden imports
   const pagePath = path.join(targetDir, 'app', 'page.tsx')
   if (fs.existsSync(pagePath)) {
     const pageContent = fs.readFileSync(pagePath, 'utf-8')
