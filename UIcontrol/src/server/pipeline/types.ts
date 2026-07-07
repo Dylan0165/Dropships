@@ -39,6 +39,45 @@ export interface StageState {
   reason?: string
 }
 
+// ── Wizard config ─────────────────────────────────────────────────────────────
+// Wordt meegegeven door de store-wizard i.p.v. alleen een niche-string.
+// Als deze aanwezig is slaat de engine de research-stages over (producten en
+// doelgroep zijn al door de gebruiker gekozen) en krijgen brand/content agents
+// de persona als extra context.
+
+export interface WizardProduct {
+  productId: string
+  variantId?: string
+  supplier?: string
+  title: string
+  image?: string
+  description?: string
+  costPriceUsd?: number
+  priceEur: number
+  compareAtPriceEur?: number
+  reason?: string
+}
+
+export interface WizardConfig {
+  idea: string
+  persona: {
+    label: string
+    ageRange?: string
+    interests?: string[]
+    buyingMotivation?: string
+    problem?: string
+    priceRange?: { min: number; max: number }
+    tone?: string
+  }
+  products: WizardProduct[]
+  siteStructure?: {
+    nicheType?: string
+    pages?: Array<{ id: string; title: string; purpose?: string }>
+    extras?: Array<{ id: string; title: string; purpose?: string }>
+    rationale?: string
+  }
+}
+
 export interface PipelineState {
   runId: string
   niche: string
@@ -50,6 +89,8 @@ export interface PipelineState {
   cancelled: boolean
   startedAt: string
   finishedAt?: string
+  /** Aanwezig wanneer de run vanuit de store-wizard gestart is */
+  config?: WizardConfig
 }
 
 export interface AgentResult {
