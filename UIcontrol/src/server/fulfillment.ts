@@ -193,6 +193,3 @@ export function listOrders(limit = 100): unknown[] {
     FROM checkout_orders ORDER BY id DESC LIMIT ?
   `).all(limit) as unknown[]
 }
-
-// Type-guard alias om JSON.parse netjes te typeren
-type CheckooutItemsGuard = CheckoutItem[]
