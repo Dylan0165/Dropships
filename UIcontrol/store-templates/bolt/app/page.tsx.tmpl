@@ -1,7 +1,7 @@
 'use client';
 import { useRef, useState, useEffect } from 'react';
 
-interface Product { id: string; title: string; image: string; price: number; compareAtPrice?: number; badge?: string; description?: string }
+interface Product { id: string; title: string; image: string; price: number; compareAtPrice?: number; badge?: string; description?: string; bullets?: string[]; supplier?: string; supplierProductId?: string; supplierVariantId?: string; [key: string]: unknown }
 const PRODUCTS: Product[] = {{PRODUCTS_JSON}};
 const PRIMARY = '{{PRIMARY}}';
 const ACCENT  = '{{ACCENT}}';
