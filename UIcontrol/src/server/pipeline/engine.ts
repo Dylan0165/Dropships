@@ -1,6 +1,6 @@
 import db, { savePipelineState, loadPipelineState, getStageOutput } from '../db.js'
 import { STAGES, initialState } from './types.js'
-import type { Stage, PipelineState, StageStatus } from './types.js'
+import type { Stage, PipelineState, StageStatus, WizardConfig } from './types.js'
 import { STAGE_RUNNERS } from './stages.js'
 import { emit } from './events.js'
 
