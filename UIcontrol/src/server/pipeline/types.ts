@@ -126,7 +126,7 @@ export function emptyStageState(): StageState {
   }
 }
 
-export function initialState(runId: string, niche: string): PipelineState {
+export function initialState(runId: string, niche: string, config?: WizardConfig): PipelineState {
   const stages = {} as Record<Stage, StageState>
   for (const s of STAGES) stages[s] = emptyStageState()
   return {
@@ -137,5 +137,6 @@ export function initialState(runId: string, niche: string): PipelineState {
     paused: false,
     cancelled: false,
     startedAt: new Date().toISOString(),
+    ...(config ? { config } : {}),
   }
 }
