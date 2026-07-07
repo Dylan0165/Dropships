@@ -27,7 +27,7 @@ import { v4 as uuid } from 'uuid'
 import db, { saveAgentOutput as _saveAgentOutput, claimPort as _claimPort } from './db.js'
 import {
   selectTemplate, applyTemplate, buildLayoutSharedFiles,
-  buildTemplateVars, validateNoForbiddenImports,
+  buildTemplateVars, validateNoForbiddenImports, ensureTailwindSupport,
 } from './store-platform/template-engine.js'
 import { validateAndBuild } from './store-platform/build-validator.js'
 import { atomicDeploy, getHighestNginxPort } from './store-platform/deploy.js'
