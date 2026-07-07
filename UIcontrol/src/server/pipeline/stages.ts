@@ -30,7 +30,7 @@ const ProductResearchSchema = z.object({
     shipping_days: z.number().int().nonnegative().optional(),
     image: z.string().url().optional().or(z.literal('')),
     supplier: z.string().optional(),
-  })).min(1).max(10),
+  }).passthrough()).min(1).max(10),
 }).passthrough()
 
 const BrandSchema = z.object({
