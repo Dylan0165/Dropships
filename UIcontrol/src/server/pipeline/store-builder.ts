@@ -40,7 +40,16 @@ export interface StoreBuildInput {
   brand: {
     name?: string
     slogan?: string
+    tone?: string
     colors?: { primary?: string; secondary?: string; accent?: string }
+  }
+  /** Doelgroepprofiel uit de wizard — bepaalt het design-DNA */
+  persona?: PersonaLike
+  /** Site-structuur uit wizard stap 3 — beïnvloedt de sectie-volgorde */
+  siteStructure?: {
+    nicheType?: string
+    pages?: Array<{ id: string; title: string }>
+    extras?: Array<{ id: string; title: string }>
   }
   products: Array<{
     id?: string
