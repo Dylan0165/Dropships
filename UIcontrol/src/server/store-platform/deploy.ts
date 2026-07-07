@@ -290,6 +290,40 @@ async function pruneOldReleases(subdomain: string): Promise<void> {
   )
 }
 
+/**
+ * Verwijder een store volledig van de store server:
+ * nginx vhost (sites-enabled + sites-available), webroot en nginx reload.
+ * Lokale modus (geen STORE_SERVER_HOST) → alleen ok teruggeven; caller ruimt lokale files op.
+ */
+export async function removeDeployedStore(
+  subdomain: string,
+  onLog?: (msg: string) => void,
+): Promise<{ ok: boolean; error?: string }> {
+  const log = onLog ?? ((m: string) => console.log(`[deploy] ${m}`))
+  const { host } = env()
+  if (!host) return { ok: true }
+
+  // Guard tegen path injection — subdomain is alleen [a-z0-9.-]
+  const safe = subdomain.replace(/[^a-z0-9.-]/gi, '')
+  if (!safe || safe !== subdomain) {
+    return { ok: false, error: `Ongeldige subdomain "${subdomain}"` }
+  }
+
+  log(`Store ${safe} verwijderen van ${host}...`)
+  const res = await runSsh(
+    `sudo rm -f /etc/nginx/sites-enabled/${safe} /etc/nginx/sites-available/${safe} && ` +
+    `sudo rm -rf /var/www/stores/${safe} && ` +
+    `sudo nginx -t && sudo systemctl reload nginx`,
+    45_000,
+    log,
+  )
+  if (!res.ok) {
+    return { ok: false, error: `Verwijderen mislukt (exit=${res.exitCode}): ${res.output.slice(-300) || '<geen output>'}` }
+  }
+  log(`Store ${safe} verwijderd ✓`)
+  return { ok: true }
+}
+
 export async function getHighestNginxPort(): Promise<number> {
   const res = await runSsh(
     `grep -rh "listen" /etc/nginx/sites-available/ 2>/dev/null | grep -v "listen 80" | grep -oE "[0-9]{4,}" | sort -n | tail -1`,
