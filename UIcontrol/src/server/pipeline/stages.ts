@@ -92,7 +92,16 @@ async function runExecutorStage(
 ): Promise<StageOutput> {
   const r = await runAgent({
     runId: ctx.runId, stage, agentName, skillName, model,
-    input: { niche: ctx.niche, previous_agent_output: ctx.previous },
+    input: {
+      niche: ctx.niche,
+      previous_agent_output: ctx.previous,
+      // Persona + site-structuur uit de wizard als extra context voor de agent
+      ...(ctx.config ? {
+        doelgroep_persona: ctx.config.persona,
+        site_structuur: ctx.config.siteStructure,
+        store_idee: ctx.config.idea,
+      } : {}),
+    },
     outputSchema: schema,
     onLog: (lvl, m) => ctx.onLog(`[${lvl}] ${m}`),
   })
