@@ -99,8 +99,15 @@ Reviewer output schema (locked): `{ verdict: "APPROVED"|"REJECTED"|"UNCERTAIN", 
 
 **SSH key voor deploy:** `/home/student/.ssh/deploy_key` (user: `student`)
 
+## Supplier / checkout flow (sinds juli 2026)
+- `CJ_EMAIL`/`CJ_API_KEY`/`CJ_ENV` in .env — geen key = mock-modus; `sandbox` = orders aanmaken maar nooit betalen; `production` = payBalance na createOrderV2
+- Checkout: store `/checkout/` pagina (adresformulier) → POST `/api/checkout/session` (met `customer` + `redirectUrl`) → Mollie → webhook paid → `fulfillment.ts` → `getSupplier('cj').placeOrder()`
+- Wizard-run: POST `/api/pipeline/start` met `wizardConfig` → trend/niche/product stages worden ge-short-circuit, persona gaat mee naar brand/content agents
+- Key endpoints: `/api/wizard/*`, `/api/suppliers/cj/*`, `/api/orders` (+ `/:id/fulfill`, `/:id/tracking`), `DELETE /api/stores/:storeId`
+- Gegenereerde stores hebben nu ook `/bedankt/`, `/over/`, `/contact/`, `/faq/`, `/retour/` en `trailingSlash: true`
+
 ## Bekende gotcha's
-- `.env` is gitignored — wijzigingen moeten direct op de server via `sed + pm2 restart`
+- `.env` is gitignored én untracked (sinds juli 2026) — wijzigingen moeten direct op de server via `sed + pm2 restart`
 - `STORE_SERVER_HOST` moet `192.168.121.11` zijn (oud: `192.168.121.8` — fix: `sed -i 's/192.168.121.8/192.168.121.11/' .env && pm2 restart all`)
 - Auto-push git hook zit in `.claude/settings.json` — elke Edit/Write commit+pusht automatisch
 - Stores deployen naar port pool 4001, 4002, ... op de store server
