@@ -165,7 +165,7 @@ async function runStage(state: PipelineState, stage: Stage): Promise<void> {
   }
 
   try {
-    const result = await runner({ runId: state.runId, niche: state.niche, previous, onLog })
+    const result = await runner({ runId: state.runId, niche: state.niche, previous, onLog, config: state.config })
     const finishedAt = new Date().toISOString()
     const startedAt = state.stages[stage].startedAt ?? finishedAt
     const durationMs = new Date(finishedAt).getTime() - new Date(startedAt).getTime()
