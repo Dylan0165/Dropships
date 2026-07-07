@@ -311,7 +311,12 @@ function EmptyState({ hasRemoteMode, syncing, onSync }: { hasRemoteMode: boolean
 
 // ── Compact list view ─────────────────────────────────────────────────────────
 
-function CompactList({ stores, onEdit }: { stores: StoreInfoEx[]; onEdit: (s: StoreInfoEx) => void }) {
+function CompactList({ stores, onEdit, onDelete, deletingId }: {
+  stores: StoreInfoEx[]
+  onEdit: (s: StoreInfoEx) => void
+  onDelete: (s: StoreInfoEx) => void
+  deletingId: string | null
+}) {
   return (
     <div className="flex flex-col gap-1">
       {stores.map(store => {
