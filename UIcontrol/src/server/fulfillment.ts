@@ -198,7 +198,7 @@ export async function getOrderTracking(orderId: number): Promise<Record<string, 
   if (tracking.ok && tracking.trackingNumber && tracking.trackingNumber !== order.tracking_number) {
     db.prepare(`UPDATE checkout_orders SET tracking_number = ? WHERE id = ?`).run(tracking.trackingNumber, orderId)
   }
-  return { ok: tracking.ok, orderId, supplierOrderId: order.cj_order_id, ...tracking }
+  return { ...tracking, orderId, supplierOrderId: order.cj_order_id }
 }
 
 export function listOrders(limit = 100): unknown[] {
