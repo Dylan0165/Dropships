@@ -94,6 +94,7 @@ export async function handleWebhook(body: URLSearchParams): Promise<void> {
   if (!apiKey) {
     db.prepare(`UPDATE checkout_orders SET status = 'paid' WHERE mollie_payment_id = ?`).run(paymentId)
     console.log(`[mollie] mock webhook: ${paymentId} gemarkeerd als betaald`)
+    fulfillOrderForPayment(paymentId).catch(err => console.error('[mollie] fulfillment (mock) mislukt:', err))
     return
   }
 
