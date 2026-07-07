@@ -28,8 +28,14 @@ d:\Dropshippingv0.1tool\          ← Windows dev machine
 │   │   │   │   ├── deploy.ts      ← atomicDeploy via SSH naar 192.168.121.11
 │   │   │   │   ├── build-validator.ts ← npm install + tsc + next build
 │   │   │   │   └── template-engine.ts ← HTML generator
+│   │   │   ├── suppliers/         ← SupplierAdapter pattern
+│   │   │   │   ├── types.ts       ← SupplierAdapter interface + EU_WAREHOUSES
+│   │   │   │   ├── cj-adapter.ts  ← CJ Dropshipping API v2 (token cache, rate limits, sandbox/mock)
+│   │   │   │   └── index.ts       ← getSupplier('cj') registry
+│   │   │   ├── fulfillment.ts     ← Mollie paid → CJ placeOrder (retry, tracking)
+│   │   │   ├── wizard.ts          ← Store-wizard AI endpoints (vragen/richtingen/shortlist/structuur)
 │   │   │   ├── meta-ads.ts        ← Meta Ads API
-│   │   │   ├── mollie.ts          ← Mollie payment webhooks
+│   │   │   ├── mollie.ts          ← Mollie payment webhooks (+ customer_json, → fulfillment)
 │   │   │   ├── whatsapp.ts        ← WhatsApp notificaties bij escalatie
 │   │   │   ├── trendscraper.ts    ← Proxy naar Python trendscraper (port 8001)
 │   │   │   ├── store-lifecycle.ts ← Store health + ROAS tracking
