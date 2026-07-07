@@ -115,4 +115,4 @@ export interface SupplierAdapter {
 }
 
 /** EU warehouse-landen die we standaard accepteren */
-export const EU_WAREHOUSES = ['DE', 'NL', 'FR', 'IT', 'ES', 'PL', 'CZ', 'GB'] as const
+export const EU_WAREHOUSES = ['DE', 'NL', 'FR', 'IT', 'ES', 'PL', 'CZ'] as const
