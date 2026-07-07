@@ -171,59 +171,79 @@ function nicheUsps(niche: string): Array<{title: string; desc: string}> {
     { title: 'Veilig betalen', desc: 'iDEAL, Visa, Mastercard, PayPal.' },
   ]
 }
+// CMS-rebuild / standalone deploy pad. Gebruikt dezelfde design-DNA +
+// variant-renderer als de pipeline (renderStore), zodat óók herbouwde stores
+// uniek + Engelstalig zijn — geen vaste .tmpl templates meer.
 async function writeNextScaffold(targetDir: string, data: StoreData): Promise<void> {
   ensureDir(path.join(targetDir, 'app'))
   ensureDir(path.join(targetDir, 'public'))
 
-  const d = data as StoreData & { colors?: Record<string, string> }
-  const primary   = d.colors?.primary   ?? d.primary_color ?? '#2563eb'
-  const secondary = d.colors?.secondary ?? '#1e293b'
-  const accent    = d.colors?.accent    ?? '#f59e0b'
+  const d = data as StoreData & { colors?: Record<string, string>; hero_headline?: string }
+  const primary = d.colors?.primary ?? d.primary_color ?? undefined
 
-  const templateName = selectTemplate(data.niche)
-  const layoutIdx    = ['noir','blanc','bolt','dusk','grid'].indexOf(templateName)
-  const font         = FONT_PAIRINGS[layoutIdx >= 0 ? layoutIdx : 0]
-  const usps         = nicheUsps(data.niche)
+  // Geen persona beschikbaar in dit pad → afgeleid van de niche (seeded op subdomain)
+  const persona = fallbackPersona(data.niche)
+  const seed = data.runId || data.storeId || data.subdomain || data.brand_name
+  const dna = deriveDesignDNA({ persona, niche: data.niche, seed, brandPrimary: primary })
+  const layout = selectLayout({ tone: dna.tone, seed: dna.seed })
+  recordLayout(layout, dna.tone, data.subdomain ?? data.brand_name)
+
+  const year = new Date().getFullYear()
+  const products: RenderProduct[] = data.products.slice(0, 3).map((p, i) => ({
+    id: p.id, title: p.title, image: p.image ?? '', price: p.price,
+    compareAtPrice: p.compareAtPrice,
+    badge: p.badge ?? badgeFor(dna.tone, i, dna.seed),
+    supplier: p.supplier, supplierProductId: p.supplierProductId, supplierVariantId: p.supplierVariantId,
+  }))
+
+  const content = {
+    brandName:       data.brand_name,
+    slogan:          data.slogan,
+    heroLabel:       heroLabel(dna.tone, dna.seed, year),
+    heroHeadline:    d.hero_headline ?? data.slogan ?? data.brand_name,
+    heroSubheadline: data.slogan ?? '',
+    heroCta:         'Shop now',
+    usps:            defaultUspsEn(),
+    footerTagline:   data.slogan ?? data.brand_name,
+    story:           generateStory({ brandName: data.brand_name, niche: data.niche, persona, tone: dna.tone, seed: dna.seed }),
+    ctaBand:         generateCtaBand(dna.seed),
+    reviews:         generateReviews(dna.seed),
+    navLinks:        buildNavLinks(),
+    footerLinks:     buildFooterLinks(),
+  }
 
   const vars = buildTemplateVars({
     brandName:    data.brand_name,
     slogan:       data.slogan,
     niche:        data.niche,
-    primary,
-    secondary,
-    accent,
+    primary:      dna.palette.primary,
+    secondary:    dna.palette.secondary,
+    accent:       dna.palette.accent,
     products:     data.products,
-    usps,
-    heroHeadline: (data as StoreData & { hero_headline?: string }).hero_headline ?? data.brand_name,
-    fontUrl:      font.url,
-    headingFont:  font.heading,
-    bodyFont:     font.body,
+    usps:         content.usps,
+    heroHeadline: content.heroHeadline,
+    fontUrl:      dna.typography.fontUrl,
+    headingFont:  dna.typography.heading,
+    bodyFont:     dna.typography.body,
     storeId:      data.storeId ?? (data.subdomain ? `store-${data.subdomain}` : 'store'),
     subdomain:    data.subdomain ?? '',
     runId:        data.runId ?? '',
   })
 
-  // 1. Schrijf shared files (package.json, tsconfig, layout.tsx, globals.css)
+  fs.writeFileSync(path.join(targetDir, 'app', 'page.tsx'), renderStorePage(dna, layout, content, products), 'utf-8')
   buildLayoutSharedFiles(targetDir, vars)
-
-  // 2. Kopieer template page.tsx.tmpl + vul placeholders in
-  applyTemplate(targetDir, templateName, vars)
-
-  // 3. Tailwind build guard: configs + deps toevoegen als gegenereerde code tailwind gebruikt
+  buildCheckoutAndInfoPages(targetDir, vars)
   ensureTailwindSupport(targetDir)
 
-  // 4. Valideer gegenereerde page.tsx op verboden imports
-  const pagePath = path.join(targetDir, 'app', 'page.tsx')
-  if (fs.existsSync(pagePath)) {
-    const pageContent = fs.readFileSync(pagePath, 'utf-8')
-    const importErrors = validateNoForbiddenImports(pageContent)
-    if (importErrors.length > 0) {
-      console.warn(`[store-platform] Import-waarschuwingen in page.tsx (${templateName}):`)
-      importErrors.forEach(e => console.warn(`  ${e}`))
-    }
-  }
+  console.log(`[store-platform] Store gegenereerd (tone=${dna.tone}, hero=${layout.hero}) voor ${data.brand_name}`)
+}
 
-  console.log(`[store-platform] Template "${templateName}" toegepast voor ${data.brand_name}`)
+function defaultUspsEn(): Array<{ title: string; desc: string }> {
+  return [
+    { title: 'Free EU shipping', desc: 'On every order across NL, BE, DE and FR.' },
+    { title: '30-day returns', desc: 'Not for you? Send it back, no hassle.' },
+    { title: 'Secure checkout', desc: 'iDEAL, Bancontact, credit card and PayPal.' },
+  ]
 }
 
 // ── SEO assets ───────────────────────────────────────────────────────────────
