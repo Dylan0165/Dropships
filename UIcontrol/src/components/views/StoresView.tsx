@@ -360,6 +360,14 @@ function CompactList({ stores, onEdit, onDelete, deletingId }: {
                   <ExternalLink size={11} />
                 </a>
               )}
+              <button
+                onClick={() => onDelete(store)}
+                disabled={deletingId === store.storeId}
+                className="text-zinc-500 hover:text-red-400 p-1 rounded transition-colors disabled:opacity-40"
+                title="Verwijderen"
+              >
+                {deletingId === store.storeId ? <Loader2 size={11} className="animate-spin" /> : <Trash2 size={11} />}
+              </button>
             </div>
           </div>
         )
