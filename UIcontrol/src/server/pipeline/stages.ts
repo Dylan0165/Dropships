@@ -199,19 +199,21 @@ export const STAGE_RUNNERS: Record<Stage, (ctx: StageContext) => Promise<StageOu
     ? Promise.resolve(wizardApproved(ctx, 'niche-review', 'Niche en doelgroep door gebruiker bevestigd in de wizard'))
     : runReviewerStage(ctx, 'niche-review', 'niche-reviewer', 'niche-reviewer'),
 
+  // Data-stage → lage temperature (consistent, parseerbaar)
   'product-research': (ctx) => ctx.config?.products?.length
     ? Promise.resolve(wizardProductsOutput(ctx))
-    : runExecutorStage(ctx, 'product-research', 'product-agent', 'product-agent', ProductResearchSchema, process.env.LLM_MODEL_EXECUTOR ?? 'deepseek-chat'),
+    : runExecutorStage(ctx, 'product-research', 'product-agent', 'product-agent', ProductResearchSchema, process.env.LLM_MODEL_EXECUTOR ?? 'deepseek-chat', 0.3),
 
   'product-review': (ctx) => ctx.config?.products?.length
     ? Promise.resolve(wizardApproved(ctx, 'product-review', 'Producten door gebruiker gekozen uit CJ shortlist'))
     : runReviewerStage(ctx, 'product-review', 'product-reviewer', 'product-reviewer'),
 
+  // Creatieve stages → hoge temperature voor variatie tussen stores
   'brand-creation': (ctx) =>
-    runExecutorStage(ctx, 'brand-creation', 'brand-agent', 'brand-agent', BrandSchema, process.env.LLM_MODEL_BRAND ?? 'deepseek-chat'),
+    runExecutorStage(ctx, 'brand-creation', 'brand-agent', 'brand-agent', BrandSchema, process.env.LLM_MODEL_BRAND ?? 'deepseek-chat', 0.95),
 
   'content-generation': (ctx) =>
-    runExecutorStage(ctx, 'content-generation', 'content-agent', 'content-agent', ContentSchema, process.env.LLM_MODEL_CONTENT ?? 'deepseek-chat'),
+    runExecutorStage(ctx, 'content-generation', 'content-agent', 'content-agent', ContentSchema, process.env.LLM_MODEL_CONTENT ?? 'deepseek-chat', 0.85),
 
   'store-build': async (ctx) => {
     ctx.onLog('Calling store-builder...')
