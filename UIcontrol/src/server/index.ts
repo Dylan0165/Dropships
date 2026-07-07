@@ -149,7 +149,7 @@ app.post('/api/pipeline/start', async (req, res) => {
     .run(runId, new Date().toISOString(), clean)
 
   try {
-    const state = await pipelineStartRun(runId, clean)
+    const state = await pipelineStartRun(runId, clean, wizardConfig)
     res.json({ runId, state })
   } catch (err) {
     res.status(500).json({ error: err instanceof Error ? err.message : 'Pipeline start failed' })
