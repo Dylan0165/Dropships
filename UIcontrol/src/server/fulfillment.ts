@@ -11,6 +11,24 @@ import db from './db.js'
 import { getSupplier } from './suppliers/index.js'
 import type { OrderItem, ShippingAddress } from './suppliers/index.js'
 
+// Tabel hier aanmaken (niet alleen in mollie.ts): deze module wordt door mollie.ts
+// geïmporteerd en draait dus eerder — de ALTERs hieronder vereisen dat de tabel bestaat.
+db.exec(`
+  CREATE TABLE IF NOT EXISTS checkout_orders (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    mollie_payment_id TEXT NOT NULL DEFAULT '',
+    store_id TEXT NOT NULL,
+    subdomain TEXT NOT NULL,
+    run_id TEXT NOT NULL DEFAULT '',
+    amount_eur REAL NOT NULL,
+    items_json TEXT NOT NULL DEFAULT '[]',
+    cj_order_id TEXT NOT NULL DEFAULT '',
+    status TEXT NOT NULL DEFAULT 'open',
+    created_at TEXT NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_checkout_mollie_id ON checkout_orders(mollie_payment_id);
+`)
+
 // Idempotente migratie: extra kolommen op checkout_orders voor fulfillment
 const cols = (db.prepare(`PRAGMA table_info(checkout_orders)`).all() as { name: string }[]).map(c => c.name)
 const migrations: [string, string][] = [
