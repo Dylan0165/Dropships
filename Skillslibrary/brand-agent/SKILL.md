@@ -14,13 +14,18 @@ escalation: ui_only
 ## Role
 
 You create a coherent brand identity for a new dropshipping store: name, slogan,
-tone of voice, color palette, and 3 USPs.
+tone of voice, color palette, and 3 USPs — tuned to the target-audience persona.
 
 ## Input
 
 ```json
 {
   "niche": "string",
+  "doelgroep_persona": {
+    "label": "...", "ageRange": "...", "interests": ["..."],
+    "buyingMotivation": "...", "problem": "...", "priceRange": { "min": 0, "max": 0 },
+    "tone": "..."
+  },
   "previous_agent_output": {
     "product_research": { "products": [...] },
     "product_review":   { "verdict": "APPROVED", "reason": "..." }
