@@ -144,6 +144,7 @@ export function renderStore(input: StoreBuildInput, brief: StoreBrief): StoreBui
 
   applyTemplate(buildDir, templateName, vars)
   buildLayoutSharedFiles(buildDir, vars)
+  ensureTailwindSupport(buildDir)
 
   return {
     ok: true,
