@@ -26,9 +26,16 @@ import { fileURLToPath } from 'url'
 import { v4 as uuid } from 'uuid'
 import db, { saveAgentOutput as _saveAgentOutput, claimPort as _claimPort } from './db.js'
 import {
-  selectTemplate, applyTemplate, buildLayoutSharedFiles,
-  buildTemplateVars, validateNoForbiddenImports, ensureTailwindSupport,
+  buildLayoutSharedFiles, buildTemplateVars,
+  buildCheckoutAndInfoPages, ensureTailwindSupport,
 } from './store-platform/template-engine.js'
+import { deriveDesignDNA, fallbackPersona } from './design/tokens.js'
+import { selectLayout, recordLayout } from './design/layout.js'
+import { renderStorePage, type RenderProduct } from './design/render-page.js'
+import {
+  generateReviews, generateStory, generateCtaBand,
+  buildNavLinks, buildFooterLinks, heroLabel, badgeFor,
+} from './design/content-en.js'
 import { validateAndBuild } from './store-platform/build-validator.js'
 import { atomicDeploy, getHighestNginxPort } from './store-platform/deploy.js'
 void _saveAgentOutput
