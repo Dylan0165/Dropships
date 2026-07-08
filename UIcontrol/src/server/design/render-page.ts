@@ -212,9 +212,11 @@ function ProductCard({ p, i, layout, reverse }: { p: Product; i: number; layout:
 // ── Hero-varianten ────────────────────────────────────────────────────────────
 
 function heroJsx(variant: HeroVariant): string {
-  const label = `<span className="rv in" style={S.label}>{CONTENT.heroLabel}</span>`
-  const h1 = `<h1 style={S.h1}>{CONTENT.heroHeadline}</h1>`
-  const sub = `<p style={S.sub}>{CONTENT.heroSubheadline}</p>`
+  // Hero-orkestratie: label → kop → sub → CTA komen gefaseerd op (hi-1..hi-4),
+  // het beeld zoomt zachtjes in (hi-img). Eén samenhangend moment bij laden.
+  const label = `<span className="hi hi-1" style={S.label}>{CONTENT.heroLabel}</span>`
+  const h1 = `<h1 className="hi hi-2" style={S.h1}>{CONTENT.heroHeadline}</h1>`
+  const sub = `<p className="hi hi-3" style={S.sub}>{CONTENT.heroSubheadline}</p>`
   const cta = `<a href="#products" className="btnp" style={S.btn}>{CONTENT.heroCta}</a>`
   const img0 = `PRODUCTS[0] && PRODUCTS[0].image`
 
