@@ -81,6 +81,7 @@ export function StoreWizard({ onClose, onStarted }: Props) {
   // Stap 2 — producten
   const [shortlist, setShortlist] = useState<ShortlistProduct[]>([])
   const [supplierIsMock, setSupplierIsMock] = useState(false)
+  const [searchTermUsed, setSearchTermUsed] = useState<string | null>(null)
   const [cjError, setCjError] = useState<string | null>(null)   // state (b): key gezet maar CJ faalt
   const [maxHint, setMaxHint] = useState(false)                  // feedback bij max bereikt
   const [selectedProducts, setSelectedProducts] = useState<Map<string, ShortlistProduct>>(new Map())
