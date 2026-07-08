@@ -154,6 +154,24 @@ Reviewer output schema (locked): `{ verdict: "APPROVED"|"REJECTED"|"UNCERTAIN", 
 - Wizard stap 1 heeft nu twee entries: "Eigen idee" (bestaand) en "AI-niches uit CJ-voorraad" —
   kaart kiezen zet idea+persona (chosenDirection) en springt direct naar stap 2.
 
+## Cloudflare Tunnel / Mollie webhook (sinds juli 2026)
+- **Probleem:** Mollie weigert LAN-webhook-URLs met 422 "unreachable" — 192.168.121.x is niet publiek.
+- **Opzet:** één gedeelde Quick Tunnel (gratis, geen account/domein/open poorten) naar de UIcontrol
+  API (:3001) op de tool-server. PM2-service `cloudflared-api` = `scripts/cloudflared-manager.cjs`:
+  spawnt `cloudflared tunnel --url http://127.0.0.1:3001`, parset de trycloudflare-URL en POST hem
+  naar `/api/admin/public-url` (settings-tabel, runtime — geen restart nodig; heartbeat 60s).
+  Quick-tunnel-URLs wisselen bij herstart → CI start de service alleen als hij nog niet draait.
+- `server/public-url.ts`: `getPublicBaseUrl()` (settings → env `PUBLIC_BASE_URL` → null),
+  `isPubliclyReachableUrl()` weigert privé-IP/localhost/.local. `mollie.ts` stuurt webhookUrl
+  ALLEEN mee als er een publiek adres is — zonder tunnel wordt de payment zonder webhook aangemaakt
+  (checkout werkt, geen 422; fulfillment dan handmatig via `/api/orders/:id/fulfill`).
+- Endpoints: `GET/POST /api/admin/public-url` (POST alleen localhost of `TUNNEL_TOKEN`),
+  `GET /api/admin/tunnel-selftest` (maakt echte €0.01 Mollie test-payment mét webhookUrl → bewijst 422-fix).
+- CI (deploy.yml) doet: cloudflared-diagnose (tool + store server), binary-install naar `~/bin`
+  (geen sudo), PM2-start, en de selftest — resultaat in de Actions-log.
+- Stores zelf publiek maken (klant-facing) kan een Quick Tunnel NIET voor meerdere port-vhosts
+  tegelijk — daarvoor is een eigen domein + named tunnel (wildcard ingress per store) nodig.
+
 ## Bekende gotcha's
 - `.env` is gitignored én untracked (sinds juli 2026) — wijzigingen moeten direct op de server via `sed + pm2 restart`
 - **Env-loading:** de server laadt via `server/load-env.ts` (niet meer kaal `dotenv/config`)
