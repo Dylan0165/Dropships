@@ -462,7 +462,7 @@ export function StoreWizard({ onClose, onStarted }: Props) {
               )}
 
               {/* ── Eigen idee (bestaande route) ── */}
-              {entryMode === 'idea' && (
+              {entryMode === 'idea' && (<>
               <div>
                 <label className="text-xs text-zinc-400 block mb-2">Waar wil je een store omheen bouwen?</label>
                 <div className="flex gap-2">
