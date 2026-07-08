@@ -149,19 +149,24 @@ export function renderStore(input: StoreBuildInput, brief: StoreBrief): StoreBui
 
   const year = new Date().getFullYear()
 
-  // ── 3. Producten (badges Engels, toon-afhankelijk) ──────────────────────────
-  const products: RenderProduct[] = input.products.slice(0, 3).map((p, i) => ({
+  // ── 3. Producten — collectie-grootte varieert 6-15 per store ────────────────
+  const targetCount = deriveProductCount(dna.seed, input.siteStructure?.nicheType)
+  const baseProducts: RenderProduct[] = input.products.map((p, i) => ({
     id:             p.id ?? `product-${i + 1}`,
     title:          p.title,
     price:          p.price,
     compareAtPrice: p.compareAtPrice,
     image:          p.image ?? '',
-    badge:          p.badge ?? badgeFor(dna.tone, i, dna.seed),
+    badge:          p.badge,
     description:    p.description ?? '',
     bullets:        p.bullets ?? [],
     supplier:           p.supplier,
     supplierProductId:  p.supplierProductId,
     supplierVariantId:  p.supplierVariantId,
+  }))
+  const products: RenderProduct[] = fitProducts(baseProducts, targetCount, dna.seed).map((p, i) => ({
+    ...p,
+    badge: p.badge ?? badgeFor(dna.tone, i, dna.seed),
   }))
 
   // ── 4. Engelse content ──────────────────────────────────────────────────────
