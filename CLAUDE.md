@@ -133,14 +133,22 @@ Reviewer output schema (locked): `{ verdict: "APPROVED"|"REJECTED"|"UNCERTAIN", 
 - `wizard.ts buildShortlist` → `discoverCandidates`: **MCP eerst, val terug op REST** (deriveSearchTerms + `adapter.searchProducts`). Response bevat `source: 'mcp'|'rest'|'mock'`. Status: `GET /api/suppliers/cj/mcp/status`. Handmatig "Zelf zoeken" blijft REST (directe keyword).
 
 ## Niche-discovery / CJ-catalogus verkenning (sinds juli 2026)
+- **Warehouse-scope is WERELDWIJD; EU is een label/voorkeur, geen filter** (sinds 9 juli 2026).
+  `searchProducts` doet EU-passes + één globale pass; resultaten EU-eerst gesorteerd
+  (`sortByShippingPreference`). `shippingDaysFor(warehouse)`: EU 3-8d, US/UK 7-14d, CN/onbekend 15-30d.
+  UI toont per product een verzend-badge ("3-8d · DE" groen / "15-30d · CN" amber) + "Alleen snelle
+  EU-verzending" weergave-toggle (filtert alleen wat je ziet). `options.warehouseCountries` expliciet
+  meegeven = wél strikt.
 - `server/niche-discovery.ts`: `scanCatalog()` meet per CJ level-2 categorie (round-robin over
-  hoofdcategorieën, cap `NICHE_SCAN_MAX_CATEGORIES`=24) de EU-voorraad. Signalen: paginatie-`total`
-  per categorie×warehouse (DE primair, top-8 ook FR voor spreiding), `sellPrice`-sample → marge
-  bij 2.8× markup, `listedNum` → populariteit. Varianten/trending bewust niet (rate limit / geen endpoint).
+  hoofdcategorieën, cap `NICHE_SCAN_MAX_CATEGORIES`=24) **globaal totaal + EU(DE) totaal** →
+  `shippingProfile: eu-fast|mixed|mostly-cn` (EU-aandeel ≥40% / ≥12% / minder). Verder: `sellPrice`-sample
+  → marge bij 2.8× markup, `listedNum` → populariteit, top-8 ook FR-spreiding. Varianten/trending
+  bewust niet (rate limit / geen endpoint). Scan = 2 calls per categorie (~1-2 min).
 - Adapter-probes: `CJAdapter.getCategoryTree()` (`/product/getCategory`) en `probeCategory()`
-  (`/product/list` met categoryId+countryCode, geeft total+sample) — met mock-varianten.
-- LLM clustert categorieën ≥25 producten tot 5-8 niche-thema's mét persona (`generateNicheSuggestions`);
-  deterministische fallback zonder LLM/mock-modus. Overlap-check tegen bestaande live stores.
+  (`/product/list`; countryCode optioneel — weglaten = wereldwijd) — met mock-varianten.
+- LLM clustert categorieën ≥25 producten (wereldwijd) tot 5-8 niche-thema's mét persona én
+  shippingProfile in de onderbouwing (`generateNicheSuggestions`); deterministische fallback zonder
+  LLM/mock-modus. Overlap-check tegen bestaande live stores. Niche-kaarten tonen het verzendprofiel-badge.
 - Cache: settings-key `niche_discovery_cache`, 24h TTL. `GET /api/wizard/niches` (+`?refresh=1`);
   antwoord `status: ready|scanning|stale-refreshing`. Scan duurt ~30-60s (1 req/s CJ-limit), draait async.
 - Wizard stap 1 heeft nu twee entries: "Eigen idee" (bestaand) en "AI-niches uit CJ-voorraad" —
