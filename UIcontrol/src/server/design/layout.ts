@@ -90,6 +90,44 @@ function pickAvoiding<T extends string>(
   return pool[Math.floor(rng() * pool.length) % pool.length]
 }
 
+// ── Aantal producten per store (varieert 6-15, seeded) ────────────────────────
+
+export const PRODUCTS_MIN = 6
+export const PRODUCTS_MAX = 15
+
+/**
+ * Bepaalt hoeveel producten een store toont — varieert per store tussen 6 en 15.
+ * Impulsaankoop-niches krijgen een compactere collectie, overwogen aankopen een
+ * bredere. Deterministisch geseed zodat twee stores een ander aantal krijgen.
+ */
+export function deriveProductCount(seed: number, nicheType?: string): number {
+  const rng = rngFrom(seed ^ 0x50f7)
+  let lo = PRODUCTS_MIN, hi = PRODUCTS_MAX
+  if (nicheType === 'impulse') { lo = 6; hi = 10 }
+  else if (nicheType === 'considered') { lo = 9; hi = 15 }
+  return lo + Math.floor(rng() * (hi - lo + 1))
+}
+
+/**
+ * Past een productlijst aan tot een doel-aantal:
+ * - genoeg producten → toont er `target` (max 15)
+ * - te weinig (< 6) → vult aan tot minimaal 6 door te cyclen (unieke display-id,
+ *   supplier-velden blijven gelijk zodat fulfillment naar het juiste CJ-product wijst)
+ * Zo heeft elke store een volle, maar variabel grote collectie.
+ */
+export function fitProducts<T extends { id: string }>(products: T[], target: number, _seed = 0): T[] {
+  if (products.length === 0) return []
+  const desired = products.length >= PRODUCTS_MIN
+    ? Math.min(target, products.length)
+    : PRODUCTS_MIN
+  const out: T[] = []
+  for (let i = 0; i < desired; i++) {
+    const src = products[i % products.length]
+    out.push(i < products.length ? src : { ...src, id: `${src.id}--v${Math.floor(i / products.length) + 1}` })
+  }
+  return out
+}
+
 // ── Toon → passende hero/product varianten ────────────────────────────────────
 
 const HERO_BY_TONE: Record<VisualTone, HeroVariant[]> = {
