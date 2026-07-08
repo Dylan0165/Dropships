@@ -372,6 +372,18 @@ app.post('/api/admin/reconcile-stores', async (_req, res) => {
   }
 })
 
+// Nginx-audit: orphaned vhosts + poort-conflicten (rapporteert alleen, verwijdert niets)
+app.get('/api/admin/nginx-audit', async (_req, res) => {
+  try {
+    const rows = db.prepare(`SELECT subdomein FROM stores WHERE status IN ('live','building','local')`).all() as { subdomein: string }[]
+    const active = new Set(rows.map(r => r.subdomein))
+    const audit = await auditNginx(active)
+    res.json(audit)
+  } catch (err) {
+    res.status(500).json({ error: err instanceof Error ? err.message : 'nginx audit mislukt' })
+  }
+})
+
 // ── CMS proxy endpoints ───────────────────────────────────────────────────────
 const PLATFORM_URL = process.env.PLATFORM_API_URL ?? 'http://localhost:3002'
 
