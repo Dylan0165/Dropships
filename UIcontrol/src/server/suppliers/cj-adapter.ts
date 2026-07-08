@@ -184,12 +184,12 @@ export class CJAdapter implements SupplierAdapter {
     }
     settingSet('cj_last_auth_at', String(Date.now()))
 
-    const resp = await fetch(`${CJ_BASE}/authentication/getAccessToken`, {
+    const resp = await enqueue(() => fetch(`${CJ_BASE}/authentication/getAccessToken`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password: apiKey }),
       signal: AbortSignal.timeout(15_000),
-    })
+    }))
     const body = await resp.json() as CjEnvelope<{
       accessToken: string; accessTokenExpiryDate: string
       refreshToken: string; refreshTokenExpiryDate: string
