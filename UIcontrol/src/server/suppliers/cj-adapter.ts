@@ -613,6 +613,49 @@ export class CJAdapter implements SupplierAdapter {
   }
 }
 
+// ── Catalogus-verkenning types + mocks ─────────────────────────────────────────
+
+export interface CjCategoryLevel3 { id: string; name: string }
+export interface CjCategoryLevel2 { id: string; name: string; children: CjCategoryLevel3[] }
+export interface CjCategoryLevel1 { id: string; name: string; children: CjCategoryLevel2[] }
+
+export interface CatalogProbe {
+  total: number
+  sample: Array<{ title: string; costPrice: number; listedNum?: number; categoryName?: string }>
+}
+
+function mockCategoryTree(): CjCategoryLevel1[] {
+  const mk = (id: string, name: string, subs: string[]): CjCategoryLevel1 => ({
+    id, name,
+    children: subs.map((s, i) => ({ id: `${id}-${i + 1}`, name: s, children: [] })),
+  })
+  return [
+    mk('mc1', 'Home & Garden', ['Home Organization', 'Kitchen Gadgets', 'LED Lighting', 'Garden Tools']),
+    mk('mc2', 'Sports & Outdoors', ['Fitness Equipment', 'Camping Gear', 'Cycling Accessories', 'Yoga']),
+    mk('mc3', 'Pet Supplies', ['Dog Accessories', 'Cat Furniture', 'Pet Travel']),
+    mk('mc4', 'Consumer Electronics', ['Phone Accessories', 'Desk Gadgets', 'Cable Management', 'Smart Home']),
+    mk('mc5', 'Beauty & Health', ['Skincare Tools', 'Massage', 'Hair Styling']),
+  ]
+}
+
+function mockProbe(opts: { categoryId?: string; keyword?: string; countryCode: string }): CatalogProbe {
+  const key = `${opts.categoryId ?? opts.keyword ?? 'x'}:${opts.countryCode}`
+  const seed = key.split('').reduce((a, c) => a + c.charCodeAt(0), 0)
+  // Deterministisch: sommige categorieën breed (100-400), sommige schaars (0-8)
+  const scarce = seed % 5 === 0
+  const total = scarce ? seed % 9 : 60 + (seed * 7) % 340
+  const n = Math.min(total, 12)
+  return {
+    total,
+    sample: Array.from({ length: n }, (_, i) => ({
+      title: `${opts.keyword ?? 'Category'} product ${i + 1} (mock)`,
+      costPrice: 3 + ((seed + i * 11) % 25),
+      listedNum: (seed + i * 3) % 900,
+      categoryName: opts.keyword,
+    })),
+  }
+}
+
 // ── Relevantie-vangnet ─────────────────────────────────────────────────────────
 // CJ's productNameEn-filter matcht los (soms lijkt hij genegeerd te worden) en
 // levert dan compleet irrelevante catalogus-items ("portable blenders" →
