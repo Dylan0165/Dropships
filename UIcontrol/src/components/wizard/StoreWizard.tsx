@@ -560,6 +560,7 @@ export function StoreWizard({ onClose, onStarted }: Props) {
                   ))}
                 </div>
               )}
+              </>)}
             </div>
           )}
 
