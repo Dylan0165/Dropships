@@ -203,13 +203,15 @@ function existingStoreNiches(): string[] {
 }
 
 export async function generateNicheSuggestions(categories: CategoryStats[]): Promise<NicheSuggestion[]> {
-  const usable = categories.filter(c => c.totalDE >= MIN_TOTAL_FOR_NICHE)
+  const usable = categories.filter(c => c.totalAll >= MIN_TOTAL_FOR_NICHE)
   const existing = existingStoreNiches()
 
   const compact = usable.map(c => ({
     category: `${c.parentName} › ${c.name}`,
-    products: c.totalDE,
+    productsWorldwide: c.totalAll,
+    productsEuWarehouse: c.totalEU,
     alsoInFR: c.totalSpread,
+    shippingProfile: c.shippingProfile,
     avgCostUsd: c.avgCostUsd,
     marginPct: c.avgMarginPct,
     avgListedByDropshippers: c.avgListedNum,
@@ -218,7 +220,9 @@ export async function generateNicheSuggestions(categories: CategoryStats[]): Pro
 
   const result = await chatJson<{ suggestions: Array<Omit<NicheSuggestion, 'id'>> }>(
     'Je bent een EU dropshipping strateeg. Je clustert supplier-categorieën met BEVESTIGDE voorraad tot samenhangende webshop-niches.',
-    `CJ Dropshipping categorieën met gemeten EU-voorraad (DE warehouse, deels ook FR):
+    `CJ Dropshipping categorieën met gemeten voorraad — wereldwijd totaal én het deel
+in EU-warehouses (DE, deels ook FR). shippingProfile: "eu-fast" (veel EU-voorraad,
+3-8 dagen levertijd), "mixed", of "mostly-cn" (vnl. vanuit China, 15-30 dagen):
 ${JSON.stringify(compact, null, 1)}
 
 ${existing.length ? `Bestaande live stores (vermijd overlap): ${JSON.stringify(existing)}` : ''}
@@ -226,10 +230,14 @@ ${existing.length ? `Bestaande live stores (vermijd overlap): ${JSON.stringify(e
 Maak 5-8 samenhangende NICHE-voorstellen voor een eigen webshop. Geen losse categorieën,
 maar thema's die logisch bij elkaar horen (bv. "Home organization essentials",
 "Pet travel accessories", "Desk & cable management"). Gebruik ALLEEN categorieën met
-ruime voorraad hierboven. Per voorstel:
+ruime voorraad hierboven. Verzendtijd is GEEN uitsluitingscriterium — brede mostly-cn
+categorieën zijn prima voorstellen — maar de gebruiker moet het wel wéten. Per voorstel:
 - "title": Engels, 2-5 woorden (wordt de store-niche)
-- "rationale": 2-3 zinnen NEDERLANDS — waarom kansrijk (voorraad-breedte, marge, doelgroep, geen overlap)
-- "estimatedProducts": som van de relevante categorie-aantallen (realistisch, geen fantasie)
+- "rationale": 2-3 zinnen NEDERLANDS — waarom kansrijk (voorraad-breedte, marge, doelgroep,
+  geen overlap) én expliciet het verzendprofiel: overwegend snel uit EU, gemengd, of
+  overwegend 15-30 dagen uit China
+- "shippingProfile": "eu-fast" | "mixed" | "mostly-cn" (gewogen naar de gebruikte categorieën)
+- "estimatedProducts": som van de relevante wereldwijde categorie-aantallen (realistisch, geen fantasie)
 - "exampleKeywords": 3-4 korte ENGELSE productzoektermen (concrete productnamen)
 - "categories": welke input-categorieën dit thema dekken
 - "persona": {"label","ageRange","interests":[],"buyingMotivation","problem","priceRange":{"min","max"},"tone"} — Nederlands, realistisch voor EU
