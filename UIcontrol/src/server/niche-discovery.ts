@@ -119,7 +119,15 @@ function statsFromProbe(probe: CatalogProbe): { avgCostUsd: number; avgMarginPct
   }
 }
 
-/** Volledige catalogus-scan. Duurt ~30-60s door de 1 req/s CJ rate limit. */
+function deriveShippingProfile(totalAll: number, totalEU: number): ShippingProfile {
+  if (totalAll <= 0) return 'mostly-cn'
+  const share = totalEU / totalAll
+  if (share >= 0.4) return 'eu-fast'
+  if (share >= 0.12) return 'mixed'
+  return 'mostly-cn'
+}
+
+/** Volledige catalogus-scan. Duurt ~1-2 min door de 1 req/s CJ rate limit. */
 export async function scanCatalog(onLog: (m: string) => void = m => console.log(`[niche-scan] ${m}`)): Promise<CategoryStats[]> {
   const adapter = cj()
   const tree = await adapter.getCategoryTree()
@@ -129,23 +137,28 @@ export async function scanCatalog(onLog: (m: string) => void = m => console.log(
   const stats: CategoryStats[] = []
   for (const cat of selected) {
     try {
-      const probe = await adapter.probeCategory({ categoryId: cat.id, countryCode: PRIMARY_WAREHOUSE })
+      // Globale meting (alle warehouses) = de echte breedte; EU-meting (DE) =
+      // hoeveel daarvan snel leverbaar is. EU is informatie, geen filter.
+      const global = await adapter.probeCategory({ categoryId: cat.id })
+      const eu = await adapter.probeCategory({ categoryId: cat.id, countryCode: PRIMARY_EU_WAREHOUSE, pageSize: 1 })
       stats.push({
         categoryId: cat.id,
         name: cat.name,
         parentName: cat.parentName,
-        totalDE: probe.total,
-        ...statsFromProbe(probe),
-        sampleTitles: probe.sample.slice(0, 5).map(s => s.title.slice(0, 70)),
+        totalAll: global.total,
+        totalEU: eu.total,
+        shippingProfile: deriveShippingProfile(global.total, eu.total),
+        ...statsFromProbe(global),
+        sampleTitles: global.sample.slice(0, 5).map(s => s.title.slice(0, 70)),
       })
-      onLog(`"${cat.parentName} › ${cat.name}": ${probe.total} producten (${PRIMARY_WAREHOUSE})`)
+      onLog(`"${cat.parentName} › ${cat.name}": ${global.total} producten wereldwijd, waarvan ${eu.total} in ${PRIMARY_EU_WAREHOUSE}`)
     } catch (err) {
       onLog(`probe "${cat.name}" mislukt: ${err instanceof Error ? err.message : err}`)
     }
   }
 
-  // EU-spreiding: top-N breedste categorieën ook in een 2e warehouse meten
-  const top = [...stats].sort((a, b) => b.totalDE - a.totalDE).slice(0, SPREAD_PROBES)
+  // EU-spreiding: top-N breedste categorieën ook in een 2e EU-warehouse meten
+  const top = [...stats].sort((a, b) => b.totalAll - a.totalAll).slice(0, SPREAD_PROBES)
   for (const cat of top) {
     try {
       const probe = await adapter.probeCategory({ categoryId: cat.categoryId, countryCode: SPREAD_WAREHOUSE, pageSize: 1 })
