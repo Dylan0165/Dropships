@@ -27,7 +27,12 @@ export interface MolliePaymentParams {
   amountEur: number
   description: string
   redirectUrl: string
-  webhookUrl: string
+  /**
+   * Publiek bereikbare webhook-URL. Optioneel: zonder webhookUrl maakt Mollie
+   * de betaling gewoon aan (geen 422), alleen zonder automatische status-push —
+   * dat is de nette fallback zolang de Cloudflare Tunnel er niet is.
+   */
+  webhookUrl?: string
   items?: unknown[]
   /** Verzendgegevens van de klant — vereist voor automatische supplier fulfillment */
   customer?: Record<string, string>
