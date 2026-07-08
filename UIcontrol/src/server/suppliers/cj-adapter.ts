@@ -207,12 +207,12 @@ export class CJAdapter implements SupplierAdapter {
   }
 
   private async refreshAccessToken(refreshToken: string): Promise<string> {
-    const resp = await fetch(`${CJ_BASE}/authentication/refreshAccessToken`, {
+    const resp = await enqueue(() => fetch(`${CJ_BASE}/authentication/refreshAccessToken`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ refreshToken }),
       signal: AbortSignal.timeout(15_000),
-    })
+    }))
     const body = await resp.json() as CjEnvelope<{
       accessToken: string; accessTokenExpiryDate: string
       refreshToken: string; refreshTokenExpiryDate: string
