@@ -9,7 +9,7 @@
  *                             → updates ad status to 'generating'
  *   pollHiggsfieldJobs()  → checks pending jobs, updates ad creative_url on completion
  */
-import 'dotenv/config'
+import './load-env.js'
 import db from './db.js'
 import { generateAdCreatives } from './image-gen.js'
 import { getAgentOutput } from './db.js'
