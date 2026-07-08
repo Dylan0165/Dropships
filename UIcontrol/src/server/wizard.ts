@@ -233,7 +233,7 @@ JSON formaat:
     })
   }
 
-  return { candidates: candidates.length, shortlist, supplierIsMock: adapter.isMock }
+  return { candidates: candidates.length, shortlist, supplierIsMock: adapter.isMock, searchTermsTried: terms, searchTermUsed }
 }
 
 // ── Stap 3: site-structuur voorstel ──────────────────────────────────────────
