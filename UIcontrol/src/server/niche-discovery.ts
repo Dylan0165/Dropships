@@ -36,12 +36,16 @@ const MIN_TOTAL_FOR_NICHE = 25     // minder dan dit (wereldwijd!) = "schaars", 
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
+export type ShippingProfile = 'eu-fast' | 'mixed' | 'mostly-cn'
+
 export interface CategoryStats {
   categoryId: string
   name: string
   parentName: string
-  totalDE: number                  // breedte in primair EU warehouse
-  totalSpread?: number             // breedte in 2e warehouse (alleen top-N)
+  totalAll: number                 // breedte over ALLE warehouses wereldwijd
+  totalEU: number                  // breedte in primair EU warehouse (DE)
+  totalSpread?: number             // breedte in 2e EU warehouse (alleen top-N)
+  shippingProfile: ShippingProfile // afgeleid van totalEU/totalAll
   avgCostUsd: number
   avgMarginPct: number             // bij onze 2.8× markup-heuristiek
   avgListedNum?: number            // populariteit bij andere dropshippers
