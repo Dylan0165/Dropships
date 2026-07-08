@@ -479,7 +479,11 @@ export function releasePort(storeId: string): void {
   try {
     db.prepare(`UPDATE port_allocations SET released_at=? WHERE store_id=? AND released_at IS NULL`)
       .run(new Date().toISOString(), storeId)
-  } catch { /* ignore */ }
+    // Maak de poort ook in de stores-tabel vrij zodat allocatePort hem opnieuw kan uitdelen
+    db.prepare(`UPDATE stores SET port = NULL WHERE store_id = ?`).run(storeId)
+  } catch (err) {
+    console.error(`[db] releasePort(${storeId}) failed:`, err)
+  }
 }
 
 export function savePipelineState(
