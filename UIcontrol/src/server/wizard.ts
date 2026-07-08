@@ -171,7 +171,7 @@ export async function buildShortlist(
   const adapter = getSupplier('cj')
 
   // Idee → korte Engelse zoektermen; probeer ze in volgorde tot er resultaten zijn
-  const terms = await adapter.isMock ? [niche] : await deriveSearchTerms(niche, persona)
+  const terms = adapter.isMock ? [niche] : await deriveSearchTerms(niche, persona)
   console.log(`[wizard] CJ zoektermen voor "${niche}": ${JSON.stringify(terms)}`)
 
   let candidates: SupplierProduct[] = []
