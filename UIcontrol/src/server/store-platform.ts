@@ -507,11 +507,31 @@ export async function deployStore(storeData: StoreData): Promise<DeployedStore> 
     }
 
     // STEP 3 — atomic deploy: symlink-based releases + nginx reload + auto-rollback
-    const maxNginxPort = await getHighestNginxPort()
-    if (maxNginxPort > 0) {
-      console.log(`[store-platform] hoogste nginx poort op store server: ${maxNginxPort}`)
+    // Scan de echte server-poorten zodat we er geen dubbel uitdelen (self-healing
+    // bij een stale DB). Redeploy van hetzelfde subdomain hergebruikt zijn poort.
+    let serverVhosts: Array<{ subdomain: string; port: number }> = []
+    try {
+      serverVhosts = await scanDeployedStores()
+    } catch (err) {
+      console.warn(`[store-platform] nginx port-scan overgeslagen: ${err instanceof Error ? err.message : String(err)}`)
     }
-    const assignedPort = assignPort(storeId, maxNginxPort)
+    const ownVhost = serverVhosts.find(v => v.subdomain === subdomain && v.port > 0)
+    const reserved = serverVhosts.filter(v => v.subdomain !== subdomain && v.port > 0).map(v => v.port)
+
+    let assignedPort: number
+    try {
+      assignedPort = ownVhost
+        ? reservePort(storeId, ownVhost.port)
+        : allocatePort(storeId, reserved)
+      db.prepare('UPDATE stores SET port = ? WHERE store_id = ?').run(assignedPort, storeId)
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+      console.error(`[store-platform] port-allocatie mislukt: ${msg}`)
+      const fallback = { storeId, subdomain, niche: data.niche, status: 'failed' as const,
+        previewUrl: '', filesPath: baseDir, createdAt, errorMessage: msg }
+      persistStore(fallback, storeData.runId)
+      return fallback
+    }
     const deployRes = await atomicDeploy(
       subdomain,
       path.join(baseDir, 'out'),
