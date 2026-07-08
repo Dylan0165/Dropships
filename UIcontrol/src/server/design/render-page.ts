@@ -520,7 +520,9 @@ export default function Home() {
     <div style={{ background: DNA.bg, color: DNA.text, minHeight: '100dvh', fontFamily: DNA.body, fontWeight: DNA.bodyWeight }}>
       <style dangerouslySetInnerHTML={{ __html: CSS }} />
       ${navJsx(layout.navStyle)}
-      ${heroJsx(layout.hero)}
+      <div style={{ position: 'relative', overflow: 'hidden' }}>
+      ${heroJsx(layout.hero)}${signatureInHero(signature)}
+      </div>${signatureAfterHero(signature)}
 ${sections}
       ${footerJsx(layout.footerStyle)}
     </div>
