@@ -321,68 +321,84 @@ export class CJAdapter implements SupplierAdapter {
     // naar boven (state b) i.p.v. stilzwijgend als "geen resultaten" (was verwarrend).
     await this.getToken()
 
-    const warehouses = options.warehouseCountries ?? [...EU_WAREHOUSES]
+    // EU-warehouses eerst (levert per-warehouse tagging + snelle opties bovenaan),
+    // daarna één GLOBALE pass zonder countryCode — warehouse is informatie, geen
+    // harde uitsluiting meer. Expliciete warehouseCountries in options = strikt.
+    const euWarehouses = options.warehouseCountries ?? [...EU_WAREHOUSES]
+    const strictWarehouses = options.warehouseCountries != null
     const pageSize = options.pageSize ?? 20
     const maxResults = options.maxResults ?? 30
     const seen = new Map<string, SupplierProduct>()
-    const warehouseErrors: string[] = []
-
+    const passErrors: string[] = []
     let rawSeen = 0
-    for (const countryCode of warehouses) {
-      if (seen.size >= maxResults) break
+    let attempts = 0
+
+    // Eén zoek-pass; countryCode undefined = alle warehouses wereldwijd
+    const runPass = async (countryCode?: string) => {
+      attempts++
       const params = {
         pageNum: options.page ?? 1,
         pageSize,
         productNameEn: niche,
-        countryCode,
+        ...(countryCode ? { countryCode } : {}),
       }
       // Exacte request loggen: zo is bij irrelevante resultaten meteen zichtbaar
       // of de zoekterm überhaupt (en correct) bij CJ aankomt.
       console.log(`[cj] → GET /product/list ${JSON.stringify(params)}`)
+      const data = await this.request<{
+        pageNum: number; pageSize: number; total: number
+        list: Array<Record<string, unknown>>
+      }>('GET', '/product/list', params)
+      const list = data?.list ?? []
+      rawSeen += list.length
+      for (const raw of list) {
+        const p = mapCjListProduct(raw, countryCode)
+        // Relevantie-vangnet: CJ's productNameEn-match is los (of wordt soms
+        // genegeerd) en geeft dan willekeurige catalogus-items terug. Producten
+        // waarvan titel/beschrijving/categorie GEEN enkel woord van de zoekterm
+        // bevatten worden genegeerd.
+        if (p && !isRelevantToQuery(niche, p)) continue
+        if (p && !seen.has(p.productId)) seen.set(p.productId, p)
+        if (seen.size >= maxResults) break
+      }
+    }
+
+    const passes: Array<string | undefined> = strictWarehouses
+      ? [...euWarehouses]
+      : [...euWarehouses, undefined]   // undefined = wereldwijde pass als sluitstuk
+
+    for (const countryCode of passes) {
+      if (seen.size >= maxResults) break
       try {
-        const data = await this.request<{
-          pageNum: number; pageSize: number; total: number
-          list: Array<Record<string, unknown>>
-        }>('GET', '/product/list', params)
-        const list = data?.list ?? []
-        rawSeen += list.length
-        for (const raw of list) {
-          const p = mapCjListProduct(raw, countryCode)
-          // Relevantie-vangnet: CJ's productNameEn-match is los (of wordt soms
-          // genegeerd) en geeft dan willekeurige catalogus-items terug. Producten
-          // waarvan titel/beschrijving/categorie GEEN enkel woord van de zoekterm
-          // bevatten worden genegeerd.
-          if (p && !isRelevantToQuery(niche, p)) continue
-          if (p && !seen.has(p.productId)) seen.set(p.productId, p)
-          if (seen.size >= maxResults) break
-        }
+        await runPass(countryCode)
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err)
-        warehouseErrors.push(`${countryCode}: ${msg}`)
-        console.warn(`[cj] product search voor warehouse ${countryCode} mislukt:`, msg)
-        // Rate limit definitief uitgeput → de resterende warehouses gaan óók
-        // 429 geven; doorgaan verergert het alleen. Stop meteen: return wat we
+        passErrors.push(`${countryCode ?? 'global'}: ${msg}`)
+        console.warn(`[cj] product search pass ${countryCode ?? 'global'} mislukt:`, msg)
+        // Rate limit definitief uitgeput → de resterende passes gaan óók 429
+        // geven; doorgaan verergert het alleen. Stop meteen: return wat we
         // hebben, of gooi de fout door zodat de gebruiker hem ziet.
         if (err instanceof CJApiError && err.retryable) {
           if (seen.size > 0) {
-            console.warn(`[cj] rate limit uitgeput — stop met resterende warehouses, ${seen.size} producten gevonden tot nu toe`)
-            return Array.from(seen.values())
+            console.warn(`[cj] rate limit uitgeput — stop met resterende passes, ${seen.size} producten gevonden tot nu toe`)
+            return sortByShippingPreference(Array.from(seen.values()))
           }
           throw err
         }
       }
     }
 
-    // ...maar als ÁLLE warehouses faalden en er niets gevonden is, is dat een
-    // echte CJ-fout die de gebruiker moet zien — niet stil leeg teruggeven.
-    if (seen.size === 0 && warehouseErrors.length === warehouses.length) {
-      throw new CJApiError(`CJ productzoekopdracht faalde voor alle warehouses — ${warehouseErrors[0]}`)
+    // Als ÁLLE passes faalden en er niets gevonden is, is dat een echte CJ-fout
+    // die de gebruiker moet zien — niet stil leeg teruggeven.
+    if (seen.size === 0 && passErrors.length === attempts && attempts > 0) {
+      throw new CJApiError(`CJ productzoekopdracht faalde voor alle zoek-passes — ${passErrors[0]}`)
     }
 
     if (rawSeen > 0) {
-      console.log(`[cj] zoekterm "${niche}": ${rawSeen} raw resultaten van CJ → ${seen.size} relevant na filter`)
+      const eu = Array.from(seen.values()).filter(p => isEuWarehouse(p.warehouse)).length
+      console.log(`[cj] zoekterm "${niche}": ${rawSeen} raw resultaten → ${seen.size} relevant na filter (${eu} EU-snel, ${seen.size - eu} overig)`)
     }
-    return Array.from(seen.values())
+    return sortByShippingPreference(Array.from(seen.values()))
   }
 
   // ── Catalogus-verkenning (niche-discovery) ──────────────────────────────────
