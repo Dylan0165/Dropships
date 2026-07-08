@@ -116,6 +116,8 @@ export function StoreWizard({ onClose, onStarted }: Props) {
   const [manualQuery, setManualQuery] = useState('')
   const [manualResults, setManualResults] = useState<ShortlistProduct[]>([])
   const [searching, setSearching] = useState(false)
+  // Weergave-filter, geen zoek-filter: breed zoeken blijft de default
+  const [euOnly, setEuOnly] = useState(false)
 
   // Stap 3 — structuur
   const [structure, setStructure] = useState<StructureProposal | null>(null)
