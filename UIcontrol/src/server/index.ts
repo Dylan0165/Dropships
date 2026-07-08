@@ -955,6 +955,27 @@ app.get('/api/suppliers/cj/status', (_req, res) => {
   res.json(getCjStatus())
 })
 
+// MCP-status: is de CJ MCP discovery-laag geconfigureerd, en welke read-only
+// tools biedt de server aan? Order-tools worden hier NOOIT uitgevoerd.
+app.get('/api/suppliers/cj/mcp/status', async (_req, res) => {
+  const configured = isMcpConfigured()
+  if (!configured) {
+    res.json({ configured: false, tools: [], note: 'MCP niet geconfigureerd — wizard gebruikt directe REST-search' })
+    return
+  }
+  try {
+    const tools = await listDiscoveryTools()
+    res.json({
+      configured: true,
+      tools: tools.map(t => t.name),
+      allowlist: [...CJ_MCP_DISCOVERY_TOOLS],
+      note: 'Alleen read-only discovery-tools; orders lopen via REST CJAdapter',
+    })
+  } catch (err) {
+    res.json({ configured: true, reachable: false, tools: [], error: err instanceof Error ? err.message : 'MCP onbereikbaar' })
+  }
+})
+
 app.get('/api/suppliers/cj/search', async (req, res) => {
   const { q, limit } = req.query as { q?: string; limit?: string }
   if (!q || !q.trim()) { res.status(400).json({ error: 'q (zoekterm) is verplicht' }); return }
