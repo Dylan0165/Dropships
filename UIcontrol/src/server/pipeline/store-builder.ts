@@ -229,7 +229,7 @@ export function renderStore(input: StoreBuildInput, brief: StoreBrief): StoreBui
   // ── 6. Schrijf de gegenereerde page + shared files ──────────────────────────
   const appDir = path.join(buildDir, 'app')
   fs.mkdirSync(appDir, { recursive: true })
-  fs.writeFileSync(path.join(appDir, 'page.tsx'), renderStorePage(dna, layout, content, products), 'utf-8')
+  fs.writeFileSync(path.join(appDir, 'page.tsx'), renderStorePage(dna, layout, content, products, applied.signature), 'utf-8')
 
   buildLayoutSharedFiles(buildDir, vars)
   buildCheckoutAndInfoPages(buildDir, vars)
