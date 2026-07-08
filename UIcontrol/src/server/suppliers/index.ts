@@ -5,7 +5,7 @@ import { CJAdapter } from './cj-adapter.js'
 import type { SupplierAdapter } from './types.js'
 
 export * from './types.js'
-export { CJAdapter, CJApiError } from './cj-adapter.js'
+export { CJAdapter, CJApiError, getCjStatus } from './cj-adapter.js'
 
 const adapters: Record<string, SupplierAdapter> = {
   cj: new CJAdapter(),
