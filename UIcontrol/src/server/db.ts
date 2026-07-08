@@ -18,6 +18,9 @@ const db = new Database(dbPath)
 
 // Enable WAL mode for better concurrent reads
 db.pragma('journal_mode = WAL')
+// Laat gelijktijdige schrijvers (pipeline-proces + store-platform-proces) wachten
+// op elkaars write-lock i.p.v. meteen te falen — nodig voor atomaire port-claims.
+db.pragma('busy_timeout = 5000')
 
 // Create tables
 db.exec(`
