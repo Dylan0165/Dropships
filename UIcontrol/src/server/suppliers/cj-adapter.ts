@@ -122,7 +122,8 @@ function enqueue<T>(task: () => Promise<T>): Promise<T> {
 // ── 429 backoff: exponentieel 3s → 6s → 12s → 24s → 48s ──────────────────────
 
 const MAX_ATTEMPTS = 6            // 1 poging + 5 retries
-const BACKOFF_BASE_MS = 3_000
+// Overridebaar voor tests (default 3s → reeks 3/6/12/24/48s)
+const BACKOFF_BASE_MS = parseInt(process.env.CJ_BACKOFF_BASE_MS ?? '3000', 10)
 
 async function rateLimitBackoff(path: string, attempt: number): Promise<void> {
   const backoff = BACKOFF_BASE_MS * 2 ** (attempt - 1)
