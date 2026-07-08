@@ -132,6 +132,20 @@ Reviewer output schema (locked): `{ verdict: "APPROVED"|"REJECTED"|"UNCERTAIN", 
 - `suppliers/cj-mcp-search.ts`: `mcpProductDiscovery()` — DeepSeek roept zelf `search_products` aan (agentic loop, max 5 rondes); onze `isRelevantToQuery` + EU-warehouse voorkeur draaien er bovenop. Faalt MCP → `McpUnavailableError`.
 - `wizard.ts buildShortlist` → `discoverCandidates`: **MCP eerst, val terug op REST** (deriveSearchTerms + `adapter.searchProducts`). Response bevat `source: 'mcp'|'rest'|'mock'`. Status: `GET /api/suppliers/cj/mcp/status`. Handmatig "Zelf zoeken" blijft REST (directe keyword).
 
+## Niche-discovery / CJ-catalogus verkenning (sinds juli 2026)
+- `server/niche-discovery.ts`: `scanCatalog()` meet per CJ level-2 categorie (round-robin over
+  hoofdcategorieën, cap `NICHE_SCAN_MAX_CATEGORIES`=24) de EU-voorraad. Signalen: paginatie-`total`
+  per categorie×warehouse (DE primair, top-8 ook FR voor spreiding), `sellPrice`-sample → marge
+  bij 2.8× markup, `listedNum` → populariteit. Varianten/trending bewust niet (rate limit / geen endpoint).
+- Adapter-probes: `CJAdapter.getCategoryTree()` (`/product/getCategory`) en `probeCategory()`
+  (`/product/list` met categoryId+countryCode, geeft total+sample) — met mock-varianten.
+- LLM clustert categorieën ≥25 producten tot 5-8 niche-thema's mét persona (`generateNicheSuggestions`);
+  deterministische fallback zonder LLM/mock-modus. Overlap-check tegen bestaande live stores.
+- Cache: settings-key `niche_discovery_cache`, 24h TTL. `GET /api/wizard/niches` (+`?refresh=1`);
+  antwoord `status: ready|scanning|stale-refreshing`. Scan duurt ~30-60s (1 req/s CJ-limit), draait async.
+- Wizard stap 1 heeft nu twee entries: "Eigen idee" (bestaand) en "AI-niches uit CJ-voorraad" —
+  kaart kiezen zet idea+persona (chosenDirection) en springt direct naar stap 2.
+
 ## Bekende gotcha's
 - `.env` is gitignored én untracked (sinds juli 2026) — wijzigingen moeten direct op de server via `sed + pm2 restart`
 - **Env-loading:** de server laadt via `server/load-env.ts` (niet meer kaal `dotenv/config`)
