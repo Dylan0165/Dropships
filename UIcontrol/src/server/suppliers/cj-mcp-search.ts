@@ -75,7 +75,7 @@ export async function mcpProductDiscovery(
         + 'Use the CJ Dropshipping tools to SEARCH for products that fit the given store idea and target persona. '
         + 'Call search_products with concise ENGLISH product keywords (1-3 words, the product noun, e.g. "portable blender"). '
         + 'You may refine with a second search or inspect variants/shipping if useful. '
-        + 'Prefer EU warehouses (DE, NL, FR, IT, ES, PL, CZ). '
+        + 'Search ALL warehouses worldwide — do not restrict to one country. EU-stocked products (DE, NL, FR, IT, ES, PL, CZ) are preferred for fast shipping, but slower China-shipped products are also fine; they will be labelled with their delivery time. '
         + 'When you have gathered enough relevant candidates, stop calling tools and reply with a short plain-text summary. '
         + 'You never place orders or modify the cart — only discovery.',
     },
