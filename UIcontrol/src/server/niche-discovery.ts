@@ -55,8 +55,9 @@ export interface CategoryStats {
 export interface NicheSuggestion {
   id: string
   title: string                    // Engels — wordt de niche/idea voor de pipeline
-  rationale: string                // Nederlands — onderbouwing voor de gebruiker
+  rationale: string                // Nederlands — onderbouwing incl. verzendprofiel
   estimatedProducts: number
+  shippingProfile?: ShippingProfile // EU-snel / gemengd / vnl. China-verzending
   exampleKeywords: string[]        // Engelse zoektermen voor stap 2
   categories: string[]
   persona: WizardPersona           // klaar-voor-gebruik → wizard kan direct naar stap 2
