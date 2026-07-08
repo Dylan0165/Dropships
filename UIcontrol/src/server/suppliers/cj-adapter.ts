@@ -655,12 +655,14 @@ function mockCategoryTree(): CjCategoryLevel1[] {
   ]
 }
 
-function mockProbe(opts: { categoryId?: string; keyword?: string; countryCode: string }): CatalogProbe {
-  const key = `${opts.categoryId ?? opts.keyword ?? 'x'}:${opts.countryCode}`
+function mockProbe(opts: { categoryId?: string; keyword?: string; countryCode?: string }): CatalogProbe {
+  const key = `${opts.categoryId ?? opts.keyword ?? 'x'}:${opts.countryCode ?? 'ALL'}`
   const seed = key.split('').reduce((a, c) => a + c.charCodeAt(0), 0)
-  // Deterministisch: sommige categorieën breed (100-400), sommige schaars (0-8)
+  // Deterministisch: sommige categorieën breed (100-400), sommige schaars (0-8).
+  // Globale scope (geen countryCode) is ruwweg 4× zo breed als één EU-warehouse.
   const scarce = seed % 5 === 0
-  const total = scarce ? seed % 9 : 60 + (seed * 7) % 340
+  const base = scarce ? seed % 9 : 60 + (seed * 7) % 340
+  const total = opts.countryCode ? base : base * 4 + 12
   const n = Math.min(total, 12)
   return {
     total,
