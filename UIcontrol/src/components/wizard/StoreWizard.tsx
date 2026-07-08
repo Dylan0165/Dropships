@@ -474,7 +474,8 @@ export function StoreWizard({ onClose, onStarted }: Props) {
                 <>
                   <div className="flex items-center justify-between flex-wrap gap-1">
                     <p className="text-xs text-zinc-400">
-                      AI-shortlist voor <span className="text-white">{chosenDirection?.persona.label}</span> —
+                      AI-shortlist voor <span className="text-white">{chosenDirection?.persona.label}</span>
+                      {searchTermUsed && <> (CJ-zoekterm: <span className="text-zinc-300 font-mono">"{searchTermUsed}"</span>)</>} —
                       geselecteerd: <span className={clsx('font-semibold', selectedProducts.size >= MIN_ADVISED ? 'text-emerald-400' : 'text-amber-400')}>{selectedProducts.size}</span> / {MAX_SELECT}
                     </p>
                     {maxHint
