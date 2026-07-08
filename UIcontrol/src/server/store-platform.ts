@@ -16,7 +16,7 @@
  * Templates are copied from Websitecomponentscodes/ and have these placeholders
  * replaced: {{BRAND_NAME}}, {{SLOGAN}}, {{PRIMARY_COLOR}}, {{PRODUCTS_JSON}}.
  */
-import 'dotenv/config'
+import './load-env.js'
 import express from 'express'
 import path from 'path'
 import os from 'os'
