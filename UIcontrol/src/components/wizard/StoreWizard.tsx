@@ -71,6 +71,11 @@ const STEPS = ['Idee & doelgroep', 'Producten (CJ)', 'Site-structuur', 'Bevestig
 const MAX_SELECT = 15
 const MIN_ADVISED = 6
 
+// EU-warehouses = snelle verzending. Puur voor labels/sortering in de UI —
+// langzamere (CN) opties worden getoond, niet uitgesloten.
+const EU_WAREHOUSES_UI = new Set(['DE', 'NL', 'FR', 'IT', 'ES', 'PL', 'CZ'])
+const isEuWh = (wh?: string) => !!wh && EU_WAREHOUSES_UI.has(wh.toUpperCase())
+
 async function postJson<T>(url: string, body: unknown): Promise<T> {
   const r = await fetch(url, {
     method: 'POST',
