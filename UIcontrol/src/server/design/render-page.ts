@@ -129,8 +129,11 @@ function buildCss(dna: DesignDNA, signature: SignatureElement | null): string {
     )
   }
   if (signature?.type === 'outline-word') {
+    // z-index 2 + blend-mode: het woord blijft zichtbaar óver hero-beelden
+    // (editorial/fullbleed hebben hun foto onderaan) zonder tekst te verstoren.
+    const blend = dna.palette.mode === 'dark' ? 'mix-blend-mode:screen;opacity:.3' : 'mix-blend-mode:multiply;opacity:.14'
     rules.push(
-      `.sig-outline{position:absolute;bottom:-.12em;left:0;right:0;font-family:${dna.typography.heading};font-weight:800;font-size:clamp(5rem,19vw,16rem);line-height:1;letter-spacing:-.02em;color:transparent;-webkit-text-stroke:1.5px ${dna.palette.accent};opacity:.15;text-transform:uppercase;white-space:nowrap;overflow:hidden;pointer-events:none;user-select:none;z-index:0;text-align:center}`,
+      `.sig-outline{position:absolute;bottom:-.12em;left:0;right:0;font-family:${dna.typography.heading};font-weight:800;font-size:clamp(5rem,19vw,16rem);line-height:1;letter-spacing:-.02em;color:transparent;-webkit-text-stroke:2px ${dna.palette.accent};${blend};text-transform:uppercase;white-space:nowrap;overflow:hidden;pointer-events:none;user-select:none;z-index:2;text-align:center}`,
     )
   }
   if (signature?.type === 'numbered-collection') {
