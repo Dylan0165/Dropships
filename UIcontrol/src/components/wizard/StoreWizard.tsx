@@ -141,13 +141,14 @@ export function StoreWizard({ onClose, onStarted }: Props) {
     setLoadingShortlist(true)
     setError(null)
     setCjError(null)
-    postJson<{ shortlist: ShortlistProduct[]; supplierIsMock: boolean }>('/api/wizard/shortlist', {
+    postJson<{ shortlist: ShortlistProduct[]; supplierIsMock: boolean; searchTermUsed?: string | null }>('/api/wizard/shortlist', {
       niche: idea,
       persona: chosenDirection.persona,
     })
       .then(data => {
         setShortlist(data.shortlist ?? [])
         setSupplierIsMock(data.supplierIsMock)
+        setSearchTermUsed(data.searchTermUsed ?? null)
         // Pre-selecteer de top 8 (of minder) — de store toont 6-15 producten
         const pre = new Map<string, ShortlistProduct>()
         for (const p of (data.shortlist ?? []).slice(0, Math.min(8, MAX_SELECT))) pre.set(p.productId, p)
