@@ -904,6 +904,71 @@ app.post('/api/checkout/session', async (req, res) => {
   }
 })
 
+// ═══════ Publieke URL (Cloudflare Tunnel) ═══════
+// De cloudflared-manager (PM2, zelfde machine) registreert hier de actuele
+// trycloudflare-URL. Alleen vanaf localhost, of met TUNNEL_TOKEN indien gezet.
+
+function tunnelAuthOk(req: express.Request): boolean {
+  const token = process.env.TUNNEL_TOKEN
+  if (token && req.headers['x-tunnel-token'] === token) return true
+  const ip = req.socket.remoteAddress ?? ''
+  return ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1'
+}
+
+app.post('/api/admin/public-url', (req, res) => {
+  if (!tunnelAuthOk(req)) { res.status(403).json({ error: 'alleen localhost of met TUNNEL_TOKEN' }); return }
+  const { url } = req.body as { url?: string | null }
+  const result = setPublicBaseUrl(url ?? null)
+  if (!result.ok) { res.status(400).json(result); return }
+  res.json({ ok: true, publicBaseUrl: getPublicBaseUrl() })
+})
+
+app.get('/api/admin/public-url', (_req, res) => {
+  const base = getPublicBaseUrl()
+  res.json({
+    publicBaseUrl: base,
+    mollieWebhookUrl: getMollieWebhookUrl(),
+    configured: base !== null,
+    note: base ? 'Mollie-webhooks gaan via dit adres' : 'Geen publiek adres — payments worden ZONDER webhook aangemaakt (geen 422, wel handmatige fulfillment)',
+  })
+})
+
+// Selftest: maakt een echte €0.01 test-payment MET webhookUrl bij Mollie en
+// rapporteert of Mollie hem accepteert (i.p.v. de oude 422). Draait op de
+// server (waar de Mollie-key staat); best-effort direct weer geannuleerd.
+app.get('/api/admin/tunnel-selftest', async (_req, res) => {
+  const apiKey = process.env.MOLLIE_API_KEY
+  if (!apiKey) { res.json({ ok: false, skipped: true, reason: 'MOLLIE_API_KEY niet geconfigureerd' }); return }
+  const webhookUrl = getMollieWebhookUrl()
+  if (!webhookUrl) { res.json({ ok: false, reason: 'Geen publieke URL geregistreerd — draait de cloudflared-api PM2 service?' }); return }
+  try {
+    const resp = await fetch('https://api.mollie.com/v2/payments', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        amount: { currency: 'EUR', value: '0.01' },
+        description: 'Tunnel selftest (auto-cancelled)',
+        redirectUrl: `${getPublicBaseUrl()}/`,
+        webhookUrl,
+      }),
+      signal: AbortSignal.timeout(15_000),
+    })
+    const bodyTxt = await resp.text()
+    if (!resp.ok) {
+      res.json({ ok: false, status: resp.status, webhookUrl, mollieResponse: bodyTxt.slice(0, 300) })
+      return
+    }
+    const payment = JSON.parse(bodyTxt) as { id: string }
+    // Best-effort opruimen (alleen mogelijk zolang de payment cancelable is)
+    fetch(`https://api.mollie.com/v2/payments/${payment.id}`, {
+      method: 'DELETE', headers: { Authorization: `Bearer ${apiKey}` },
+    }).catch(() => { /* niet-cancelable is prima */ })
+    res.json({ ok: true, webhookUrl, paymentId: payment.id, note: 'Mollie accepteerde de webhook-URL — geen 422 meer' })
+  } catch (err) {
+    res.json({ ok: false, error: err instanceof Error ? err.message : String(err) })
+  }
+})
+
 // Mollie sends URLEncoded POST; always respond 200 regardless of outcome
 app.post('/api/webhooks/mollie', async (req, res) => {
   res.sendStatus(200)
