@@ -296,9 +296,26 @@ export class CJAdapter implements SupplierAdapter {
 
   // ── searchProducts ──────────────────────────────────────────────────────────
 
+  // Identieke zoekopdrachten die tegelijk binnenkomen (bv. dubbele React-effect
+  // fire of dubbelklik) delen één CJ-call i.p.v. de rate limit 2× te belasten.
+  private inflightSearches = new Map<string, Promise<SupplierProduct[]>>()
+
   async searchProducts(niche: string, options: ProductSearchOptions = {}): Promise<SupplierProduct[]> {
     if (this.isMock) return mockProducts(niche, options)
 
+    const key = `${niche.toLowerCase().trim()}::${JSON.stringify(options)}`
+    const existing = this.inflightSearches.get(key)
+    if (existing) {
+      console.log(`[cj] identieke zoekopdracht al onderweg — hergebruik resultaat ("${niche}")`)
+      return existing
+    }
+    const search = this.doSearchProducts(niche, options)
+      .finally(() => this.inflightSearches.delete(key))
+    this.inflightSearches.set(key, search)
+    return search
+  }
+
+  private async doSearchProducts(niche: string, options: ProductSearchOptions): Promise<SupplierProduct[]> {
     // Auth vooraf: config-/auth-/rate-limit-fouten komen zo als duidelijke error
     // naar boven (state b) i.p.v. stilzwijgend als "geen resultaten" (was verwarrend).
     await this.getToken()
