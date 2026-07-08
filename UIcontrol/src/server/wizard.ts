@@ -136,16 +136,54 @@ export interface ShortlistedProduct extends SupplierProduct {
   marginPct: number
 }
 
+/**
+ * Vertaal het (mogelijk Nederlandse, lange) store-idee naar korte ENGELSE
+ * CJ-zoektermen. CJ's productNameEn matcht op Engelse productnamen — een zin
+ * als "draagbare blender voor onderweg" of zelfs een lange Engelse omschrijving
+ * levert daar willekeurige catalogus-items op. 1-3 woorden per term werkt.
+ */
+export async function deriveSearchTerms(idea: string, persona?: WizardPersona): Promise<string[]> {
+  try {
+    const result = await chatJson<{ terms: string[] }>(
+      'You translate e-commerce store ideas into product search keywords for a supplier catalog (CJ Dropshipping). The catalog matches on ENGLISH product names.',
+      `Store idea (any language): "${idea}"
+${persona ? `Target audience: ${JSON.stringify({ label: persona.label, interests: persona.interests, problem: persona.problem })}` : ''}
+
+Give 3 ENGLISH product search terms for this idea, best first.
+Rules: 1-3 words each, concrete product nouns (what the product IS, e.g. "portable blender"),
+no marketing words, no audience words, singular or plural both fine.
+JSON: {"terms":["portable blender","blender bottle","mini juicer"]}`,
+      { maxTokens: 256, temperature: 0.2 },
+    )
+    const terms = (result.terms ?? []).map(t => String(t).trim()).filter(t => t.length >= 3 && t.length <= 40)
+    if (terms.length > 0) return terms.slice(0, 3)
+  } catch (err) {
+    console.warn('[wizard] zoekterm-afleiding via LLM mislukt, val terug op ruwe input:', err instanceof Error ? err.message : err)
+  }
+  return [idea]
+}
+
 export async function buildShortlist(
   niche: string,
   persona: WizardPersona,
   options: { maxResults?: number } = {},
-): Promise<{ candidates: number; shortlist: ShortlistedProduct[]; supplierIsMock: boolean }> {
+): Promise<{ candidates: number; shortlist: ShortlistedProduct[]; supplierIsMock: boolean; searchTermsTried: string[]; searchTermUsed: string | null }> {
   const adapter = getSupplier('cj')
-  const candidates = await adapter.searchProducts(niche, { maxResults: options.maxResults ?? 30 })
+
+  // Idee → korte Engelse zoektermen; probeer ze in volgorde tot er resultaten zijn
+  const terms = await adapter.isMock ? [niche] : await deriveSearchTerms(niche, persona)
+  console.log(`[wizard] CJ zoektermen voor "${niche}": ${JSON.stringify(terms)}`)
+
+  let candidates: SupplierProduct[] = []
+  let searchTermUsed: string | null = null
+  for (const term of terms) {
+    candidates = await adapter.searchProducts(term, { maxResults: options.maxResults ?? 30 })
+    if (candidates.length > 0) { searchTermUsed = term; break }
+    console.log(`[wizard] zoekterm "${term}" gaf 0 relevante resultaten — probeer volgende`)
+  }
 
   if (candidates.length === 0) {
-    return { candidates: 0, shortlist: [], supplierIsMock: adapter.isMock }
+    return { candidates: 0, shortlist: [], supplierIsMock: adapter.isMock, searchTermsTried: terms, searchTermUsed: null }
   }
 
   // Compacte weergave voor het LLM (tokens besparen)
