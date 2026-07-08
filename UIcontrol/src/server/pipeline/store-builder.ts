@@ -30,6 +30,10 @@ export const StoreBriefSchema = z.object({
     desc:  z.string().min(1).max(160),
   })).length(3),
   footer_tagline: z.string().min(1).max(80),
+  // Engelse één-zin framing van het klantprobleem voor de brand-story sectie.
+  // Vervangt de RAUWE persona.problem (vaak Nederlands) die eerder direct in
+  // de Engelse copy lekte.
+  story_angle: z.string().min(1).max(180).optional(),
 }).passthrough()
 
 export type StoreBrief = z.infer<typeof StoreBriefSchema>
