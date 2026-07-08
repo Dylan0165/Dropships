@@ -741,6 +741,12 @@ export function mapCjListProduct(raw: Record<string, unknown>, warehouse?: strin
   if (!pid || cost === null) return null
 
   const title = String(raw.productNameEn ?? raw.nameEn ?? raw.productName ?? 'Onbekend product')
+  // Warehouse: expliciet meegegeven (per-warehouse query) of uit het item zelf;
+  // globale zoekopdrachten zonder herkomst-info verzenden in de praktijk uit CN.
+  const wh = warehouse
+    ?? (raw.countryCode ? String(raw.countryCode) : undefined)
+    ?? (raw.warehouseCountryCode ? String(raw.warehouseCountryCode) : undefined)
+    ?? 'CN'
   return {
     supplier: 'cj',
     productId: String(pid),
@@ -751,8 +757,8 @@ export function mapCjListProduct(raw: Record<string, unknown>, warehouse?: strin
     costPrice: cost,
     suggestedPrice: suggestPrice(cost),
     currency: 'USD',
-    shippingDays: { min: 3, max: 8 },   // EU warehouse levertijd-indicatie
-    warehouse,
+    shippingDays: shippingDaysFor(wh),
+    warehouse: wh,
     category: raw.categoryName ? String(raw.categoryName) : undefined,
     rating: raw.score ? Number(raw.score) : undefined,
     url: `https://www.cjdropshipping.com/product/-p-${String(pid)}.html`,
