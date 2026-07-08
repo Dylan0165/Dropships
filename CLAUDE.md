@@ -108,6 +108,10 @@ Reviewer output schema (locked): `{ verdict: "APPROVED"|"REJECTED"|"UNCERTAIN", 
   - `render-page.ts` — genereert `app/page.tsx`; 5 hero-varianten, 4 product-weergaven,
     6 sectie-volgordes, 3 nav- + 3 footer-stijlen. Structuur verschilt letterlijk per store.
   - `content-en.ts` — Engelse reviews/story/cta/badges/nav (seeded)
+  - Collectie-grootte varieert **6-15 producten per store** (`deriveProductCount` in layout.ts,
+    seeded; impulse 6-10 / considered 9-15). `fitProducts` vult thin sourcing aan tot min. 6
+    met unieke display-ids (supplier-velden gelijk → fulfillment blijft correct). `MAX_PRODUCTS_PER_STORE`
+    default nu 15; product-agent sourcet 8-15, wizard-shortlist idem.
 - **Alle klant-facing content is Engelstalig**, ook bij Nederlandse wizard-input. Skill-prompts
   (brand/content/store-builder) zeggen expliciet "all text in English" + anti-generiek.
 - Per-stage temperature in `agent.ts`: creatief (brand 0.95 / content 0.85 / store-build 0.9),
