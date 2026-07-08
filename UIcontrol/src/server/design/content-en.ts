@@ -4,7 +4,7 @@
 // (reviews, brand story, cta-band, nav/footer labels, product badges) in het
 // Engels, deterministisch geseed zodat stores onderling verschillen.
 
-import type { PersonaLike, VisualTone } from './tokens.js'
+import type { VisualTone } from './tokens.js'
 import { hashString } from './tokens.js'
 
 function rngFrom(seed: number): () => number {
