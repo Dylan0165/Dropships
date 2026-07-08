@@ -1,6 +1,6 @@
 import path from 'path'
 import { atomicDeploy } from '../store-platform/deploy.js'
-import { claimPort, releasePort } from '../db.js'
+import { allocatePort, releasePort } from '../db.js'
 
 export interface DeployInput {
   subdomain: string
