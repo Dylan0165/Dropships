@@ -60,8 +60,9 @@ const STORE_BASE_DOMAIN = process.env.STORE_BASE_DOMAIN || 'localhost'
 const LOCAL_STORES_DIR = path.resolve(workspaceRoot, 'UIcontrol/data/stores')
 const TMP_BUILD_DIR = path.join(os.tmpdir(), 'stores')
 
-// Max producten per store — branded stores zijn focused, geen catalogus
-const MAX_PRODUCTS_PER_STORE = parseInt(process.env.MAX_PRODUCTS_PER_STORE ?? '3', 10)
+// Max producten per store — collectie varieert per store (6-15). Deze cap is de
+// bovengrens op wat er de renderer in gaat; de renderer kiest het exacte aantal.
+const MAX_PRODUCTS_PER_STORE = parseInt(process.env.MAX_PRODUCTS_PER_STORE ?? '15', 10)
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
