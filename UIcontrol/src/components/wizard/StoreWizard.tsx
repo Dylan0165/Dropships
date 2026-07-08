@@ -692,11 +692,14 @@ export function StoreWizard({ onClose, onStarted }: Props) {
 
 // ── Kleine subcomponenten ───────────────────────────────────────────────────────
 
-function AiThinking({ label }: { label: string }) {
+function AiThinking({ label, warn = false }: { label: string; warn?: boolean }) {
   return (
-    <div className="flex items-center gap-2.5 px-3 py-3 rounded-lg bg-blue-500/[0.05] border border-blue-500/20">
-      <Loader2 size={14} className="animate-spin text-blue-400 flex-shrink-0" />
-      <span className="text-xs text-blue-300">{label}</span>
+    <div className={clsx(
+      'flex items-center gap-2.5 px-3 py-3 rounded-lg border',
+      warn ? 'bg-amber-500/[0.06] border-amber-500/25' : 'bg-blue-500/[0.05] border-blue-500/20',
+    )}>
+      <Loader2 size={14} className={clsx('animate-spin flex-shrink-0', warn ? 'text-amber-400' : 'text-blue-400')} />
+      <span className={clsx('text-xs', warn ? 'text-amber-300' : 'text-blue-300')}>{label}</span>
     </div>
   )
 }
