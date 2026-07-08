@@ -133,9 +133,9 @@ export function StoreWizard({ onClose, onStarted }: Props) {
       .then(data => {
         setShortlist(data.shortlist ?? [])
         setSupplierIsMock(data.supplierIsMock)
-        // Pre-selecteer de top 3 (store toont max 3 producten)
+        // Pre-selecteer de top 8 — de store toont een collectie van 6-15 producten
         const pre = new Map<string, ShortlistProduct>()
-        for (const p of (data.shortlist ?? []).slice(0, 3)) pre.set(p.productId, p)
+        for (const p of (data.shortlist ?? []).slice(0, 8)) pre.set(p.productId, p)
         setSelectedProducts(pre)
       })
       .catch(err => setError(err instanceof Error ? err.message : 'Shortlist laden mislukt'))
