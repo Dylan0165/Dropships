@@ -143,17 +143,29 @@ export function renderStore(input: StoreBuildInput, brief: StoreBrief): StoreBui
   if (fs.existsSync(buildDir)) fs.rmSync(buildDir, { recursive: true, force: true })
   fs.mkdirSync(buildDir, { recursive: true })
 
-  // ── 1. Design-DNA uit persona ───────────────────────────────────────────────
+  // ── 1. Design-DNA uit persona + LLM-ontwerpplan eroverheen ──────────────────
+  // Het seeded DNA blijft het vangnet; het LLM-plan (brief.design) levert de
+  // bewuste art-direction: benoemde kleuren, karakter-typografie, layout-concept
+  // en het signature-element. applyDesignPlan valideert (contrast, allowlist).
   const persona = input.persona ?? fallbackPersona(input.niche, input.brand.tone)
-  const dna = deriveDesignDNA({
+  const baseDna = deriveDesignDNA({
     persona,
     niche: input.niche,
     seed: input.runId,
     brandPrimary: brief.colors?.primary,
   })
+  const applied = applyDesignPlan(baseDna, brief.design)
+  const dna = applied.dna
+  for (const w of applied.warnings) input.onLog?.(`[design-plan] ⚠ ${w}`)
+  input.onLog?.(applied.planApplied
+    ? `[design-plan] LLM-ontwerpplan toegepast — signature: ${applied.signature?.type}, display: ${brief.design?.typography.display}`
+    : '[design-plan] geen LLM-ontwerpplan in de brief — seeded design-DNA gebruikt')
 
-  // ── 2. Layout-plan (met anti-herhaling t.o.v. eerdere stores) ────────────────
-  const layout = selectLayout({ tone: dna.tone, seed: dna.seed, siteStructure: input.siteStructure })
+  // ── 2. Layout-plan (LLM-voorkeur wint; anders seeded met anti-herhaling) ─────
+  const layout = selectLayout({
+    tone: dna.tone, seed: dna.seed, siteStructure: input.siteStructure,
+    preferred: applied.layoutPreference ?? undefined,
+  })
   recordLayout(layout, dna.tone, subdomain)
 
   const year = new Date().getFullYear()
