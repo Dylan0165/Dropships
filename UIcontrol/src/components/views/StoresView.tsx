@@ -167,6 +167,37 @@ export function StoresView() {
   const downCount     = stores.filter(s => s.healthStatus === 'down').length
   const buildingCount = stores.filter(s => s.status === 'building').length
 
+  // Client-side poort-conflict detectie: zelfde poort bij >1 store = probleem
+  const portConflicts = (() => {
+    const byPort = new Map<number, string[]>()
+    for (const s of stores) {
+      if (s.port == null) continue
+      const arr = byPort.get(s.port) ?? []
+      arr.push(s.subdomein ?? s.storeId)
+      byPort.set(s.port, arr)
+    }
+    return [...byPort.entries()].filter(([, subs]) => subs.length > 1).map(([port, subs]) => ({ port, subs }))
+  })()
+
+  const runNginxAudit = async () => {
+    setAuditing(true)
+    setSyncResult(null)
+    try {
+      const r = await fetch('/api/admin/nginx-audit')
+      const data = await r.json() as { orphans?: Array<{ subdomain: string; port: number | null }>; portConflicts?: Array<{ port: number; subdomains: string[] }>; error?: string }
+      if (data.error) { setSyncResult(`Nginx-audit: ${data.error}`); return }
+      const parts: string[] = []
+      if ((data.portConflicts?.length ?? 0) > 0) parts.push(`${data.portConflicts!.length} poort-conflict(en): ${data.portConflicts!.map(c => `:${c.port} (${c.subdomains.join(', ')})`).join(' · ')}`)
+      if ((data.orphans?.length ?? 0) > 0) parts.push(`${data.orphans!.length} orphaned vhost(s): ${data.orphans!.map(o => o.subdomain).join(', ')}`)
+      setSyncResult(parts.length ? `Nginx-audit — ${parts.join(' | ')}` : 'Nginx-audit: geen conflicten of orphans gevonden ✓')
+    } catch {
+      setSyncResult('Nginx-audit mislukt — check of de store server bereikbaar is')
+    } finally {
+      setAuditing(false)
+      setTimeout(() => setSyncResult(null), 12000)
+    }
+  }
+
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       {/* Header */}
