@@ -60,9 +60,14 @@ export async function createPayment(params: MolliePaymentParams): Promise<string
     amount: { currency: 'EUR', value: amountEur.toFixed(2) },
     description,
     redirectUrl,
-    webhookUrl,
+    // Alleen meesturen als er een publiek adres is — een LAN-URL geeft Mollie
+    // 422 "webhook URL is unreachable" en blokkeert de HELE checkout.
+    ...(webhookUrl ? { webhookUrl } : {}),
     method: ['ideal', 'bancontact', 'creditcard', 'paypal'],
     metadata: { storeId, subdomain, runId },
+  }
+  if (!webhookUrl) {
+    console.warn(`[mollie] payment voor ${subdomain} ZONDER webhook aangemaakt — geen publieke URL (Cloudflare Tunnel niet actief?). Betaling werkt; status-push en auto-fulfillment niet.`)
   }
 
   const resp = await fetch(`${MOLLIE_API}/payments`, {
