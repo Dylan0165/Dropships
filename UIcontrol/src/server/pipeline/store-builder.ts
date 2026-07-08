@@ -237,7 +237,11 @@ export function renderStore(input: StoreBuildInput, brief: StoreBrief): StoreBui
 
   // ── 7. Design-DNA + layout persisteren (debug/reproduceerbaarheid) ──────────
   fs.writeFileSync(path.join(buildDir, 'design-dna.json'),
-    JSON.stringify({ tone: dna.tone, palette: dna.palette, typography: dna.typography, shape: dna.shape, layout, seed: dna.seed }, null, 2), 'utf-8')
+    JSON.stringify({
+      tone: dna.tone, palette: dna.palette, typography: dna.typography, shape: dna.shape,
+      layout, seed: dna.seed,
+      designPlan: brief.design ?? null, signature: applied.signature, planWarnings: applied.warnings,
+    }, null, 2), 'utf-8')
 
   // templateName behouden we voor backward-compat logging (niet meer bepalend)
   const templateName = selectTemplate(input.niche)
