@@ -128,6 +128,10 @@ Reviewer output schema (locked): `{ verdict: "APPROVED"|"REJECTED"|"UNCERTAIN", 
 
 ## Bekende gotcha's
 - `.env` is gitignored én untracked (sinds juli 2026) — wijzigingen moeten direct op de server via `sed + pm2 restart`
+- **Env-loading:** de server laadt via `server/load-env.ts` (niet meer kaal `dotenv/config`)
+  ZOWEL `UIcontrol/.env` als de repo-root `.env` — echte waarden winnen, lege/placeholder
+  (`your_..._here`) tellen niet als geconfigureerd. Een CJ-key mag dus in root óf UIcontrol/.env.
+  `isConfigured()` bepaalt overal of een key echt is (CJAdapter.isMock gebruikt dit).
 - `STORE_SERVER_HOST` moet `192.168.121.11` zijn (oud: `192.168.121.8` — fix: `sed -i 's/192.168.121.8/192.168.121.11/' .env && pm2 restart all`)
 - Auto-push git hook zit in `.claude/settings.json` — elke Edit/Write commit+pusht automatisch
 - Stores deployen naar port pool 4001-4999 op de store server. **Port-allocatie loopt
