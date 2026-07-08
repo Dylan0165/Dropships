@@ -83,11 +83,15 @@ export function badgeFor(tone: VisualTone, index: number, seed: number): string 
 
 // ── Brand story (Engels) ──────────────────────────────────────────────────────
 
+// LET OP: hier mag NOOIT rauwe wizard-input (persona.problem e.d.) in — die is
+// vaak Nederlands. `storyAngle` komt uit de store-builder LLM-brief en is per
+// definitie Engelse marketing-copy; zonder storyAngle valt hij terug op een
+// generieke Engelse regel.
 export function generateStory(opts: {
-  brandName: string; niche: string; persona: PersonaLike; tone: VisualTone; seed: number
+  brandName: string; niche: string; storyAngle?: string; tone: VisualTone; seed: number
 }): { title: string; body: string } {
   const rng = rngFrom(opts.seed ^ 0x5678)
-  const problem = opts.persona.problem
+  const problem = opts.storyAngle?.trim()
   const titles = [
     'Why we built ' + opts.brandName,
     'Made for the way you live',
