@@ -637,8 +637,32 @@ export function StoreWizard({ onClose, onStarted }: Props) {
                         ? <span className="text-[11px] text-zinc-600">Tip: kies er minstens {MIN_ADVISED} voor een volle collectie.</span>
                         : null}
                   </div>
+                  {/* Verzend-filter: alleen weergave, sluit niets uit in de data */}
+                  <label className="flex items-center gap-2 text-[11px] text-zinc-400 cursor-pointer w-fit">
+                    <button
+                      role="switch"
+                      aria-checked={euOnly}
+                      onClick={() => setEuOnly(v => !v)}
+                      className={clsx(
+                        'w-8 h-4.5 rounded-full transition-colors relative h-[18px]',
+                        euOnly ? 'bg-emerald-600' : 'bg-zinc-700',
+                      )}
+                    >
+                      <span className={clsx(
+                        'absolute top-[2px] w-3.5 h-3.5 rounded-full bg-white transition-all',
+                        euOnly ? 'left-[16px]' : 'left-[2px]',
+                      )} />
+                    </button>
+                    Alleen snelle EU-verzending (3-8d)
+                    {euOnly && shortlist.length !== visibleShortlist.length && (
+                      <span className="text-zinc-600">— {shortlist.length - visibleShortlist.length} langzamere verborgen</span>
+                    )}
+                  </label>
+                  {euOnly && visibleShortlist.length === 0 && (
+                    <p className="text-[11px] text-amber-400">Geen EU-voorraad voor deze zoekopdracht — zet het filter uit om ook 15-30d opties uit China te zien.</p>
+                  )}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                    {shortlist.map(p => (
+                    {visibleShortlist.map(p => (
                       <ProductCard
                         key={p.productId}
                         p={p}
