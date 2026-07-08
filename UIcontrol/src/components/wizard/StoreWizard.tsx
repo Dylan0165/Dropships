@@ -706,7 +706,7 @@ export function StoreWizard({ onClose, onStarted }: Props) {
                 )}
                 {manualResults.length > 0 && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-3">
-                    {manualResults.map(p => (
+                    {visibleManualResults.map(p => (
                       <ProductCard
                         key={p.productId}
                         p={p}
