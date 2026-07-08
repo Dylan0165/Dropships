@@ -884,6 +884,33 @@ function AiThinking({ label, warn = false }: { label: string; warn?: boolean }) 
   )
 }
 
+// Verzendtijd + warehouse-badge: groen = EU-snel, amber = langzamer (vnl. CN).
+// Informatief label — geen filter.
+function ShippingBadge({ warehouse, days }: { warehouse?: string; days?: { min: number; max: number } }) {
+  if (!warehouse && !days) return null
+  const eu = isEuWh(warehouse)
+  const label = `${days ? `${days.min}-${days.max}d` : '?'} · ${warehouse ?? '??'}`
+  return (
+    <span
+      title={eu ? `Snelle verzending uit EU-warehouse ${warehouse}` : `Langzamere verzending uit ${warehouse ?? 'onbekend warehouse'}`}
+      className={clsx(
+        'px-1.5 py-0.5 rounded border not-italic',
+        eu
+          ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-300'
+          : 'bg-amber-500/10 border-amber-500/40 text-amber-300',
+      )}
+    >
+      {label}
+    </span>
+  )
+}
+
+const SHIPPING_PROFILE_UI = {
+  'eu-fast': { label: 'EU-snel', cls: 'bg-emerald-500/10 border-emerald-500/40 text-emerald-300' },
+  'mixed': { label: 'EU + CN gemengd', cls: 'bg-blue-500/10 border-blue-500/40 text-blue-300' },
+  'mostly-cn': { label: 'vnl. CN · 15-30d', cls: 'bg-amber-500/10 border-amber-500/40 text-amber-300' },
+} as const
+
 function Chip({ children }: { children: React.ReactNode }) {
   return (
     <span className="px-2 py-0.5 rounded-full text-[10px] bg-white/[0.05] border border-white/[0.1] text-zinc-400">
