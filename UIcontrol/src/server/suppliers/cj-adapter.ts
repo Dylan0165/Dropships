@@ -560,6 +560,40 @@ export class CJAdapter implements SupplierAdapter {
   }
 }
 
+// ── Relevantie-vangnet ─────────────────────────────────────────────────────────
+// CJ's productNameEn-filter matcht los (soms lijkt hij genegeerd te worden) en
+// levert dan compleet irrelevante catalogus-items ("portable blenders" →
+// gereedschapskisten, routers). Dit vangnet eist dat minstens één significant
+// woord uit de zoekterm voorkomt in titel/beschrijving/categorie. Bewust simpel
+// (geen synoniemen): het is een vangnet bovenop een goede zoekterm, niet de fix.
+
+const QUERY_STOPWORDS = new Set([
+  'the', 'and', 'for', 'with', 'per', 'set', 'new', 'pro', 'mini', 'plus',
+  'een', 'het', 'van', 'voor', 'met', 'and',
+])
+
+/** normaliseer een woord: lowercase, alleen letters/cijfers, simpele meervoud-strip */
+function normToken(w: string): string {
+  let t = w.toLowerCase().replace(/[^a-z0-9]/g, '')
+  if (t.length > 3 && t.endsWith('es')) t = t.slice(0, -2)
+  else if (t.length > 3 && t.endsWith('s')) t = t.slice(0, -1)
+  return t
+}
+
+function queryTokens(query: string): string[] {
+  return query.split(/\s+/).map(normToken).filter(t => t.length >= 3 && !QUERY_STOPWORDS.has(t))
+}
+
+export function isRelevantToQuery(query: string, p: SupplierProduct): boolean {
+  const tokens = queryTokens(query)
+  if (tokens.length === 0) return true   // geen bruikbare zoekwoorden → niet filteren
+  const haystack = `${p.title} ${p.description ?? ''} ${p.category ?? ''}`
+    .toLowerCase().split(/\s+/).map(normToken)
+  const hay = new Set(haystack)
+  // substring-match als extra kans (bv. "blender" in "blenderbottle")
+  return tokens.some(t => hay.has(t) || haystack.some(h => h.length >= 4 && h.includes(t)))
+}
+
 // ── Mapping helpers ────────────────────────────────────────────────────────────
 
 /** CJ prijzen kunnen een range-string zijn ("1.50 -- 2.30") of een number */
