@@ -346,22 +346,84 @@ export function getStageOutput(runId: string, stage: string): Record<string, unk
   } catch { return null }
 }
 
-export function claimPort(storeId: string): number {
-  const now = new Date().toISOString()
-  return db.transaction(() => {
-    // Idempotent: if this storeId already has an active allocation, reuse it
-    const existing = db.prepare(
-      `SELECT port FROM port_allocations WHERE store_id = ? AND released_at IS NULL`
-    ).get(storeId) as { port: number } | undefined
-    if (existing) return existing.port
+export const PORT_RANGE_MIN = parseInt(process.env.STORE_PORT_MIN ?? '4001', 10)
+export const PORT_RANGE_MAX = parseInt(process.env.STORE_PORT_MAX ?? '4999', 10)
 
-    const maxRow = db.prepare(
-      `SELECT MAX(port) as m FROM port_allocations`
-    ).get() as { m: number | null } | undefined
-    const next = (maxRow?.m ?? 4000) + 1
-    db.prepare(`INSERT INTO port_allocations (port, store_id, allocated_at) VALUES (?,?,?)`).run(next, storeId, now)
-    return next
-  })()
+export class PortExhaustedError extends Error {
+  constructor(message: string) { super(message); this.name = 'PortExhaustedError' }
+}
+
+/**
+ * Centrale, atomaire port-allocatie — de DATABASE is de single source of truth.
+ *
+ * - Idempotent per storeId (herhaalde deploys van dezelfde store → zelfde poort).
+ * - Scant de volledige range [PORT_RANGE_MIN..MAX] en vermijdt élke poort die in
+ *   gebruik is door een store (elke status met een niet-NULL poort) óf door een
+ *   actieve allocatie in het ledger.
+ * - Claimt atomair via INSERT/UPSERT op de port_allocations PRIMARY KEY; een
+ *   gelijktijdige claim (ander proces/run) botst op de UNIQUE constraint en wordt
+ *   automatisch opnieuw geprobeerd — geen twee stores krijgen ooit dezelfde poort.
+ * - Gooit PortExhaustedError als de range vol is (i.p.v. stil een bestaande poort
+ *   te hergebruiken).
+ */
+export function allocatePort(storeId: string): number {
+  const now = new Date().toISOString()
+
+  // Idempotent: bestaande actieve allocatie of reeds gezette stores.port
+  const existingAlloc = db.prepare(
+    `SELECT port FROM port_allocations WHERE store_id = ? AND released_at IS NULL`,
+  ).get(storeId) as { port: number } | undefined
+  if (existingAlloc) return existingAlloc.port
+
+  const existingStore = db.prepare(
+    `SELECT port FROM stores WHERE store_id = ? AND port IS NOT NULL`,
+  ).get(storeId) as { port: number } | undefined
+  if (existingStore) {
+    // Ledger bijtrekken zodat het consistent is, dan die poort teruggeven
+    try {
+      db.prepare(`
+        INSERT INTO port_allocations (port, store_id, allocated_at, released_at) VALUES (?,?,?,NULL)
+        ON CONFLICT(port) DO UPDATE SET store_id = excluded.store_id, released_at = NULL
+      `).run(existingStore.port, storeId, now)
+    } catch { /* ledger is best-effort hier */ }
+    return existingStore.port
+  }
+
+  for (let attempt = 0; attempt < 64; attempt++) {
+    // Bouw de set van bezette poorten uit BEIDE bronnen
+    const used = new Set<number>()
+    for (const r of db.prepare(`SELECT port FROM stores WHERE port IS NOT NULL`).all() as { port: number }[]) used.add(r.port)
+    for (const r of db.prepare(`SELECT port FROM port_allocations WHERE released_at IS NULL`).all() as { port: number }[]) used.add(r.port)
+
+    let port = -1
+    for (let p = PORT_RANGE_MIN; p <= PORT_RANGE_MAX; p++) {
+      if (!used.has(p)) { port = p; break }
+    }
+    if (port === -1) {
+      throw new PortExhaustedError(
+        `Geen vrije poort in range ${PORT_RANGE_MIN}-${PORT_RANGE_MAX} — alle ${PORT_RANGE_MAX - PORT_RANGE_MIN + 1} poorten in gebruik. Verwijder ongebruikte stores.`,
+      )
+    }
+
+    // Atomaire claim: nieuwe poort → INSERT slaagt; vrijgegeven poort → UPSERT
+    // reactiveert; actieve poort van een ander (race) → 0 changes → opnieuw.
+    const info = db.prepare(`
+      INSERT INTO port_allocations (port, store_id, allocated_at, released_at) VALUES (?,?,?,NULL)
+      ON CONFLICT(port) DO UPDATE SET
+        store_id = excluded.store_id, allocated_at = excluded.allocated_at, released_at = NULL
+      WHERE port_allocations.released_at IS NOT NULL
+    `).run(port, storeId, now)
+
+    if (info.changes === 1) return port
+    // changes === 0: poort werd net door een ander actief geclaimd → retry
+  }
+
+  throw new PortExhaustedError('allocatePort: kon geen poort claimen na 64 pogingen (hoge contention)')
+}
+
+/** @deprecated Gebruik allocatePort — alias voor backward-compat. */
+export function claimPort(storeId: string): number {
+  return allocatePort(storeId)
 }
 
 export function upsertStore(store: {
