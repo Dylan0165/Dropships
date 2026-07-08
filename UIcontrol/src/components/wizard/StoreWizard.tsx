@@ -465,6 +465,11 @@ export function StoreWizard({ onClose, onStarted }: Props) {
               {!cjError && !supplierIsMock && shortlist.length > 0 && (
                 <div className="px-3 py-2 rounded-lg text-[11px] bg-emerald-900/25 border border-emerald-700/40 text-emerald-300">
                   Verbonden met CJ — echte producten met echte CJ product-ID's (pid/vid).
+                  {productSource === 'mcp'
+                    ? <span className="ml-1 text-emerald-400">Via CJ MCP-server (AI-gestuurde discovery).</span>
+                    : productSource === 'rest'
+                      ? <span className="ml-1 text-emerald-400/70">Via directe CJ REST-search.</span>
+                      : null}
                 </div>
               )}
 
