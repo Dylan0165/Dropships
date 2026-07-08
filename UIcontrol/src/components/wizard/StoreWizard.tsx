@@ -132,6 +132,7 @@ export function StoreWizard({ onClose, onStarted }: Props) {
     if (step !== 1 || !chosenDirection || shortlist.length > 0 || loadingShortlist) return
     setLoadingShortlist(true)
     setError(null)
+    setCjError(null)
     postJson<{ shortlist: ShortlistProduct[]; supplierIsMock: boolean }>('/api/wizard/shortlist', {
       niche: idea,
       persona: chosenDirection.persona,
@@ -139,39 +140,51 @@ export function StoreWizard({ onClose, onStarted }: Props) {
       .then(data => {
         setShortlist(data.shortlist ?? [])
         setSupplierIsMock(data.supplierIsMock)
-        // Pre-selecteer de top 8 — de store toont een collectie van 6-15 producten
+        // Pre-selecteer de top 8 (of minder) — de store toont 6-15 producten
         const pre = new Map<string, ShortlistProduct>()
-        for (const p of (data.shortlist ?? []).slice(0, 8)) pre.set(p.productId, p)
+        for (const p of (data.shortlist ?? []).slice(0, Math.min(8, MAX_SELECT))) pre.set(p.productId, p)
         setSelectedProducts(pre)
       })
-      .catch(err => setError(err instanceof Error ? err.message : 'Shortlist laden mislukt'))
+      // CJ-fout (auth/rate-limit/netwerk) → toon de reden, val NIET stil terug op mock
+      .catch(err => setCjError(err instanceof Error ? err.message : 'Shortlist laden mislukt'))
       .finally(() => setLoadingShortlist(false))
   }, [step, chosenDirection, idea, shortlist.length, loadingShortlist])
 
   const manualSearch = useCallback(async () => {
     if (!manualQuery.trim()) return
     setSearching(true)
-    setError(null)
+    setCjError(null)
     try {
       const r = await fetch(`/api/suppliers/cj/search?q=${encodeURIComponent(manualQuery.trim())}&limit=12`)
-      const data = await r.json() as { products?: ShortlistProduct[]; error?: string }
+      const data = await r.json() as { products?: ShortlistProduct[]; isMock?: boolean; error?: string }
       if (!r.ok) throw new Error(data.error ?? `${r.status}`)
+      if (typeof data.isMock === 'boolean') setSupplierIsMock(data.isMock)
       setManualResults((data.products ?? []).map(p => ({
         ...p,
         suggestedPriceEur: p.suggestedPriceEur ?? Math.max(9.95, Math.floor(p.costPrice * 0.92 * 2.8) + 0.95),
       })))
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Handmatig zoeken mislukt')
+      setCjError(err instanceof Error ? err.message : 'Handmatig zoeken mislukt')
     } finally {
       setSearching(false)
     }
   }, [manualQuery])
 
+  // Selectie-toggle met max-constraint (zelfde logica voor shortlist én handmatig zoeken)
   const toggleProduct = (p: ShortlistProduct) => {
     setSelectedProducts(prev => {
       const next = new Map(prev)
-      if (next.has(p.productId)) next.delete(p.productId)
-      else next.set(p.productId, p)
+      if (next.has(p.productId)) {
+        next.delete(p.productId)
+        setMaxHint(false)
+        return next
+      }
+      if (next.size >= MAX_SELECT) {
+        setMaxHint(true)          // max bereikt → blokkeer + toon feedback
+        return prev
+      }
+      next.set(p.productId, p)
+      if (next.size < MAX_SELECT) setMaxHint(false)
       return next
     })
   }
