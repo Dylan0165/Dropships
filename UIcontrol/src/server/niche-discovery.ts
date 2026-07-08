@@ -29,10 +29,10 @@ const MARKUP = 2.8
 const CACHE_KEY = 'niche_discovery_cache'
 const CACHE_TTL_MS = 24 * 3600_000
 const MAX_CATEGORIES = parseInt(process.env.NICHE_SCAN_MAX_CATEGORIES ?? '24', 10)
-const SPREAD_PROBES = 8            // top-N categorieën krijgen een 2e-warehouse check
-const PRIMARY_WAREHOUSE = 'DE'     // grootste EU-voorraad bij CJ
+const SPREAD_PROBES = 8            // top-N categorieën krijgen een 2e EU-warehouse check
+const PRIMARY_EU_WAREHOUSE = 'DE'  // grootste EU-voorraad bij CJ
 const SPREAD_WAREHOUSE = 'FR'
-const MIN_TOTAL_FOR_NICHE = 25     // minder dan dit = "schaars", niet voorstellen
+const MIN_TOTAL_FOR_NICHE = 25     // minder dan dit (wereldwijd!) = "schaars", niet voorstellen
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
