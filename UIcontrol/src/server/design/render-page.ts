@@ -8,6 +8,7 @@
 
 import type { DesignDNA } from './tokens.js'
 import type { HeroVariant, LayoutPlan, ProductVariant, SectionId } from './layout.js'
+import type { SignatureElement } from './design-plan.js'
 
 export interface RenderProduct {
   id: string
