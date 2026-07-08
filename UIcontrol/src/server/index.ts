@@ -18,7 +18,7 @@ import { runSkillsUpdate, recordSkillPerformance, getSkillsStats } from './skill
 import { createExperiment, assignComponentVariant, recordComponentConversion, declareWinner, getExperiments, getWinners, getExperimentStats } from './component-lab.js'
 import { runSeasonalCheck, getActiveSeasons } from './seasonal.js'
 import { getStoreBranding, generateAdsForStore, animateAdWithHiggsfield, killAd, getAdsForStore, startHiggsfieldPoller } from './ad-manager.js'
-import { scanDeployedStores, removeDeployedStore } from './store-platform/deploy.js'
+import { scanDeployedStores, removeDeployedStore, auditNginx } from './store-platform/deploy.js'
 import { getSupplier, listSuppliers } from './suppliers/index.js'
 import { listOrders, fulfillOrder, getOrderTracking } from './fulfillment.js'
 import { generateQuestions, generateDirections, buildShortlist, proposeStructure } from './wizard.js'
