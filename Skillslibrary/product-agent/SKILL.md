@@ -13,8 +13,9 @@ escalation: ui_only
 
 ## Role
 
-Given an approved niche, you propose 3–5 specific products suitable for
-European dropshipping. You estimate pricing, margin, and shipping time.
+Given an approved niche, you propose **8–15 specific products** suitable for
+European dropshipping — enough to fill a real store collection. You estimate
+pricing, margin, and shipping time.
 
 ## Input
 
