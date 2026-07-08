@@ -668,16 +668,23 @@ function SummaryBlock({ title, children }: { title: string; children: React.Reac
   )
 }
 
-function ProductCard({ p, selected, onToggle }: { p: ShortlistProduct; selected: boolean; onToggle: () => void }) {
+function ProductCard({ p, selected, onToggle, disabled = false }: { p: ShortlistProduct; selected: boolean; onToggle: () => void; disabled?: boolean }) {
   const costEur = p.costPrice * 0.92
   const price = p.suggestedPriceEur ?? costEur * 2.8
   const margin = p.marginEur ?? price - costEur
+  const isMock = p.productId.startsWith('mock-')
   return (
     <button
       onClick={onToggle}
+      disabled={disabled}
+      title={disabled ? `Max ${MAX_SELECT} producten geselecteerd` : undefined}
       className={clsx(
         'text-left p-3 rounded-xl border transition-all',
-        selected ? 'border-emerald-500/60 bg-emerald-500/[0.05]' : 'border-white/[0.08] bg-white/[0.02] hover:border-white/[0.2]',
+        selected
+          ? 'border-emerald-500/60 bg-emerald-500/[0.05]'
+          : disabled
+            ? 'border-white/[0.05] bg-white/[0.01] opacity-40 cursor-not-allowed'
+            : 'border-white/[0.08] bg-white/[0.02] hover:border-white/[0.2]',
       )}
     >
       <div className="flex gap-2.5">
