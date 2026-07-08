@@ -302,7 +302,7 @@ export class CJAdapter implements SupplierAdapter {
   private inflightSearches = new Map<string, Promise<SupplierProduct[]>>()
 
   async searchProducts(niche: string, options: ProductSearchOptions = {}): Promise<SupplierProduct[]> {
-    if (this.isMock) return mockProducts(niche, options)
+    if (this.isMock) return sortByShippingPreference(mockProducts(niche, options))
 
     const key = `${niche.toLowerCase().trim()}::${JSON.stringify(options)}`
     const existing = this.inflightSearches.get(key)
