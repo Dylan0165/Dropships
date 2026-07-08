@@ -398,6 +398,71 @@ export function StoreWizard({ onClose, onStarted }: Props) {
           {/* ─── STAP 1: Idee & doelgroep ─── */}
           {step === 0 && (
             <div className="space-y-5">
+              {/* Entry-modus: eigen idee vs AI-niches uit gemeten CJ-voorraad */}
+              <div className="flex gap-1.5 p-1 bg-white/[0.03] border border-white/[0.08] rounded-lg w-fit">
+                {([['idea', 'Eigen idee'], ['suggest', 'AI-niches uit CJ-voorraad']] as const).map(([mode, label]) => (
+                  <button
+                    key={mode}
+                    onClick={() => setEntryMode(mode)}
+                    className={clsx(
+                      'px-3 py-1.5 rounded-md text-[11px] font-medium transition-all',
+                      entryMode === mode ? 'bg-blue-600 text-white' : 'text-zinc-400 hover:text-white',
+                    )}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+
+              {/* ── AI-niches: kaarten uit de CJ-catalogus verkenning ── */}
+              {entryMode === 'suggest' && (
+                <div className="space-y-3">
+                  {(!nicheData || nicheData.status === 'scanning') && (
+                    <AiThinking label={loadingNiches || nicheData?.status === 'scanning'
+                      ? 'CJ-catalogus wordt gescand op goed-voorradige niches (kan ±1 min duren)…'
+                      : 'Niche-suggesties laden…'} />
+                  )}
+                  {nicheData && nicheData.suggestions.length > 0 && (
+                    <>
+                      <div className="flex items-center justify-between flex-wrap gap-1">
+                        <p className="text-xs text-zinc-400">
+                          Niches met <span className="text-white">bevestigde CJ EU-voorraad</span>
+                          {nicheData.source === 'mock' && <span className="text-amber-400"> (mock-data — geen CJ-key)</span>}
+                          {nicheData.status === 'stale-refreshing' && <span className="text-zinc-500"> · wordt ververst…</span>}
+                        </p>
+                        {nicheData.scannedAt && (
+                          <span className="text-[10px] text-zinc-600">gescand {new Date(nicheData.scannedAt).toLocaleString('nl-NL')}</span>
+                        )}
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        {nicheData.suggestions.map(s => (
+                          <button
+                            key={s.id}
+                            onClick={() => pickNiche(s)}
+                            className="text-left p-3.5 rounded-xl border border-white/[0.08] bg-white/[0.02] hover:border-blue-500/50 hover:bg-blue-500/[0.04] transition-all"
+                          >
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="text-white text-sm font-semibold">{s.title}</span>
+                              <span className="text-[10px] font-mono text-emerald-400 whitespace-nowrap">±{s.estimatedProducts} producten</span>
+                            </div>
+                            <p className="text-[11px] text-zinc-400 mt-1 line-clamp-3">{s.rationale}</p>
+                            <div className="flex flex-wrap gap-1.5 mt-2">
+                              <Chip>{s.persona.label}</Chip>
+                              {(s.exampleKeywords ?? []).slice(0, 3).map(k => <Chip key={k}>{k}</Chip>)}
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                      <p className="text-[10px] text-zinc-600">
+                        Kies een niche → de wizard gaat direct naar de product-selectie (doelgroep-profiel zit bij de suggestie).
+                      </p>
+                    </>
+                  )}
+                </div>
+              )}
+
+              {/* ── Eigen idee (bestaande route) ── */}
+              {entryMode === 'idea' && (
               <div>
                 <label className="text-xs text-zinc-400 block mb-2">Waar wil je een store omheen bouwen?</label>
                 <div className="flex gap-2">
