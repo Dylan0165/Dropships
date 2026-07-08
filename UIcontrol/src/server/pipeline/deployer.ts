@@ -24,16 +24,33 @@ export async function deployStore(
 ): Promise<DeployOutput> {
   const log = onLog ?? ((m: string) => console.log(`[deployer] ${m}`))
 
+  // Scan de ECHTE poorten op de nginx-server zodat de allocator poorten vermijdt
+  // die de server al gebruikt (ook als de DB stale is). Best-effort: bij een
+  // scan-fout valt de allocatie terug op de DB (pre-flight blijft als vangnet).
+  let serverVhosts: Array<{ subdomain: string; port: number }> = []
+  try {
+    serverVhosts = await scanDeployedStores()
+  } catch (err) {
+    log(`nginx port-scan overgeslagen: ${err instanceof Error ? err.message : String(err)}`)
+  }
+  const ownVhost = serverVhosts.find(v => v.subdomain === input.subdomain && v.port > 0)
+  const reserved = serverVhosts.filter(v => v.subdomain !== input.subdomain && v.port > 0).map(v => v.port)
+
   let port: number
   try {
-    port = allocatePort(input.storeId)
+    if (ownVhost) {
+      // Redeploy: store draait al op deze poort op de server → hergebruik hem
+      port = reservePort(input.storeId, ownVhost.port)
+      log(`Redeploy: hergebruik bestaande server-poort ${port} voor ${input.subdomain}`)
+    } else {
+      port = allocatePort(input.storeId, reserved)
+      log(`Port ${port} allocated for ${input.storeId} (${reserved.length} server-poorten gereserveerd)`)
+    }
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
     log(`Port-allocatie mislukt: ${msg}`)
     return { ok: false, port: 0, releaseDir: '', previewUrl: '', error: msg }
   }
-
-  log(`Port ${port} allocated for ${input.storeId}`)
 
   const result = await atomicDeploy(
     input.subdomain,
