@@ -188,6 +188,19 @@ export async function atomicDeploy(
     }
   }
 
+  // 0b. Poort-conflict pre-flight: harde stop als een ANDERE vhost deze poort al
+  // claimt. Voorkomt "conflicting server name on 0.0.0.0:PORT" en dat een nieuwe
+  // store een bestaande overschrijft. Alleen de eigen vhost (zelfde subdomain,
+  // = redeploy) mag de poort al gebruiken.
+  log(`Pre-flight: poort ${port} conflict-check tegen bestaande nginx vhosts`)
+  const conflict = await portConflictOwner(subdomain, port)
+  if (conflict) {
+    return {
+      ok: false, port, releaseDir: '',
+      error: `Poort-conflict: poort ${port} is al in gebruik door vhost "${conflict}" op ${host}. Deploy afgebroken om overschrijven/nginx-conflict te voorkomen. Dit duidt op een dubbele port-allocatie — verwijder de conflicterende store of draai de nginx-audit (/api/admin/nginx-audit).`,
+    }
+  }
+
   const ts = Date.now()
   const storeRoot = `/var/www/stores/${subdomain}`
   const releaseDir = `${storeRoot}/releases/${ts}`
