@@ -327,20 +327,32 @@ export class CJAdapter implements SupplierAdapter {
     const seen = new Map<string, SupplierProduct>()
     const warehouseErrors: string[] = []
 
+    let rawSeen = 0
     for (const countryCode of warehouses) {
       if (seen.size >= maxResults) break
+      const params = {
+        pageNum: options.page ?? 1,
+        pageSize,
+        productNameEn: niche,
+        countryCode,
+      }
+      // Exacte request loggen: zo is bij irrelevante resultaten meteen zichtbaar
+      // of de zoekterm überhaupt (en correct) bij CJ aankomt.
+      console.log(`[cj] → GET /product/list ${JSON.stringify(params)}`)
       try {
         const data = await this.request<{
           pageNum: number; pageSize: number; total: number
           list: Array<Record<string, unknown>>
-        }>('GET', '/product/list', {
-          pageNum: options.page ?? 1,
-          pageSize,
-          productNameEn: niche,
-          countryCode,
-        })
-        for (const raw of data?.list ?? []) {
+        }>('GET', '/product/list', params)
+        const list = data?.list ?? []
+        rawSeen += list.length
+        for (const raw of list) {
           const p = mapCjListProduct(raw, countryCode)
+          // Relevantie-vangnet: CJ's productNameEn-match is los (of wordt soms
+          // genegeerd) en geeft dan willekeurige catalogus-items terug. Producten
+          // waarvan titel/beschrijving/categorie GEEN enkel woord van de zoekterm
+          // bevatten worden genegeerd.
+          if (p && !isRelevantToQuery(niche, p)) continue
           if (p && !seen.has(p.productId)) seen.set(p.productId, p)
           if (seen.size >= maxResults) break
         }
