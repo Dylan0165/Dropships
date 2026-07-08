@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { ArrowLeft, ArrowRight, Check, Loader2, Package, Search, Sparkles, X } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { ArrowLeft, ArrowRight, Check, Loader2, Package, RefreshCw, Search, Sparkles, X } from 'lucide-react'
 import clsx from 'clsx'
 
 // ═══════ Store-wizard ═══════
