@@ -22,10 +22,18 @@ export async function deployStore(
   input: DeployInput,
   onLog?: (msg: string) => void,
 ): Promise<DeployOutput> {
-  const port = claimPort(input.storeId)
   const log = onLog ?? ((m: string) => console.log(`[deployer] ${m}`))
 
-  log(`Port ${port} claimed for ${input.storeId}`)
+  let port: number
+  try {
+    port = allocatePort(input.storeId)
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    log(`Port-allocatie mislukt: ${msg}`)
+    return { ok: false, port: 0, releaseDir: '', previewUrl: '', error: msg }
+  }
+
+  log(`Port ${port} allocated for ${input.storeId}`)
 
   const result = await atomicDeploy(
     input.subdomain,
