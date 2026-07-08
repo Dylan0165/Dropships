@@ -441,6 +441,28 @@ export function claimPort(storeId: string): number {
   return allocatePort(storeId)
 }
 
+/**
+ * Claimt een SPECIFIEKE poort voor een store — gebruikt bij redeploy wanneer de
+ * store al op die poort op de nginx-server draait (self-healing als de DB stale
+ * is). Idempotent; gooit een error als een ANDERE actieve store die poort al
+ * bezet houdt in de database.
+ */
+export function reservePort(storeId: string, port: number): number {
+  const now = new Date().toISOString()
+  const other = db.prepare(
+    `SELECT store_id FROM stores WHERE port = ? AND store_id != ?`,
+  ).get(port, storeId) as { store_id: string } | undefined
+  if (other) {
+    throw new PortExhaustedError(`Poort ${port} kan niet hergebruikt worden — al bezet door store ${other.store_id.slice(0, 12)} in de database.`)
+  }
+  db.prepare(`
+    INSERT INTO port_allocations (port, store_id, allocated_at, released_at) VALUES (?,?,?,NULL)
+    ON CONFLICT(port) DO UPDATE SET store_id = excluded.store_id, allocated_at = excluded.allocated_at, released_at = NULL
+  `).run(port, storeId, now)
+  db.prepare(`UPDATE stores SET port = ? WHERE store_id = ?`).run(port, storeId)
+  return port
+}
+
 export function upsertStore(store: {
   storeId: string; runId: string; subdomain: string; niche: string
   previewUrl: string; port: number; status?: string
