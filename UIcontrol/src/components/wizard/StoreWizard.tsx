@@ -465,7 +465,12 @@ export function StoreWizard({ onClose, onStarted }: Props) {
                               <span className="text-[10px] font-mono text-emerald-400 whitespace-nowrap">±{s.estimatedProducts} producten</span>
                             </div>
                             <p className="text-[11px] text-zinc-400 mt-1 line-clamp-3">{s.rationale}</p>
-                            <div className="flex flex-wrap gap-1.5 mt-2">
+                            <div className="flex flex-wrap gap-1.5 mt-2 items-center">
+                              {s.shippingProfile && SHIPPING_PROFILE_UI[s.shippingProfile] && (
+                                <span className={clsx('px-1.5 py-0.5 rounded border text-[10px] font-mono', SHIPPING_PROFILE_UI[s.shippingProfile].cls)}>
+                                  {SHIPPING_PROFILE_UI[s.shippingProfile].label}
+                                </span>
+                              )}
                               <Chip>{s.persona.label}</Chip>
                               {(s.exampleKeywords ?? []).slice(0, 3).map(k => <Chip key={k}>{k}</Chip>)}
                             </div>
