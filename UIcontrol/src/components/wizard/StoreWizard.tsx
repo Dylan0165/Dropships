@@ -464,7 +464,9 @@ export function StoreWizard({ onClose, onStarted }: Props) {
                 </div>
               )}
 
-              {loadingShortlist && <AiThinking label="CJ doorzoeken (EU warehouses) en AI selecteert een shortlist…" />}
+              {loadingShortlist && (cjRetry
+                ? <AiThinking warn label={`CJ rate limit bereikt — opnieuw proberen over ${cjRetry.seconds}s (poging ${cjRetry.attempt}/${cjRetry.maxAttempts})…`} />
+                : <AiThinking label="CJ doorzoeken (EU warehouses) en AI selecteert een shortlist…" />)}
 
               {!loadingShortlist && shortlist.length > 0 && (
                 <>
