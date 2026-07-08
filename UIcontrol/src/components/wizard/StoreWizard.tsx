@@ -394,7 +394,7 @@ export function StoreWizard({ onClose, onStarted }: Props) {
                 <>
                   <p className="text-xs text-zinc-400">
                     AI-shortlist voor <span className="text-white">{chosenDirection?.persona.label}</span> — geselecteerd: {selectedProducts.size}
-                    <span className="text-zinc-600"> (de store toont er max 3)</span>
+                    <span className="text-zinc-600"> (de store toont een collectie van 6-15 producten)</span>
                   </p>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                     {shortlist.map(p => (
