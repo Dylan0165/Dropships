@@ -127,9 +127,16 @@ export function StoreWizard({ onClose, onStarted }: Props) {
   }, [idea, answers])
 
   // ── Stap 2: shortlist automatisch laden bij binnenkomst ─────────────────────
+  // Ref-guard: React StrictMode (dev) draait mount-effects DUBBEL en state-guards
+  // (loadingShortlist) zijn dan nog niet gecommit — dus zonder ref vuurden er
+  // twee identieke /api/wizard/shortlist calls af en betaalde CJ's rate limit
+  // de rekening. De ref overleeft de dubbele invocatie wél.
 
-  useEffect(() => {
-    if (step !== 1 || !chosenDirection || shortlist.length > 0 || loadingShortlist) return
+  const shortlistRequestedRef = useRef(false)
+
+  const loadShortlist = useCallback(() => {
+    if (!chosenDirection) return
+    shortlistRequestedRef.current = true
     setLoadingShortlist(true)
     setError(null)
     setCjError(null)
@@ -148,7 +155,35 @@ export function StoreWizard({ onClose, onStarted }: Props) {
       // CJ-fout (auth/rate-limit/netwerk) → toon de reden, val NIET stil terug op mock
       .catch(err => setCjError(err instanceof Error ? err.message : 'Shortlist laden mislukt'))
       .finally(() => setLoadingShortlist(false))
-  }, [step, chosenDirection, idea, shortlist.length, loadingShortlist])
+  }, [chosenDirection, idea])
+
+  useEffect(() => {
+    if (step !== 1 || !chosenDirection || shortlistRequestedRef.current) return
+    loadShortlist()
+  }, [step, chosenDirection, loadShortlist])
+
+  // ── CJ-status pollen tijdens het laden: 429-backoffs zichtbaar maken ─────────
+  // i.p.v. een generieke spinner toont de UI "opnieuw proberen over Xs".
+
+  const [cjRetry, setCjRetry] = useState<{ attempt: number; maxAttempts: number; seconds: number } | null>(null)
+
+  useEffect(() => {
+    if (!loadingShortlist && !searching) { setCjRetry(null); return }
+    let alive = true
+    const poll = async () => {
+      try {
+        const r = await fetch('/api/suppliers/cj/status')
+        const data = await r.json() as { retry: { attempt: number; maxAttempts: number; resumeInMs: number } | null }
+        if (!alive) return
+        setCjRetry(data.retry
+          ? { attempt: data.retry.attempt, maxAttempts: data.retry.maxAttempts, seconds: Math.max(1, Math.ceil(data.retry.resumeInMs / 1000)) }
+          : null)
+      } catch { /* status is nice-to-have — nooit de wizard breken */ }
+    }
+    poll()
+    const timer = setInterval(poll, 1000)
+    return () => { alive = false; clearInterval(timer) }
+  }, [loadingShortlist, searching])
 
   const manualSearch = useCallback(async () => {
     if (!manualQuery.trim()) return
