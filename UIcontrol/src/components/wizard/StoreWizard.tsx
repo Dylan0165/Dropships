@@ -50,6 +50,10 @@ interface Props {
 
 const STEPS = ['Idee & doelgroep', 'Producten (CJ)', 'Site-structuur', 'Bevestigen'] as const
 
+// Max aantal selecteerbare producten — afgestemd op de collectie-grootte (6-15).
+const MAX_SELECT = 15
+const MIN_ADVISED = 6
+
 async function postJson<T>(url: string, body: unknown): Promise<T> {
   const r = await fetch(url, {
     method: 'POST',
