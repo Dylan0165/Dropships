@@ -949,6 +949,12 @@ app.get('/api/suppliers', (_req, res) => {
   res.json(listSuppliers())
 })
 
+// Live status van de CJ request-queue: is er een 429-backoff bezig? De wizard
+// pollt dit tijdens het laden om "opnieuw proberen over Xs" te kunnen tonen.
+app.get('/api/suppliers/cj/status', (_req, res) => {
+  res.json(getCjStatus())
+})
+
 app.get('/api/suppliers/cj/search', async (req, res) => {
   const { q, limit } = req.query as { q?: string; limit?: string }
   if (!q || !q.trim()) { res.status(400).json({ error: 'q (zoekterm) is verplicht' }); return }
