@@ -52,7 +52,8 @@ pricing, margin, and shipping time.
 
 ## Rules
 
-- Return 3–5 products, all in the same niche.
+- Return **8–15 products**, all in the same niche, each genuinely distinct (no
+  near-duplicates). Enough for a full collection page.
 - `price` (EUR) = consumer selling price, > `cost_price`.
 - `cost_price` (EUR) = your wholesale cost incl. shipping.
 - `margin` = `price - cost_price` (EUR), should be > €10 ideally.
