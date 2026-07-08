@@ -692,6 +692,33 @@ export function isRelevantToQuery(query: string, p: SupplierProduct): boolean {
 
 // ── Mapping helpers ────────────────────────────────────────────────────────────
 
+// ── Verzendtijd per warehouse ──────────────────────────────────────────────────
+// Warehouse is INFORMATIE, geen harde filter: EU = snel, US/UK = middel,
+// CN/onbekend = langzaam. De UI en de shortlist-AI maken zelf de afweging.
+
+const EU_WAREHOUSE_SET = new Set<string>(EU_WAREHOUSES as readonly string[])
+
+export function isEuWarehouse(warehouse?: string): boolean {
+  return !!warehouse && EU_WAREHOUSE_SET.has(warehouse.toUpperCase())
+}
+
+export function shippingDaysFor(warehouse?: string): { min: number; max: number } {
+  const wh = warehouse?.toUpperCase()
+  if (wh && EU_WAREHOUSE_SET.has(wh)) return { min: 3, max: 8 }
+  if (wh === 'US' || wh === 'GB' || wh === 'UK' || wh === 'AU') return { min: 7, max: 14 }
+  return { min: 15, max: 30 }   // CN / onbekend
+}
+
+/** EU/snel bovenaan, daarna oplopend op levertijd — zonder iets uit te sluiten. */
+export function sortByShippingPreference(products: SupplierProduct[]): SupplierProduct[] {
+  return [...products].sort((a, b) => {
+    const ea = isEuWarehouse(a.warehouse) ? 0 : 1
+    const eb = isEuWarehouse(b.warehouse) ? 0 : 1
+    if (ea !== eb) return ea - eb
+    return (a.shippingDays?.min ?? 99) - (b.shippingDays?.min ?? 99)
+  })
+}
+
 /** CJ prijzen kunnen een range-string zijn ("1.50 -- 2.30") of een number */
 function parsePrice(v: unknown): number | null {
   if (typeof v === 'number' && isFinite(v)) return v
