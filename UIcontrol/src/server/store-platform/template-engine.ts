@@ -1,9 +1,5 @@
 import path from 'path'
 import fs from 'fs'
-import { fileURLToPath } from 'url'
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const TEMPLATES_DIR = path.resolve(__dirname, '../../../store-templates')
 
 const TEMPLATE_NAMES = ['noir', 'blanc', 'bolt', 'dusk', 'grid'] as const
 export type TemplateName = typeof TEMPLATE_NAMES[number]
@@ -35,47 +31,35 @@ export interface TemplateVars {
   RUN_ID: string
 }
 
-function esc(s: string): string {
-  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+// ─── Escaping — DE centrale plek voor alle output-escaping ────────────────────
+// Er is bewust maar één definitie in de hele codebase (store-platform.ts
+// importeert deze). Twee contexten:
+//
+//  esc()  — HTML-tekst/attributen: & < > " én ' (voor single-quoted attrs).
+//  jsStr()— string die IN GEGENEREERDE TS/TSX-code terechtkomt: altijd via
+//           JSON.stringify zodat quotes/apostrofs/backticks/newlines/${ nooit
+//           de gegenereerde code kunnen breken. AI-tekst mag NOOIT bare in een
+//           template literal of JSX geplakt worden — alleen via jsStr().
+
+export function esc(s: string): string {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
 }
 
-function fill(template: string, vars: TemplateVars): string {
-  return template.replace(/\{\{([A-Z0-9_]+)\}\}/g, (_, key: string) => {
-    const val = (vars as unknown as Record<string, string>)[key]
-    return val !== undefined ? val : `{{${key}}}`
-  })
+/** Veilige emissie van een string als TS/TSX string-literal (incl. quotes). */
+export function jsStr(s: unknown): string {
+  return JSON.stringify(String(s ?? ''))
 }
 
+// Naam-hash → stijlnaam. Alleen nog voor logging/telemetrie; de 5 vaste .tmpl
+// templates zijn verwijderd (het variant-systeem in server/design/ rendert alles).
 export function selectTemplate(niche: string): TemplateName {
   const idx = niche.split('').reduce((a, c) => a + c.charCodeAt(0), 0) % 5
   return TEMPLATE_NAMES[idx]
-}
-
-export function applyTemplate(
-  targetDir: string,
-  templateName: TemplateName,
-  vars: TemplateVars,
-): void {
-  const templateDir = path.join(TEMPLATES_DIR, templateName)
-  if (!fs.existsSync(templateDir)) {
-    throw new Error(`Template "${templateName}" niet gevonden in ${TEMPLATES_DIR}`)
-  }
-  copyDir(templateDir, targetDir, vars)
-}
-
-function copyDir(src: string, dest: string, vars: TemplateVars): void {
-  if (!fs.existsSync(dest)) fs.mkdirSync(dest, { recursive: true })
-  for (const entry of fs.readdirSync(src, { withFileTypes: true })) {
-    const srcPath  = path.join(src, entry.name)
-    const destName = entry.name.replace(/\.tmpl$/, '')
-    const destPath = path.join(dest, destName)
-    if (entry.isDirectory()) {
-      copyDir(srcPath, destPath, vars)
-    } else if (entry.isFile()) {
-      const raw = fs.readFileSync(srcPath, 'utf-8')
-      fs.writeFileSync(destPath, fill(raw, vars), 'utf-8')
-    }
-  }
 }
 
 export function buildLayoutSharedFiles(
@@ -96,7 +80,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="nl">
+    <html lang="en">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -299,7 +283,7 @@ export default function CheckoutPage() {
   return (
     <main style={{ minHeight: '100dvh', background: '#fafafa', color: '#111', padding: '2rem 1rem' }}>
       <div style={{ maxWidth: 960, margin: '0 auto' }}>
-        <a href="/" style={{ fontSize: '0.8rem', color: '#666', textDecoration: 'none' }}>&larr; Back to ${vars.BRAND_NAME}</a>
+        <a href="/" style={{ fontSize: '0.8rem', color: '#666', textDecoration: 'none' }}>&larr; Back to {${jsStr(vars.BRAND_NAME)}}</a>
         <h1 style={{ fontSize: '1.6rem', margin: '1rem 0 2rem', fontWeight: 700 }}>Checkout</h1>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem', alignItems: 'start' }}>
 
@@ -409,7 +393,7 @@ export default function CheckoutPage() {
           Your order ships within 1-2 business days from our European warehouse.
         </p>
         <a href="/" style={{ display: 'inline-block', background: '#111', color: '#fff', padding: '0.75rem 2rem', borderRadius: 8, textDecoration: 'none', fontWeight: 600, fontSize: '0.85rem' }}>
-          Back to ${vars.BRAND_NAME}
+          Back to {${jsStr(vars.BRAND_NAME)}}
         </a>
       </div>
     </main>
@@ -421,7 +405,7 @@ export default function CheckoutPage() {
   const infoPages: Array<{ slug: string; title: string; body: string }> = [
     {
       slug: 'about', title: 'About us',
-      body: `<p>${vars.BRAND_NAME} — ${vars.SLOGAN}</p>
+      body: `<p>${esc(vars.BRAND_NAME)} — ${esc(vars.SLOGAN)}</p>
         <p>We believe quality shouldn't be complicated. That's why we hand-pick every product and ship everything from European warehouses: fast delivery and no surprises at customs.</p>
         <p>Questions? Feel free to <a href="/contact/">get in touch</a>.</p>`,
     },
@@ -457,7 +441,7 @@ export default function CheckoutPage() {
   return (
     <main style={{ minHeight: '100dvh', background: '#fafafa', color: '#111', padding: '3rem 1.5rem' }}>
       <div style={{ maxWidth: 640, margin: '0 auto' }}>
-        <a href="/" style={{ fontSize: '0.8rem', color: '#666', textDecoration: 'none' }}>&larr; ${vars.BRAND_NAME}</a>
+        <a href="/" style={{ fontSize: '0.8rem', color: '#666', textDecoration: 'none' }}>&larr; {${jsStr(vars.BRAND_NAME)}}</a>
         <h1 style={{ fontSize: '1.75rem', fontWeight: 700, margin: '1rem 0 1.5rem' }}>${page.title}</h1>
         <div style={{ lineHeight: 1.8, color: '#333', fontSize: '0.95rem' }} dangerouslySetInnerHTML={{ __html: ${JSON.stringify(page.body)} }} />
       </div>
@@ -512,23 +496,26 @@ export function buildTemplateVars(opts: {
   const checkoutApiUrl = process.env.UICONTROL_PUBLIC_URL
     ? `${process.env.UICONTROL_PUBLIC_URL.replace(/\/+$/, '')}/api/checkout/session`
     : `http://192.168.121.133:3001/api/checkout/session`
+  // Waarden zijn RAW (geen esc hier). Escaping gebeurt op het gebruikspunt,
+  // context-bewust: jsStr() voor gegenereerde TSX-code, esc() voor HTML.
+  // Fallback-USPs zijn Engels — alle klant-facing content is Engelstalig.
   return {
-    BRAND_NAME:       esc(opts.brandName),
-    BRAND_NAME_UPPER: esc(opts.brandName).toUpperCase(),
-    SLOGAN:           esc(opts.slogan),
+    BRAND_NAME:       opts.brandName,
+    BRAND_NAME_UPPER: opts.brandName.toUpperCase(),
+    SLOGAN:           opts.slogan,
     PRIMARY:          opts.primary,
     SECONDARY:        opts.secondary,
     ACCENT:           opts.accent,
     PRODUCTS_JSON:    JSON.stringify(opts.products, null, 2),
     YEAR:             String(new Date().getFullYear()),
-    HERO_HEADLINE:    esc(opts.heroHeadline ?? opts.brandName),
-    HERO_LABEL:       `Nieuw — ${new Date().getFullYear()}`,
-    USP_1_TITLE:      esc(opts.usps[0]?.title ?? 'Gratis verzending'),
-    USP_1_DESC:       esc(opts.usps[0]?.desc  ?? 'Op alle bestellingen in NL & BE.'),
-    USP_2_TITLE:      esc(opts.usps[1]?.title ?? '30 dagen retour'),
-    USP_2_DESC:       esc(opts.usps[1]?.desc  ?? 'Geen gedoe, geld terug.'),
-    USP_3_TITLE:      esc(opts.usps[2]?.title ?? 'Veilig betalen'),
-    USP_3_DESC:       esc(opts.usps[2]?.desc  ?? 'iDEAL, Visa, Mastercard, PayPal.'),
+    HERO_HEADLINE:    opts.heroHeadline ?? opts.brandName,
+    HERO_LABEL:       `New — ${new Date().getFullYear()}`,
+    USP_1_TITLE:      opts.usps[0]?.title ?? 'Free EU shipping',
+    USP_1_DESC:       opts.usps[0]?.desc  ?? 'On every order across Europe.',
+    USP_2_TITLE:      opts.usps[1]?.title ?? '30-day returns',
+    USP_2_DESC:       opts.usps[1]?.desc  ?? 'Not for you? Money back, no hassle.',
+    USP_3_TITLE:      opts.usps[2]?.title ?? 'Secure checkout',
+    USP_3_DESC:       opts.usps[2]?.desc  ?? 'iDEAL, Visa, Mastercard and PayPal.',
     FONT_URL:         opts.fontUrl,
     HEADING_FONT:     opts.headingFont,
     BODY_FONT:        opts.bodyFont,

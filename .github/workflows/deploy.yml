@@ -25,6 +25,18 @@ jobs:
           cd /home/student/Dropships/UIcontrol
           npm run build
 
+      # Fix bij de BRON: de env-backup bevatte het oude store-server IP
+      # (192.168.121.8) en zette dat bij elke deploy terug over .env heen.
+      # Patch de backup vóór het herstellen, zodat de fout niet kan terugkeren.
+      - name: Fix legacy store server IP in env backup
+        run: |
+          if [ -f /home/student/.dropship-envs/uicontrol.env ]; then
+            if grep -q '192\.168\.121\.8\b' /home/student/.dropship-envs/uicontrol.env; then
+              sed -i 's/192\.168\.121\.8\b/192.168.121.11/g' /home/student/.dropship-envs/uicontrol.env
+              echo "Legacy IP 192.168.121.8 -> 192.168.121.11 gepatcht in env-backup"
+            fi
+          fi
+
       - name: Restore .env files (not in git on server)
         run: |
           if [ -f /home/student/.dropship-envs/uicontrol.env ]; then

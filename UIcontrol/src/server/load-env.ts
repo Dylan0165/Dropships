@@ -60,6 +60,20 @@ export function applyEnvFiles(files: string[], target: NodeJS.ProcessEnv = proce
 // Voorrang: UIcontrol/.env eerst, root daarna (root vult alleen gaten)
 const loadedFrom = applyEnvFiles([path.join(uiRoot, '.env'), path.join(repoRoot, '.env')])
 
+// ── Legacy-waarde guard ────────────────────────────────────────────────────────
+// 192.168.121.8 is het OUDE store-server IP; de juiste is 192.168.121.11. Het
+// oude adres dook herhaaldelijk op via stale .env-backups → "No route to host"
+// bij elke deploy. Corrigeer runtime en waarschuw luid; de CI patcht ondertussen
+// de backup zelf (zie .github/workflows/deploy.yml).
+const LEGACY_STORE_IP = '192.168.121.8'
+const CURRENT_STORE_IP = '192.168.121.11'
+for (const key of ['STORE_SERVER_HOST', 'VITE_STORE_SERVER_HOST'] as const) {
+  if (process.env[key]?.trim() === LEGACY_STORE_IP) {
+    console.warn(`[env] ⚠ ${key}=${LEGACY_STORE_IP} is het OUDE store-server IP — runtime gecorrigeerd naar ${CURRENT_STORE_IP}. Fix de .env(-backup) op de server!`)
+    process.env[key] = CURRENT_STORE_IP
+  }
+}
+
 // Korte, key-veilige samenvatting voor debug (geen waarden loggen)
 const cjOk = isConfigured(process.env.CJ_API_KEY) && isConfigured(process.env.CJ_EMAIL)
 console.log(

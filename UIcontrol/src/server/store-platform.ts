@@ -27,7 +27,7 @@ import { v4 as uuid } from 'uuid'
 import db, { saveAgentOutput as _saveAgentOutput, allocatePort, reservePort } from './db.js'
 import {
   buildLayoutSharedFiles, buildTemplateVars,
-  buildCheckoutAndInfoPages, ensureTailwindSupport,
+  buildCheckoutAndInfoPages, ensureTailwindSupport, esc,
 } from './store-platform/template-engine.js'
 import { deriveDesignDNA, fallbackPersona } from './design/tokens.js'
 import { selectLayout, recordLayout, deriveProductCount, fitProducts } from './design/layout.js'
@@ -104,10 +104,9 @@ export interface DeployedStore {
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-
-function esc(s: string): string {
-  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
-}
+// esc komt uit template-engine — de ENIGE escaping-definitie in de codebase.
+// Nooit lokaal her-definiëren; dat veroorzaakte eerder "esc is not defined"
+// drift tussen versies van dit bestand en de template-engine.
 
 function slugify(s: string): string {
   return s.toLowerCase().normalize('NFKD').replace(/[^\w\s-]/g, '').trim().replace(/[\s_]+/g, '-').replace(/-+/g, '-').slice(0, 40) || 'store'
@@ -121,64 +120,6 @@ function rmDirRecursive(p: string): void {
   if (fs.existsSync(p)) fs.rmSync(p, { recursive: true, force: true })
 }
 
-// ── Layout + Font System ──────────────────────────────────────────────────────
-
-const FONT_PAIRINGS = [
-  { // 0 Studio — geometric, bold, modern
-    url: 'https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap',
-    heading: "'Space Grotesk', sans-serif", body: "'DM Sans', system-ui, sans-serif",
-  },
-  { // 1 Maison — editorial, luxury, serif
-    url: 'https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Lato:wght@300;400;700&display=swap',
-    heading: "'Playfair Display', Georgia, serif", body: "'Lato', system-ui, sans-serif",
-  },
-  { // 2 Volt — high energy, sport
-    url: 'https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=Outfit:wght@300;400;500;600&display=swap',
-    heading: "'Syne', sans-serif", body: "'Outfit', system-ui, sans-serif",
-  },
-  { // 3 Pure — minimal, Scandinavian clean
-    url: 'https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400&display=swap',
-    heading: "'DM Serif Display', Georgia, serif", body: "'DM Sans', system-ui, sans-serif",
-  },
-  { // 4 Origin — warm, organic, lifestyle
-    url: 'https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;1,9..144,400&family=Figtree:wght@300;400;600&display=swap',
-    heading: "'Fraunces', Georgia, serif", body: "'Figtree', system-ui, sans-serif",
-  },
-]
-
-function nicheUsps(niche: string): Array<{title: string; desc: string}> {
-  const n = niche.toLowerCase()
-  if (/fit|sport|gym|yoga|train|workout|muscle|run/.test(n)) return [
-    { title: '30-daagse garantie', desc: 'Geen resultaat? Volledig terugbetaald.' },
-    { title: '10.000+ sporters', desc: 'Getest en goedgekeurd door actieve atleten.' },
-    { title: 'Morgen in huis', desc: 'Besteld voor 23:00, geleverd in NL & BE.' },
-  ]
-  if (/blend|juice|food|drink|nutri|coffee|tea|protein/.test(n)) return [
-    { title: 'BPA-vrij materiaal', desc: 'Gecertificeerd levensmiddelenveilig.' },
-    { title: 'Overal mee naartoe', desc: 'Thuis, kantoor of onderweg.' },
-    { title: 'Gratis receptenboek', desc: 'Exclusief bij elke bestelling.' },
-  ]
-  if (/beauty|skin|hair|face|glow|serum|cosmetic/.test(n)) return [
-    { title: 'Dermatologisch getest', desc: 'Veilig voor alle huidtypes.' },
-    { title: 'Clean formula', desc: 'Vrij van parabenen en sulfaten.' },
-    { title: '60 dagen zichtbaar resultaat', desc: 'Of we betalen je terug.' },
-  ]
-  if (/tech|gadget|smart|device|cable|charge|phone/.test(n)) return [
-    { title: '2 jaar garantie', desc: 'Volledige fabrieksgarantie inbegrepen.' },
-    { title: 'Plug & play', desc: 'Direct klaar voor gebruik.' },
-    { title: 'Support binnen 24u', desc: 'Ons team staat altijd klaar.' },
-  ]
-  if (/home|kitchen|house|living|decor|garden/.test(n)) return [
-    { title: 'Premium kwaliteit', desc: 'Materialen die jaren meegaan.' },
-    { title: 'Tijloos design', desc: 'Past bij elke interieurstijl.' },
-    { title: 'Gratis retour', desc: '30 dagen bedenktijd.' },
-  ]
-  return [
-    { title: 'Gratis verzending', desc: 'Op alle bestellingen in NL & BE.' },
-    { title: '30 dagen retour', desc: 'Geen gedoe, geld terug.' },
-    { title: 'Veilig betalen', desc: 'iDEAL, Visa, Mastercard, PayPal.' },
-  ]
-}
 // CMS-rebuild / standalone deploy pad. Gebruikt dezelfde design-DNA +
 // variant-renderer als de pipeline (renderStore), zodat óók herbouwde stores
 // uniek + Engelstalig zijn — geen vaste .tmpl templates meer.
@@ -302,11 +243,11 @@ function buildStaticPreviewHtml(data: StoreData): string {
   const color = data.primary_color || '#7c3aed'
   const productsHtml = data.products.map(p => `
     <article class="card">
-      ${p.image ? `<img src="${p.image}" alt="${p.title.replace(/"/g, '&quot;')}" />` : ''}
+      ${p.image ? `<img src="${p.image}" alt="${esc(p.title)}" />` : ''}
       <div class="card-body">
-        <h3>${p.title}</h3>
+        <h3>${esc(p.title)}</h3>
         <div class="price">€${p.price.toFixed(2)}${p.compareAtPrice ? ` <s>€${p.compareAtPrice.toFixed(2)}</s>` : ''}</div>
-        <button>In winkelmand</button>
+        <button>Add to cart</button>
       </div>
     </article>`).join('\n')
 
@@ -320,7 +261,7 @@ function buildStaticPreviewHtml(data: StoreData): string {
     : ''
 
   return `<!doctype html>
-<html lang="nl"><head>
+<html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${esc(data.brand_name)} — ${esc(data.slogan)}</title>
 <meta name="description" content="${esc(data.slogan)}">
@@ -360,11 +301,11 @@ ${clarityScript}
   footer { padding: 2rem; border-top: 1px solid #e5e7eb; text-align: center; color: #64748b; font-size: 0.875rem }
 </style></head>
 <body>
-<header><span class="brand">${esc(data.brand_name)}</span><nav>Shop · Over ons · Contact</nav></header>
+<header><span class="brand">${esc(data.brand_name)}</span><nav>Shop · About · Contact</nav></header>
 <section class="hero">
   <h1>${esc(data.brand_name)}</h1>
   <p>${esc(data.slogan)}</p>
-  <a href="#products" class="cta">Shop nu</a>
+  <a href="#products" class="cta">Shop now</a>
 </section>
 <section id="products"><div class="grid">${productsHtml}</div></section>
 <footer>© ${new Date().getFullYear()} ${esc(data.brand_name)} — ${data.niche}</footer>
@@ -407,18 +348,31 @@ async function sshExec(command: string): Promise<{ ok: boolean; output: string }
 }
 
 // ── Duplicate product guard ────────────────────────────────────────────────────
-// Haal alle CJ product IDs op die al in gebruik zijn door andere stores.
+// Haal alle ECHTE supplier product IDs op die al in gebruik zijn door andere
+// actieve stores. Leest uit store_data (de kolom die persistStore daadwerkelijk
+// schrijft — de oude query las het nooit-geschreven products_json en draaide dus
+// op verouderde/legacy data). Mock-producten (mock-*) tellen niet mee: hun IDs
+// zijn deterministisch per niche, waardoor elke tweede run op hetzelfde idee
+// onterecht "alles al in gebruik" gaf.
 function getDeployedProductIds(): Set<string> {
+  const used = new Set<string>()
   try {
     const rows = db.prepare(
-      `SELECT DISTINCT json_each.value AS pid
-       FROM stores, json_each(stores.products_json)
-       WHERE stores.status IN ('local','live')`,
-    ).all() as { pid: string }[]
-    return new Set(rows.map(r => r.pid))
-  } catch {
-    return new Set()
+      `SELECT store_data FROM stores WHERE status IN ('local','live') AND store_data IS NOT NULL`,
+    ).all() as { store_data: string }[]
+    for (const row of rows) {
+      try {
+        const parsed = JSON.parse(row.store_data) as { products?: Array<{ id?: string; supplierProductId?: string }> }
+        for (const p of parsed.products ?? []) {
+          const pid = p.supplierProductId ?? p.id
+          if (pid && !pid.startsWith('mock-')) used.add(pid)
+        }
+      } catch { /* corrupte store_data overslaan */ }
+    }
+  } catch (err) {
+    console.error('[store-platform] getDeployedProductIds failed:', err)
   }
+  return used
 }
 
 export async function deployStore(storeData: StoreData): Promise<DeployedStore> {
@@ -440,28 +394,22 @@ export async function deployStore(storeData: StoreData): Promise<DeployedStore> 
   }
 
   // ── Duplicate product preventie ───────────────────────────────────────────
+  // Filtert alleen ECHTE supplier-producten die al in een andere actieve store
+  // zitten (mock-producten tellen nooit mee). Deze guard BLOKKEERT een deploy
+  // nooit: bij volledige overlap deployen we gewoon met de gekozen producten
+  // en loggen we een duidelijke waarschuwing.
   const deployedIds = getDeployedProductIds()
   let uniqueProducts = limitedProducts.filter(p => {
-    if (deployedIds.has(p.id)) {
-      console.log(`[store-platform] Product ${p.id} (${p.title}) al in gebruik door andere store — overgeslagen`)
+    const pid = p.supplierProductId ?? p.id
+    if (deployedIds.has(pid)) {
+      console.log(`[store-platform] Product ${pid} (${p.title}) al in gebruik door andere store — overgeslagen`)
       return false
     }
     return true
   })
   if (uniqueProducts.length === 0) {
-    // Release products from the oldest store so they can be reused
-    try {
-      const oldest = db.prepare(
-        `SELECT id FROM stores WHERE status IN ('local','live') AND products_json != '[]' ORDER BY created_at ASC LIMIT 1`,
-      ).get() as { id: string } | undefined
-      if (oldest) {
-        db.prepare(`UPDATE stores SET products_json = '[]' WHERE id = ?`).run(oldest.id)
-        console.log(`[store-platform] Producten vrijgegeven van oudste store ${oldest.id} — hergebruik ingeschakeld`)
-      }
-    } catch { /* ignore */ }
-    // After releasing, accept all products (duplicate guard bypassed)
     uniqueProducts = limitedProducts
-    console.warn('[store-platform] Alle producten waren in gebruik — oudste store vrijgegeven, producten hergebruikt')
+    console.warn('[store-platform] Alle gekozen producten zitten al in andere stores — deploy gaat door met dezelfde producten (bewuste keuze van de gebruiker in de wizard)')
   }
 
   const data = {

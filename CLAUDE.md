@@ -53,7 +53,6 @@ d:\Dropshippingv0.1tool\          ← Windows dev machine
 │   │   │   └── usePipeline.ts     ← Pipeline state
 │   │   └── types/index.ts         ← Alle gedeelde TypeScript types
 │   ├── data/dropship.db           ← SQLite database (WAL mode)
-│   ├── store-templates/           ← Next.js store template broncode
 │   └── package.json
 └── Skillslibrary/                 ← 15 agent SKILL.md bestanden
 ```
