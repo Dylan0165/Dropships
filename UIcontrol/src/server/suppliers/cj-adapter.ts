@@ -252,10 +252,15 @@ export class CJAdapter implements SupplierAdapter {
   async searchProducts(niche: string, options: ProductSearchOptions = {}): Promise<SupplierProduct[]> {
     if (this.isMock) return mockProducts(niche, options)
 
+    // Auth vooraf: config-/auth-/rate-limit-fouten komen zo als duidelijke error
+    // naar boven (state b) i.p.v. stilzwijgend als "geen resultaten" (was verwarrend).
+    await this.getToken()
+
     const warehouses = options.warehouseCountries ?? [...EU_WAREHOUSES]
     const pageSize = options.pageSize ?? 20
     const maxResults = options.maxResults ?? 30
     const seen = new Map<string, SupplierProduct>()
+    const warehouseErrors: string[] = []
 
     for (const countryCode of warehouses) {
       if (seen.size >= maxResults) break
@@ -275,9 +280,17 @@ export class CJAdapter implements SupplierAdapter {
           if (seen.size >= maxResults) break
         }
       } catch (err) {
-        // Eén warehouse dat faalt mag de hele zoekopdracht niet breken
-        console.warn(`[cj] product search voor warehouse ${countryCode} mislukt:`, err instanceof Error ? err.message : err)
+        // Eén warehouse dat faalt mag de hele zoekopdracht niet breken...
+        const msg = err instanceof Error ? err.message : String(err)
+        warehouseErrors.push(`${countryCode}: ${msg}`)
+        console.warn(`[cj] product search voor warehouse ${countryCode} mislukt:`, msg)
       }
+    }
+
+    // ...maar als ÁLLE warehouses faalden en er niets gevonden is, is dat een
+    // echte CJ-fout die de gebruiker moet zien — niet stil leeg teruggeven.
+    if (seen.size === 0 && warehouseErrors.length === warehouses.length) {
+      throw new CJApiError(`CJ productzoekopdracht faalde voor alle warehouses — ${warehouseErrors[0]}`)
     }
 
     return Array.from(seen.values())
