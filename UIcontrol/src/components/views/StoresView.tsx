@@ -75,6 +75,7 @@ export function StoresView() {
 
   const dismissToast = (id: string) => setToasts(t => t.filter(x => x.id !== id))
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [auditing, setAuditing] = useState(false)
 
   // Store volledig verwijderen: nginx vhost + files op de store server, poort vrij, DB-rij weg
   const deleteStore = async (store: StoreInfoEx) => {
