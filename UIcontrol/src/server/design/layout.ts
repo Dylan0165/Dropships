@@ -27,6 +27,16 @@ export interface LayoutSelectOptions {
     pages?: Array<{ id: string; title: string }>
     extras?: Array<{ id: string; title: string }>
   }
+  /**
+   * Expliciete voorkeur uit het LLM-ontwerpplan (design-plan.ts). Een bewuste
+   * keuze van de designer-LLM wint van de seeded anti-herhaling — het plan IS
+   * de variatie. Ontbrekende velden vallen terug op de seeded selectie.
+   */
+  preferred?: {
+    hero?: HeroVariant
+    product?: ProductVariant
+    sections?: SectionId[]
+  }
 }
 
 // ── Anti-herhaling: recent gebruikte layouts (DB) ─────────────────────────────
