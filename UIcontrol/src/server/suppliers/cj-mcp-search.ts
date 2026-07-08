@@ -139,7 +139,7 @@ export async function mcpProductDiscovery(
   }
 
   return {
-    products: Array.from(collected.values()),
+    products: sortByShippingPreference(Array.from(collected.values())),
     toolCalls,
     primaryTerm,
   }
