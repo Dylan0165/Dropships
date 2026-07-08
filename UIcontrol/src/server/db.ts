@@ -369,8 +369,10 @@ export class PortExhaustedError extends Error {
  * - Gooit PortExhaustedError als de range vol is (i.p.v. stil een bestaande poort
  *   te hergebruiken).
  */
-export function allocatePort(storeId: string): number {
+export function allocatePort(storeId: string, reservedPorts: Iterable<number> = []): number {
   const now = new Date().toISOString()
+  const reserved = new Set<number>()
+  for (const p of reservedPorts) if (Number.isFinite(p)) reserved.add(p)
 
   // Idempotent: bestaande actieve allocatie of reeds gezette stores.port
   const existingAlloc = db.prepare(
@@ -393,8 +395,11 @@ export function allocatePort(storeId: string): number {
   }
 
   for (let attempt = 0; attempt < 64; attempt++) {
-    // Bouw de set van bezette poorten uit BEIDE bronnen
-    const used = new Set<number>()
+    // Bouw de set van bezette poorten uit ALLE bronnen: stores.port, het
+    // ledger, én de poorten die op de nginx-server al in gebruik zijn (reserved).
+    // Zonder die laatste kon een stale DB een poort uitdelen die de server al
+    // gebruikt → nginx-conflict.
+    const used = new Set<number>(reserved)
     for (const r of db.prepare(`SELECT port FROM stores WHERE port IS NOT NULL`).all() as { port: number }[]) used.add(r.port)
     for (const r of db.prepare(`SELECT port FROM port_allocations WHERE released_at IS NULL`).all() as { port: number }[]) used.add(r.port)
 
