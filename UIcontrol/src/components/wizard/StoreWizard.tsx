@@ -441,6 +441,14 @@ export function StoreWizard({ onClose, onStarted }: Props) {
                 <div className="px-3 py-2.5 rounded-lg text-[11px] bg-red-900/40 border border-red-700/50 text-red-200">
                   <span className="font-semibold">CJ API-fout:</span> {cjError}
                   <span className="block text-red-300/70 mt-0.5">Controleer je CJ_API_KEY/CJ_EMAIL, rate-limits of netwerk. Er wordt bewust NIET teruggevallen op mock-data.</span>
+                  <button
+                    onClick={loadShortlist}
+                    disabled={loadingShortlist}
+                    className="mt-2 px-3 py-1.5 bg-red-700/40 hover:bg-red-700/70 disabled:opacity-40 text-red-100 text-[11px] rounded-lg font-medium flex items-center gap-1.5 transition-colors"
+                  >
+                    {loadingShortlist ? <Loader2 size={11} className="animate-spin" /> : <RefreshCw size={11} />}
+                    Opnieuw proberen
+                  </button>
                 </div>
               )}
               {/* State (a): geen key → bewuste mock-fallback met waarschuwing */}
