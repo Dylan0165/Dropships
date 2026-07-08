@@ -19,7 +19,7 @@ import { createExperiment, assignComponentVariant, recordComponentConversion, de
 import { runSeasonalCheck, getActiveSeasons } from './seasonal.js'
 import { getStoreBranding, generateAdsForStore, animateAdWithHiggsfield, killAd, getAdsForStore, startHiggsfieldPoller } from './ad-manager.js'
 import { scanDeployedStores, removeDeployedStore, auditNginx } from './store-platform/deploy.js'
-import { getSupplier, listSuppliers } from './suppliers/index.js'
+import { getSupplier, listSuppliers, getCjStatus } from './suppliers/index.js'
 import { listOrders, fulfillOrder, getOrderTracking } from './fulfillment.js'
 import { generateQuestions, generateDirections, buildShortlist, proposeStructure } from './wizard.js'
 import type { WizardPersona } from './wizard.js'
