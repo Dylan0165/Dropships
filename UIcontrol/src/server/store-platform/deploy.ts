@@ -337,6 +337,92 @@ export async function removeDeployedStore(
   return { ok: true }
 }
 
+/**
+ * Geeft de naam van de vhost (subdomain) terug die `port` al claimt via een
+ * `listen <port>`-regel, ANDERS dan `selfSubdomain`. Null = geen conflict.
+ */
+export async function portConflictOwner(selfSubdomain: string, port: number): Promise<string | null> {
+  const { host } = env()
+  if (!host) return null
+  // Zoek alle vhost-bestanden met een non-80 listen op deze poort
+  const res = await runSsh(
+    `grep -rlE "listen[[:space:]]+${port}(;|[[:space:]])" /etc/nginx/sites-available/ 2>/dev/null || true`,
+    15_000,
+  )
+  if (!res.ok) return null
+  const files = res.output.split('\n').map(l => l.trim()).filter(Boolean)
+  for (const f of files) {
+    const name = f.split('/').pop() ?? ''
+    if (name && name !== selfSubdomain && name !== 'default') return name
+  }
+  return null
+}
+
+export interface NginxVhostInfo {
+  subdomain: string
+  port: number | null
+  enabled: boolean
+}
+
+/**
+ * Leest alle nginx vhosts (sites-available) + welke enabled zijn (sites-enabled),
+ * met de non-80 listen-poort per vhost. Basis voor orphan-/conflict-detectie.
+ */
+export async function listVhostPorts(): Promise<NginxVhostInfo[]> {
+  const { host } = env()
+  if (!host) return []
+  const listRes = await runSsh(`ls /etc/nginx/sites-available/ 2>/dev/null | grep -v '^default$' || true`, 15_000)
+  if (!listRes.ok) return []
+  const names = listRes.output.trim().split('\n').map(s => s.trim()).filter(Boolean)
+  if (names.length === 0) return []
+
+  const enabledRes = await runSsh(`ls /etc/nginx/sites-enabled/ 2>/dev/null || true`, 15_000)
+  const enabled = new Set(enabledRes.output.trim().split('\n').map(s => s.trim()).filter(Boolean))
+
+  const out: NginxVhostInfo[] = []
+  for (const subdomain of names) {
+    const portRes = await runSsh(
+      `grep -h "listen" /etc/nginx/sites-available/${subdomain} 2>/dev/null | grep -v "listen 80" | grep -oE "[0-9]{4,}" | head -1 || true`,
+      10_000,
+    )
+    const port = parseInt(portRes.output.trim(), 10)
+    out.push({ subdomain, port: port > 0 ? port : null, enabled: enabled.has(subdomain) })
+  }
+  return out
+}
+
+/**
+ * Vergelijkt nginx vhosts met de set actieve stores en detecteert:
+ * - orphans: vhosts zonder bijbehorende actieve store
+ * - portConflicts: poorten die door meer dan één vhost geclaimd worden
+ * Rapporteert alleen — verwijdert niets.
+ */
+export async function auditNginx(activeSubdomains: Set<string>): Promise<{
+  orphans: NginxVhostInfo[]
+  portConflicts: Array<{ port: number; subdomains: string[] }>
+  vhosts: NginxVhostInfo[]
+  error?: string
+}> {
+  const { host } = env()
+  if (!host) return { orphans: [], portConflicts: [], vhosts: [], error: 'STORE_SERVER_HOST niet geconfigureerd (lokale modus)' }
+
+  const vhosts = await listVhostPorts()
+  const orphans = vhosts.filter(v => !activeSubdomains.has(v.subdomain))
+
+  const byPort = new Map<number, string[]>()
+  for (const v of vhosts) {
+    if (v.port == null) continue
+    const arr = byPort.get(v.port) ?? []
+    arr.push(v.subdomain)
+    byPort.set(v.port, arr)
+  }
+  const portConflicts = [...byPort.entries()]
+    .filter(([, subs]) => subs.length > 1)
+    .map(([port, subdomains]) => ({ port, subdomains }))
+
+  return { orphans, portConflicts, vhosts }
+}
+
 export async function getHighestNginxPort(): Promise<number> {
   const res = await runSsh(
     `grep -rh "listen" /etc/nginx/sites-available/ 2>/dev/null | grep -v "listen 80" | grep -oE "[0-9]{4,}" | sort -n | tail -1`,
