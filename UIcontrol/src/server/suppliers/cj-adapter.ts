@@ -260,10 +260,10 @@ export class CJAdapter implements SupplierAdapter {
 
     // HTTP-level rate limit
     if (resp.status === 429) {
-      if (attempt >= MAX_ATTEMPTS) throw new CJApiError('CJ rate limit (429) — max retries bereikt', 429, true)
-      const backoff = attempt * 3_000
-      console.warn(`[cj] 429 op ${path} — retry ${attempt}/${MAX_ATTEMPTS - 1} na ${backoff}ms`)
-      await new Promise(r => setTimeout(r, backoff))
+      if (attempt >= MAX_ATTEMPTS) {
+        throw new CJApiError(`CJ rate limit (429) op ${path} — ${MAX_ATTEMPTS - 1} retries met backoff tot 48s uitgeput. Wacht ±1 minuut en probeer opnieuw.`, 429, true)
+      }
+      await rateLimitBackoff(path, attempt)
       return this.request<T>(method, path, payload, attempt + 1)
     }
 
