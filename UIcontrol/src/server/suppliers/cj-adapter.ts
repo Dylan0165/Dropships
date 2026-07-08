@@ -344,10 +344,19 @@ export class CJAdapter implements SupplierAdapter {
           if (seen.size >= maxResults) break
         }
       } catch (err) {
-        // Eén warehouse dat faalt mag de hele zoekopdracht niet breken...
         const msg = err instanceof Error ? err.message : String(err)
         warehouseErrors.push(`${countryCode}: ${msg}`)
         console.warn(`[cj] product search voor warehouse ${countryCode} mislukt:`, msg)
+        // Rate limit definitief uitgeput → de resterende warehouses gaan óók
+        // 429 geven; doorgaan verergert het alleen. Stop meteen: return wat we
+        // hebben, of gooi de fout door zodat de gebruiker hem ziet.
+        if (err instanceof CJApiError && err.retryable) {
+          if (seen.size > 0) {
+            console.warn(`[cj] rate limit uitgeput — stop met resterende warehouses, ${seen.size} producten gevonden tot nu toe`)
+            return Array.from(seen.values())
+          }
+          throw err
+        }
       }
     }
 
