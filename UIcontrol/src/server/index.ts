@@ -1011,6 +1011,17 @@ app.get('/api/suppliers/cj/inventory/:pid', async (req, res) => {
 
 // ═══════ Store-wizard ═══════
 
+// CJ-catalogus verkenning: niche-suggesties op basis van gemeten CJ-voorraad.
+// Cache 24h; ?refresh=1 forceert een nieuwe scan (async — response kan
+// 'scanning' of 'stale-refreshing' zijn, UI pollt dan).
+app.get('/api/wizard/niches', (req, res) => {
+  try {
+    res.json(getNicheSuggestions({ refresh: req.query.refresh === '1' }))
+  } catch (err) {
+    res.status(502).json({ error: err instanceof Error ? err.message : 'Niche-discovery mislukt' })
+  }
+})
+
 app.post('/api/wizard/questions', async (req, res) => {
   const { idea } = req.body as { idea?: string }
   if (!idea?.trim()) { res.status(400).json({ error: 'idea is verplicht' }); return }
