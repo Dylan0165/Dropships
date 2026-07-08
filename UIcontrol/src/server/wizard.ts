@@ -169,8 +169,9 @@ ${JSON.stringify(persona, null, 2)}
 Beschikbare producten uit EU warehouses (inkoopprijs in USD):
 ${JSON.stringify(compact)}
 
-Kies de 5-8 beste producten voor deze doelgroep. Weeg mee: past het bij de persona en het probleem,
-prijs binnen de prijsklasse (verkoopprijs = ca. 2.5-3× inkoop, USD→EUR ×0.92), review-kwaliteit (rating),
+Kies de 8-15 beste producten voor deze doelgroep (genoeg voor een volwaardige collectie).
+Weeg mee: past het bij de persona en het probleem, prijs binnen de prijsklasse
+(verkoopprijs = ca. 2.5-3× inkoop, USD→EUR ×0.92), review-kwaliteit (rating),
 verzendtijd en voorraad. Geef per product een suggestedPriceEur binnen de prijsklasse van de persona,
 eindigend op .95.
 JSON formaat:
