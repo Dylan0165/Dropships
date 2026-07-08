@@ -73,19 +73,66 @@ export class CJApiError extends Error {
 }
 
 // ── Request queue: serialiseer calls met vaste tussenruimte ───────────────────
+// HARDE throttle: elke CJ-call (ook auth) loopt door deze queue, dus er gaat
+// nooit meer dan 1 request per ~seconde naar CJ, hoeveel gelijktijdige
+// aanvragen (wizard, pipeline, fulfillment) er ook binnenkomen.
 
 let queueTail: Promise<unknown> = Promise.resolve()
 let lastRequestAt = 0
 
+// ── Runtime-status (voor UI-feedback tijdens retries) ─────────────────────────
+
+export interface CjRetryStatus {
+  path: string
+  attempt: number
+  maxAttempts: number
+  resumeAt: number      // epoch ms waarop de retry gaat lopen
+}
+
+const cjStatus: { queueDepth: number; retry: CjRetryStatus | null } = {
+  queueDepth: 0,
+  retry: null,
+}
+
+/** Momentopname voor de UI: bezig? wachtend op een 429-backoff? hoelang nog? */
+export function getCjStatus() {
+  return {
+    busy: cjStatus.queueDepth > 0 || cjStatus.retry !== null,
+    queueDepth: cjStatus.queueDepth,
+    retry: cjStatus.retry
+      ? { ...cjStatus.retry, resumeInMs: Math.max(0, cjStatus.retry.resumeAt - Date.now()) }
+      : null,
+  }
+}
+
 function enqueue<T>(task: () => Promise<T>): Promise<T> {
+  cjStatus.queueDepth++
   const run = queueTail.then(async () => {
     const wait = lastRequestAt + REQUEST_SPACING_MS - Date.now()
     if (wait > 0) await new Promise(r => setTimeout(r, wait))
     lastRequestAt = Date.now()
     return task()
   })
-  queueTail = run.catch(() => { /* queue mag niet breken op een failed call */ })
+  queueTail = run
+    .catch(() => { /* queue mag niet breken op een failed call */ })
+    .then(() => { cjStatus.queueDepth = Math.max(0, cjStatus.queueDepth - 1) })
   return run
+}
+
+// ── 429 backoff: exponentieel 3s → 6s → 12s → 24s → 48s ──────────────────────
+
+const MAX_ATTEMPTS = 6            // 1 poging + 5 retries
+const BACKOFF_BASE_MS = 3_000
+
+async function rateLimitBackoff(path: string, attempt: number): Promise<void> {
+  const backoff = BACKOFF_BASE_MS * 2 ** (attempt - 1)
+  cjStatus.retry = { path, attempt, maxAttempts: MAX_ATTEMPTS - 1, resumeAt: Date.now() + backoff }
+  console.warn(`[cj] rate limit (429) op ${path} — retry ${attempt}/${MAX_ATTEMPTS - 1} over ${backoff / 1000}s`)
+  try {
+    await new Promise(r => setTimeout(r, backoff))
+  } finally {
+    cjStatus.retry = null
+  }
 }
 
 // ═══════ Adapter ═══════
