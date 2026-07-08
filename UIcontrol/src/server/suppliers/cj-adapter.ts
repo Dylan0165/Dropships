@@ -93,8 +93,9 @@ function enqueue<T>(task: () => Promise<T>): Promise<T> {
 export class CJAdapter implements SupplierAdapter {
   readonly name = 'cj'
 
+  // Mock-modus zolang er geen ECHTE key is (leeg of placeholder telt niet mee).
   get isMock(): boolean {
-    return !cjEnv().apiKey
+    return !isConfigured(cjEnv().apiKey)
   }
 
   // ── Auth: token caching + refresh ──────────────────────────────────────────
