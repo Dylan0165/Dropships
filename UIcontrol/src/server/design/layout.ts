@@ -179,15 +179,23 @@ export function selectLayout(opts: LayoutSelectOptions): LayoutPlan {
   const rng = rngFrom(opts.seed)
   const recent = recentLayouts(10)
 
-  const hero = pickAvoiding(HERO_BY_TONE[opts.tone], recent.map(r => r.hero), rng)
-  const product = pickAvoiding(PRODUCT_BY_TONE[opts.tone], recent.map(r => r.product), rng)
+  const hero = opts.preferred?.hero
+    ?? pickAvoiding(HERO_BY_TONE[opts.tone], recent.map(r => r.hero), rng)
+  const product = opts.preferred?.product
+    ?? pickAvoiding(PRODUCT_BY_TONE[opts.tone], recent.map(r => r.product), rng)
 
-  // Sectie-volgorde: kies er één die niet recent is
-  const recentSectionKeys = recent.map(r => r.section_key)
-  const orderCandidates = SECTION_ORDERS.map(o => ({ order: o, key: o.join('>') }))
-  const freshOrders = orderCandidates.filter(o => !recentSectionKeys.includes(o.key))
-  const chosenPool = freshOrders.length > 0 ? freshOrders : orderCandidates
-  let sections = [...chosenPool[Math.floor(rng() * chosenPool.length) % chosenPool.length].order]
+  // Sectie-volgorde: LLM-plan wint; anders een niet-recent gebruikte volgorde
+  let sections: SectionId[]
+  if (opts.preferred?.sections?.length) {
+    sections = [...opts.preferred.sections]
+    if (!sections.includes('products')) sections.unshift('products')   // producten zijn nooit optioneel
+  } else {
+    const recentSectionKeys = recent.map(r => r.section_key)
+    const orderCandidates = SECTION_ORDERS.map(o => ({ order: o, key: o.join('>') }))
+    const freshOrders = orderCandidates.filter(o => !recentSectionKeys.includes(o.key))
+    const chosenPool = freshOrders.length > 0 ? freshOrders : orderCandidates
+    sections = [...chosenPool[Math.floor(rng() * chosenPool.length) % chosenPool.length].order]
+  }
 
   // ── Wizard site-structuur toepassen ─────────────────────────────────────────
   if (opts.siteStructure) {
