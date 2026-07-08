@@ -253,12 +253,25 @@ export function StoresView() {
           </div>
         )}
 
+        {/* Poort-conflict waarschuwing (client-side, uit de stores lijst) */}
+        {portConflicts.length > 0 && (
+          <div className="mb-3 px-3 py-2.5 rounded-lg text-xs border bg-red-900/40 border-red-700/50 text-red-200 flex items-start gap-2">
+            <AlertTriangle size={14} className="mt-0.5 flex-shrink-0 text-red-400" />
+            <div>
+              <span className="font-semibold">Poort-conflict gedetecteerd:</span>{' '}
+              {portConflicts.map(c => `poort :${c.port} → ${c.subs.join(' + ')}`).join(' · ')}.
+              <span className="text-red-300/80"> Meerdere stores delen dezelfde poort. Verwijder een van de conflicterende stores.</span>
+            </div>
+          </div>
+        )}
+
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-4 gap-3">
           {[
             { label: 'Online',   value: liveCount,    color: liveCount > 0 ? 'text-emerald-400' : 'text-zinc-500' },
             { label: 'Offline',  value: downCount,    color: downCount > 0 ? 'text-red-400' : 'text-zinc-500' },
             { label: 'Building', value: buildingCount, color: buildingCount > 0 ? 'text-amber-400' : 'text-zinc-500' },
+            { label: 'Poort-conflicten', value: portConflicts.length, color: portConflicts.length > 0 ? 'text-red-400' : 'text-emerald-400' },
           ].map(s => (
             <div key={s.label} className="bg-white/[0.03] border border-white/[0.07] rounded-xl p-3 text-center">
               <div className={clsx('text-sm font-bold', s.color)}>{s.value}</div>
