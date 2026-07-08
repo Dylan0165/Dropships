@@ -789,10 +789,13 @@ export function mapCjListProduct(raw: Record<string, unknown>, warehouse?: strin
 function mockProducts(niche: string, options: ProductSearchOptions): SupplierProduct[] {
   const seed = niche.split('').reduce((a, c) => a + c.charCodeAt(0), 0)
   const count = Math.min(options.maxResults ?? 8, 8)
-  const warehouses = options.warehouseCountries ?? [...EU_WAREHOUSES]
+  // Mock spiegelt de verbrede scope: EU-warehouses + CN/US, zodat de UI-badges
+  // (verzendtijd/warehouse) ook zonder echte key zichtbaar en testbaar zijn.
+  const warehouses = options.warehouseCountries ?? [...EU_WAREHOUSES, 'CN', 'CN', 'US']
 
   return Array.from({ length: count }, (_, i) => {
     const cost = 4 + ((seed + i * 7) % 20) + ((seed + i) % 100) / 100
+    const wh = warehouses[(seed + i) % warehouses.length]
     return {
       supplier: 'cj',
       productId: `mock-pid-${seed}-${i}`,
@@ -803,8 +806,8 @@ function mockProducts(niche: string, options: ProductSearchOptions): SupplierPro
       costPrice: Math.round(cost * 100) / 100,
       suggestedPrice: suggestPrice(cost),
       currency: 'USD',
-      shippingDays: { min: 3, max: 8 },
-      warehouse: warehouses[i % warehouses.length],
+      shippingDays: shippingDaysFor(wh),
+      warehouse: wh,
       inventory: 50 + ((seed + i * 13) % 400),
       rating: 3.8 + ((seed + i) % 12) / 10,
       category: 'Mock',
