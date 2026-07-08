@@ -119,6 +119,47 @@ export function StoreWizard({ onClose, onStarted }: Props) {
   // Stap 4
   const [starting, setStarting] = useState(false)
 
+  // ── Niche-suggesties (CJ-catalogus verkenning) ───────────────────────────────
+  // Laadt bij openen van de "AI-niches" tab; pollt zolang de scan loopt.
+
+  useEffect(() => {
+    if (step !== 0 || entryMode !== 'suggest') return
+    let alive = true
+    let timer: ReturnType<typeof setTimeout> | undefined
+    const load = async () => {
+      setLoadingNiches(true)
+      try {
+        const r = await fetch('/api/wizard/niches')
+        const data = await r.json() as NicheDiscoveryResponse
+        if (!alive) return
+        setNicheData(data)
+        // Scan bezig → blijven pollen tot 'ready'
+        if (data.status !== 'ready') timer = setTimeout(load, 5000)
+      } catch {
+        if (alive) timer = setTimeout(load, 8000)
+      } finally {
+        if (alive) setLoadingNiches(false)
+      }
+    }
+    load()
+    return () => { alive = false; if (timer) clearTimeout(timer) }
+  }, [step, entryMode])
+
+  // Niche gekozen → idee + richting staan vast (persona zit bij de suggestie),
+  // direct door naar stap 2 (producten). Shortlist-state resetten zodat de
+  // product-zoektocht voor DEZE niche vers draait.
+  const pickNiche = (s: NicheSuggestion) => {
+    setIdea(s.title)
+    setChosenDirection({ id: s.id, title: s.title, rationale: s.rationale, persona: s.persona })
+    setShortlist([])
+    setSelectedProducts(new Map())
+    setCjError(null)
+    setSearchTermUsed(null)
+    setManualResults([])
+    shortlistRequestedRef.current = false
+    setStep(1)
+  }
+
   // ── Stap 1 handlers ──────────────────────────────────────────────────────────
 
   const fetchQuestions = useCallback(async () => {
