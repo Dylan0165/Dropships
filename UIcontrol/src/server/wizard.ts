@@ -176,7 +176,7 @@ verzendtijd en voorraad. Geef per product een suggestedPriceEur binnen de prijsk
 eindigend op .95.
 JSON formaat:
 {"shortlist":[{"id":"<product id>","reason":"1 zin Nederlands","suggestedPriceEur":29.95}]}`,
-    { maxTokens: 2048, temperature: 0.4 },
+    { maxTokens: 3072, temperature: 0.4 },
   )
 
   const byId = new Map(candidates.map(p => [p.productId, p]))
