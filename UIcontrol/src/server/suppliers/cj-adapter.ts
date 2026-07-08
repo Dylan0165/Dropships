@@ -612,7 +612,7 @@ function suggestPrice(cost: number): number {
   return Math.max(9.95, Math.floor(raw) + 0.95)
 }
 
-function mapCjListProduct(raw: Record<string, unknown>, warehouse?: string): SupplierProduct | null {
+export function mapCjListProduct(raw: Record<string, unknown>, warehouse?: string): SupplierProduct | null {
   const pid = raw.pid ?? raw.productId
   const cost = parsePrice(raw.sellPrice ?? raw.variantSellPrice ?? raw.price)
   if (!pid || cost === null) return null

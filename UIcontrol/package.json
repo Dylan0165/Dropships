@@ -12,6 +12,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "@xyflow/react": "^12.3.0",
     "better-sqlite3": "^12.8.0",
     "clsx": "^2.1.0",
