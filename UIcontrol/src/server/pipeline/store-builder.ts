@@ -35,6 +35,10 @@ export const StoreBriefSchema = z.object({
   // Vervangt de RAUWE persona.problem (vaak Nederlands) die eerder direct in
   // de Engelse copy lekte.
   story_angle: z.string().min(1).max(180).optional(),
+  // Het bewuste per-store ontwerpplan (kleuren met rollen, typografie-pairing,
+  // layout-concept, signature-element). Optioneel: zonder plan valt de renderer
+  // terug op het seeded design-DNA. Zie design/design-plan.ts.
+  design: DesignPlanSchema.optional(),
 }).passthrough()
 
 export type StoreBrief = z.infer<typeof StoreBriefSchema>
