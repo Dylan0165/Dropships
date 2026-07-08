@@ -700,6 +700,9 @@ function ProductCard({ p, selected, onToggle, disabled = false }: { p: Shortlist
             </span>
           </div>
           <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1.5 text-[10px] font-mono">
+            {isMock
+              ? <span className="text-amber-500/80 not-italic">mock</span>
+              : <span className="text-emerald-500/70 not-italic" title={`CJ pid ${p.productId}`}>CJ ✓</span>}
             <span className="text-zinc-400">verkoop €{price.toFixed(2)}</span>
             <span className="text-emerald-400">marge €{margin.toFixed(2)}{p.marginPct != null && ` (${p.marginPct}%)`}</span>
             {p.shippingDays && <span className="text-zinc-500">{p.shippingDays.min}-{p.shippingDays.max}d</span>}
