@@ -183,7 +183,7 @@ export function renderStore(input: StoreBuildInput, brief: StoreBrief): StoreBui
     heroCta:         brief.hero_cta,
     usps:            brief.usps.map(u => ({ title: u.title, desc: u.desc })),
     footerTagline:   brief.footer_tagline,
-    story:           generateStory({ brandName, niche: input.niche, persona, tone: dna.tone, seed: dna.seed }),
+    story:           generateStory({ brandName, niche: input.niche, storyAngle: brief.story_angle, tone: dna.tone, seed: dna.seed }),
     ctaBand:         generateCtaBand(dna.seed),
     reviews:         generateReviews(dna.seed),
     navLinks:        buildNavLinks(),
