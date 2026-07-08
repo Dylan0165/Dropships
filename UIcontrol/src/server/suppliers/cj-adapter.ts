@@ -124,7 +124,8 @@ export class CJAdapter implements SupplierAdapter {
 
   private async authenticate(): Promise<string> {
     const { email, apiKey } = cjEnv()
-    if (!apiKey) throw new CJApiError('CJ_API_KEY niet geconfigureerd')
+    if (!isConfigured(apiKey)) throw new CJApiError('CJ_API_KEY niet geconfigureerd')
+    if (!isConfigured(email)) throw new CJApiError('CJ_EMAIL ontbreekt — vul zowel CJ_EMAIL als CJ_API_KEY in (.env)')
 
     const lastAuth = parseInt(settingGet('cj_last_auth_at') ?? '0', 10)
     const sinceLast = Date.now() - lastAuth
