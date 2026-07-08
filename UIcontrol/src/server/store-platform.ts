@@ -30,7 +30,7 @@ import {
   buildCheckoutAndInfoPages, ensureTailwindSupport,
 } from './store-platform/template-engine.js'
 import { deriveDesignDNA, fallbackPersona } from './design/tokens.js'
-import { selectLayout, recordLayout } from './design/layout.js'
+import { selectLayout, recordLayout, deriveProductCount, fitProducts } from './design/layout.js'
 import { renderStorePage, type RenderProduct } from './design/render-page.js'
 import {
   generateReviews, generateStory, generateCtaBand,
