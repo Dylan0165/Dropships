@@ -70,26 +70,83 @@ function flatDNA(dna: DesignDNA) {
   }
 }
 
-function buildCss(dna: DesignDNA): string {
+function buildCss(dna: DesignDNA, signature: SignatureElement | null): string {
   const shadow = dna.shape.shadow === 'none' ? '0 6px 24px rgba(0,0,0,0.10)' : dna.shape.shadow
-  return [
+  const ease = 'cubic-bezier(.22,1,.36,1)'
+  const rules = [
     '*{box-sizing:border-box}',
     'html{scroll-behavior:smooth}',
     'a{color:inherit;text-decoration:none}',
     'img{max-width:100%;display:block}',
-    '.rv{opacity:0;transform:translateY(26px);transition:opacity .7s cubic-bezier(.22,1,.36,1),transform .7s cubic-bezier(.22,1,.36,1)}',
+    // Zichtbare focus-ring voor toetsenbordnavigatie (kwaliteitsbodem)
+    `:focus-visible{outline:2px solid ${dna.palette.accent};outline-offset:3px;border-radius:2px}`,
+
+    // ── Scroll-reveal varianten: richting per sectietype, niet alles fade-up ──
+    `.rv{opacity:0;transition:opacity .7s ${ease},transform .7s ${ease}}`,
+    '.rv-up{transform:translateY(26px)}',
+    '.rv-left{transform:translateX(-28px)}',
+    '.rv-fade{transform:none}',
     '.rv.in{opacity:1;transform:none}',
-    '.btnp{transition:transform .25s cubic-bezier(.22,1,.36,1),box-shadow .25s;cursor:pointer}',
+
+    // ── Hero-orkestratie: één opkomst-moment bij laden (label→kop→sub→cta→beeld) ──
+    `@keyframes heroIn{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}`,
+    `@keyframes heroImg{from{opacity:0;transform:scale(1.045)}to{opacity:1;transform:none}}`,
+    `.hi{opacity:0;animation:heroIn .85s ${ease} forwards}`,
+    '.hi-1{animation-delay:.05s}.hi-2{animation-delay:.16s}.hi-3{animation-delay:.3s}.hi-4{animation-delay:.44s}',
+    `.hi-img{opacity:0;animation:heroImg 1.2s ${ease} .25s forwards}`,
+
+    // ── Micro-interacties: subtiele schaal/schaduw, geen bounce ──
+    `.btnp{transition:transform .25s ${ease},box-shadow .25s,background-color .25s;cursor:pointer}`,
     `.btnp:hover{transform:translateY(-2px);box-shadow:${shadow}}`,
     '.btnp:active{transform:scale(.98)}',
-    '.pcard{transition:transform .4s cubic-bezier(.22,1,.36,1),box-shadow .4s}',
-    `.pcard:hover{transform:translateY(-4px);box-shadow:${shadow}}`,
-    '.pimg{transition:transform .6s cubic-bezier(.22,1,.36,1)}',
-    '.pcard:hover .pimg{transform:scale(1.06)}',
+    `.pcard{transition:transform .45s ${ease},box-shadow .45s,border-color .45s}`,
+    `.pcard:hover{transform:translateY(-4px);box-shadow:${shadow};border-color:${dna.palette.accent}}`,
+    `.pimg{transition:transform .7s ${ease}}`,
+    '.pcard:hover .pimg{transform:scale(1.045)}',
     '.navl{transition:opacity .2s}.navl:hover{opacity:.55}',
     '.hscroll{-ms-overflow-style:none;scrollbar-width:none}.hscroll::-webkit-scrollbar{display:none}',
-    `@media(max-width:820px){.heroSplit{grid-template-columns:1fr !important}.erow{grid-template-columns:1fr !important}}`,
-  ].join('\n')
+  ]
+
+  // ── Signature-element CSS (alleen wat deze store nodig heeft) ──
+  if (signature?.type === 'ticker-band') {
+    rules.push(
+      `.ticker{overflow:hidden;background:${dna.palette.primary};color:${dna.palette.primaryText};padding:.85rem 0;white-space:nowrap}`,
+      '.ticker-track{display:inline-flex;gap:3rem;padding-right:3rem;animation:tick 28s linear infinite;will-change:transform}',
+      `.ticker-track span{font-family:${dna.typography.heading};font-size:.82rem;letter-spacing:.24em;text-transform:uppercase;font-weight:${dna.typography.headingWeight}}`,
+      '@keyframes tick{from{transform:translateX(0)}to{transform:translateX(-50%)}}',
+    )
+  }
+  if (signature?.type === 'floating-badge') {
+    rules.push(
+      `.sig-badge{position:absolute;top:9%;right:6%;width:122px;height:122px;border-radius:50%;display:flex;align-items:center;justify-content:center;text-align:center;font-size:.58rem;letter-spacing:.18em;text-transform:uppercase;font-weight:700;border:1.5px dashed ${dna.palette.accent};color:${dna.palette.accent};animation:spinSlow 18s linear infinite;pointer-events:none;z-index:3;padding:1.1rem}`,
+      '@keyframes spinSlow{to{transform:rotate(360deg)}}',
+    )
+  }
+  if (signature?.type === 'gradient-orb') {
+    rules.push(
+      '.sig-orb{position:absolute;border-radius:50%;filter:blur(72px);opacity:.5;pointer-events:none;mix-blend-mode:soft-light;animation:orbFloat 14s ease-in-out infinite alternate;z-index:1}',
+      '@keyframes orbFloat{from{transform:translate3d(0,0,0) scale(1)}to{transform:translate3d(4vw,-4vh,0) scale(1.14)}}',
+    )
+  }
+  if (signature?.type === 'outline-word') {
+    rules.push(
+      `.sig-outline{position:absolute;bottom:-.12em;left:0;right:0;font-family:${dna.typography.heading};font-weight:800;font-size:clamp(5rem,19vw,16rem);line-height:1;letter-spacing:-.02em;color:transparent;-webkit-text-stroke:1.5px ${dna.palette.accent};opacity:.15;text-transform:uppercase;white-space:nowrap;overflow:hidden;pointer-events:none;user-select:none;z-index:0;text-align:center}`,
+    )
+  }
+  if (signature?.type === 'numbered-collection') {
+    rules.push(
+      `.pnum{font-family:${dna.typography.heading};font-size:1.9rem;font-weight:800;color:${dna.palette.accent};opacity:.55;line-height:1;display:block;margin-bottom:.45rem}`,
+    )
+  }
+
+  rules.push(
+    // Responsive kwaliteitsbodem
+    '@media(max-width:820px){.heroSplit{grid-template-columns:1fr !important}.erow{grid-template-columns:1fr !important}.sig-badge{width:86px;height:86px;font-size:.48rem;top:4%;right:4%}.sig-outline{font-size:clamp(3.2rem,22vw,7rem)}}',
+    // Toegankelijkheid: reduced motion schakelt ALLE beweging uit,
+    // reveal/hero-content blijft gewoon zichtbaar
+    '@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important}html{scroll-behavior:auto}.rv,.hi,.hi-img{opacity:1 !important;transform:none !important}.ticker-track{animation:none !important}}',
+  )
+  return rules.join('\n')
 }
 
 // ── Product card (één component, drie layouts) ────────────────────────────────
