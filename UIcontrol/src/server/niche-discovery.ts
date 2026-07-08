@@ -251,17 +251,24 @@ JSON: {"suggestions":[{...}]}`,
     .map((s, i) => ({ ...s, id: `niche-${Date.now().toString(36)}-${i}`, exampleKeywords: s.exampleKeywords ?? [], categories: s.categories ?? [] }))
 }
 
+const PROFILE_LABEL: Record<ShippingProfile, string> = {
+  'eu-fast': 'overwegend snelle EU-verzending (3-8 dagen)',
+  'mixed': 'gemengd: deels EU-snel, deels 15-30 dagen uit China',
+  'mostly-cn': 'overwegend verzending uit China (15-30 dagen)',
+}
+
 /** Deterministische fallback zonder LLM (mock-modus of LLM-storing). */
 function fallbackSuggestions(categories: CategoryStats[]): NicheSuggestion[] {
   return categories
-    .filter(c => c.totalDE >= MIN_TOTAL_FOR_NICHE)
-    .sort((a, b) => b.totalDE - a.totalDE)
+    .filter(c => c.totalAll >= MIN_TOTAL_FOR_NICHE)
+    .sort((a, b) => b.totalAll - a.totalAll)
     .slice(0, 6)
     .map((c, i) => ({
       id: `niche-fb-${i}`,
       title: c.name,
-      rationale: `${c.totalDE} producten op voorraad in het DE-warehouse (${c.parentName}), gem. marge ~${c.avgMarginPct}% bij standaard prijszetting.${c.totalSpread ? ` Ook ${c.totalSpread} in FR.` : ''}`,
-      estimatedProducts: c.totalDE,
+      rationale: `${c.totalAll} producten wereldwijd, waarvan ${c.totalEU} in het DE-warehouse (${c.parentName}) — ${PROFILE_LABEL[c.shippingProfile]}. Gem. marge ~${c.avgMarginPct}% bij standaard prijszetting.${c.totalSpread ? ` Ook ${c.totalSpread} in FR.` : ''}`,
+      estimatedProducts: c.totalAll,
+      shippingProfile: c.shippingProfile,
       exampleKeywords: [c.name.toLowerCase()],
       categories: [`${c.parentName} › ${c.name}`],
       persona: {
