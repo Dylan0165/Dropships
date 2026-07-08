@@ -401,9 +401,23 @@ export function StoreWizard({ onClose, onStarted }: Props) {
           {/* ─── STAP 2: Producten ─── */}
           {step === 1 && (
             <div className="space-y-4">
-              {supplierIsMock && (
+              {/* State (b): key gezet maar CJ faalt → duidelijke fout, GEEN stille mock */}
+              {cjError && (
+                <div className="px-3 py-2.5 rounded-lg text-[11px] bg-red-900/40 border border-red-700/50 text-red-200">
+                  <span className="font-semibold">CJ API-fout:</span> {cjError}
+                  <span className="block text-red-300/70 mt-0.5">Controleer je CJ_API_KEY/CJ_EMAIL, rate-limits of netwerk. Er wordt bewust NIET teruggevallen op mock-data.</span>
+                </div>
+              )}
+              {/* State (a): geen key → bewuste mock-fallback met waarschuwing */}
+              {!cjError && supplierIsMock && (
                 <div className="px-3 py-2 rounded-lg text-[11px] bg-amber-900/30 border border-amber-700/40 text-amber-300">
-                  CJ_API_KEY niet geconfigureerd — dit zijn mock-producten. Vul je key in .env in voor echte CJ data.
+                  CJ_API_KEY niet geconfigureerd — dit zijn <b>mock-producten</b> (pid begint met "mock-"). Vul CJ_EMAIL + CJ_API_KEY in .env in voor echte CJ data.
+                </div>
+              )}
+              {/* State (c): echte CJ data */}
+              {!cjError && !supplierIsMock && shortlist.length > 0 && (
+                <div className="px-3 py-2 rounded-lg text-[11px] bg-emerald-900/25 border border-emerald-700/40 text-emerald-300">
+                  Verbonden met CJ — echte producten met echte CJ product-ID's (pid/vid).
                 </div>
               )}
 
@@ -411,19 +425,32 @@ export function StoreWizard({ onClose, onStarted }: Props) {
 
               {!loadingShortlist && shortlist.length > 0 && (
                 <>
-                  <p className="text-xs text-zinc-400">
-                    AI-shortlist voor <span className="text-white">{chosenDirection?.persona.label}</span> — geselecteerd: {selectedProducts.size}
-                    <span className="text-zinc-600"> (de store toont een collectie van 6-15 producten)</span>
-                  </p>
+                  <div className="flex items-center justify-between flex-wrap gap-1">
+                    <p className="text-xs text-zinc-400">
+                      AI-shortlist voor <span className="text-white">{chosenDirection?.persona.label}</span> —
+                      geselecteerd: <span className={clsx('font-semibold', selectedProducts.size >= MIN_ADVISED ? 'text-emerald-400' : 'text-amber-400')}>{selectedProducts.size}</span> / {MAX_SELECT}
+                    </p>
+                    {maxHint
+                      ? <span className="text-[11px] text-amber-400">Max {MAX_SELECT} producten bereikt — deselecteer er eerst een.</span>
+                      : selectedProducts.size < MIN_ADVISED
+                        ? <span className="text-[11px] text-zinc-600">Tip: kies er minstens {MIN_ADVISED} voor een volle collectie.</span>
+                        : null}
+                  </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                     {shortlist.map(p => (
-                      <ProductCard key={p.productId} p={p} selected={selectedProducts.has(p.productId)} onToggle={() => toggleProduct(p)} />
+                      <ProductCard
+                        key={p.productId}
+                        p={p}
+                        selected={selectedProducts.has(p.productId)}
+                        disabled={!selectedProducts.has(p.productId) && selectedProducts.size >= MAX_SELECT}
+                        onToggle={() => toggleProduct(p)}
+                      />
                     ))}
                   </div>
                 </>
               )}
 
-              {!loadingShortlist && shortlist.length === 0 && (
+              {!loadingShortlist && !cjError && shortlist.length === 0 && (
                 <p className="text-xs text-zinc-500">Geen producten gevonden in EU warehouses voor dit idee. Probeer hieronder handmatig te zoeken.</p>
               )}
 
