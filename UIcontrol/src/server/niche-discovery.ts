@@ -7,10 +7,13 @@
 // webshop-niches (met persona) → cache in settings-tabel (24h TTL).
 //
 // Gebruikte CJ-signalen (zie rapport):
-//   - `total` uit de product/list paginatie per categorie × warehouse → breedte
+//   - `total` uit de product/list paginatie — GLOBAAL (alle warehouses) én per
+//     EU-warehouse → breedte + verzendprofiel (EU-snel vs overwegend-CN)
 //   - `sellPrice` van een sample → marge-potentie (onze 2.8× markup-heuristiek)
 //   - `listedNum` (hoe vaak door andere dropshippers gelist) → populariteit/bewezen vraag
-//   - tweede warehouse-probe voor de top-categorieën → EU-spreiding
+//   - tweede EU-warehouse-probe (FR) voor de top-categorieën → EU-spreiding
+// EU is een VOORKEUR/label, geen harde filter: de scan meet wereldwijd en de
+// LLM-onderbouwing vermeldt per niche of hij EU-snel of vnl. uit CN levert.
 // Bewust NIET gebruikt: varianten-tellingen (kost 1 request per product bij
 // 1 req/s rate limit) en "trending" (geen publiek CJ v2 endpoint voor).
 
