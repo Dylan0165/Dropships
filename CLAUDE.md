@@ -125,6 +125,13 @@ Reviewer output schema (locked): `{ verdict: "APPROVED"|"REJECTED"|"UNCERTAIN", 
 - Key endpoints: `/api/wizard/*`, `/api/suppliers/cj/*`, `/api/orders` (+ `/:id/fulfill`, `/:id/tracking`), `DELETE /api/stores/:storeId`
 - Gegenereerde stores hebben nu ook `/bedankt/`, `/over/`, `/contact/`, `/faq/`, `/retour/` en `trailingSlash: true`
 
+## CJ MCP integratie — ALLEEN product-discovery (sinds juli 2026)
+- **MCP is read-only discovery, NOOIT orders.** Orders/tracking blijven 100% op `CJAdapter.placeOrder()/getTracking()` REST (`fulfillment.ts` raakt MCP niet).
+- `suppliers/cj-mcp-client.ts`: remote HTTPS StreamableHTTP (`https://developers.cjdropshipping.cn/mcp/<token>`), SDK `@modelcontextprotocol/sdk`. Token = `CJ_MCP_TOKEN` óf (default) `CJ_API_KEY`. Uitzetten met `CJ_MCP_DISABLED=1`.
+- **Harde allowlist** `CJ_MCP_DISCOVERY_TOOLS` = {search_products, query_sku_details, calculate_freight, get_logistics_timeliness, get_warehouses}. `callDiscoveryTool()` gooit `McpForbiddenToolError` op alles daarbuiten (create_order/add_to_cart/*_dispute/merge_orders/get_order_list…) — default-deny, vóór servercontact. `listDiscoveryTools()` filtert order-tools weg zodat de LLM ze nooit ziet.
+- `suppliers/cj-mcp-search.ts`: `mcpProductDiscovery()` — DeepSeek roept zelf `search_products` aan (agentic loop, max 5 rondes); onze `isRelevantToQuery` + EU-warehouse voorkeur draaien er bovenop. Faalt MCP → `McpUnavailableError`.
+- `wizard.ts buildShortlist` → `discoverCandidates`: **MCP eerst, val terug op REST** (deriveSearchTerms + `adapter.searchProducts`). Response bevat `source: 'mcp'|'rest'|'mock'`. Status: `GET /api/suppliers/cj/mcp/status`. Handmatig "Zelf zoeken" blijft REST (directe keyword).
+
 ## Bekende gotcha's
 - `.env` is gitignored én untracked (sinds juli 2026) — wijzigingen moeten direct op de server via `sed + pm2 restart`
 - **Env-loading:** de server laadt via `server/load-env.ts` (niet meer kaal `dotenv/config`)
