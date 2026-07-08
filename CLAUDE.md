@@ -126,7 +126,12 @@ Reviewer output schema (locked): `{ verdict: "APPROVED"|"REJECTED"|"UNCERTAIN", 
 - `.env` is gitignored én untracked (sinds juli 2026) — wijzigingen moeten direct op de server via `sed + pm2 restart`
 - `STORE_SERVER_HOST` moet `192.168.121.11` zijn (oud: `192.168.121.8` — fix: `sed -i 's/192.168.121.8/192.168.121.11/' .env && pm2 restart all`)
 - Auto-push git hook zit in `.claude/settings.json` — elke Edit/Write commit+pusht automatisch
-- Stores deployen naar port pool 4001, 4002, ... op de store server
+- Stores deployen naar port pool 4001-4999 op de store server. **Port-allocatie loopt
+  centraal via `allocatePort()` in db.ts** (single source of truth): range-scan tegen
+  `stores.port` + `port_allocations`, atomaire claim, UNIQUE index op `stores.port` als
+  vangnet tegen races. NOOIT meer `MAX(port)+1` gebruiken. `atomicDeploy` doet een
+  poort-conflict pre-flight tegen nginx vhosts; `/api/admin/nginx-audit` meldt orphans +
+  conflicten. Port wordt vrijgegeven bij `DELETE /api/stores/:id` (releasePort).
 - GitHub Actions CI/CD: push naar `main` → live in ~23s
 
 ## Development starten
