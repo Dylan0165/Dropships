@@ -165,27 +165,64 @@ JSON: {"terms":["portable blender","blender bottle","mini juicer"]}`,
   return [idea]
 }
 
+/**
+ * Product-discovery voor de wizard. Bron-voorkeur:
+ *   1. CJ MCP server (LLM roept zelf search_products e.d. aan) — indien geconfigureerd
+ *   2. Directe REST (CJAdapter.searchProducts + deriveSearchTerms) als fallback
+ * De EU-warehouse voorkeur en isRelevantToQuery-check gelden in BEIDE paden.
+ * Mock-modus (geen CJ-key) gebruikt altijd REST (adapter geeft mock-producten).
+ */
+async function discoverCandidates(
+  niche: string,
+  persona: WizardPersona,
+  maxResults: number,
+): Promise<{ candidates: SupplierProduct[]; searchTermsTried: string[]; searchTermUsed: string | null; source: 'mcp' | 'rest' | 'mock' }> {
+  const adapter = getSupplier('cj')
+
+  // ── Pad 1: MCP (alleen als er een echte CJ-key/MCP-token is) ────────────────
+  if (!adapter.isMock && isMcpConfigured()) {
+    try {
+      const r = await mcpProductDiscovery(niche, {
+        label: persona.label, interests: persona.interests, problem: persona.problem, priceRange: persona.priceRange,
+      }, { maxResults })
+      if (r.products.length > 0) {
+        console.log(`[wizard] MCP-discovery: ${r.products.length} kandidaten via ${r.toolCalls.length} tool-calls (term "${r.primaryTerm}")`)
+        return { candidates: r.products, searchTermsTried: r.primaryTerm ? [r.primaryTerm] : [], searchTermUsed: r.primaryTerm, source: 'mcp' }
+      }
+      console.warn('[wizard] MCP-discovery gaf 0 producten — val terug op directe REST-search')
+    } catch (err) {
+      if (err instanceof McpUnavailableError) {
+        console.warn(`[wizard] MCP niet beschikbaar (${err.message}) — val terug op directe REST-search`)
+      } else {
+        console.warn('[wizard] MCP-discovery fout — val terug op REST:', err instanceof Error ? err.message : err)
+      }
+    }
+  }
+
+  // ── Pad 2: directe REST-search ──────────────────────────────────────────────
+  const terms = adapter.isMock ? [niche] : await deriveSearchTerms(niche, persona)
+  console.log(`[wizard] REST CJ zoektermen voor "${niche}": ${JSON.stringify(terms)}`)
+  let candidates: SupplierProduct[] = []
+  let searchTermUsed: string | null = null
+  for (const term of terms) {
+    candidates = await adapter.searchProducts(term, { maxResults })
+    if (candidates.length > 0) { searchTermUsed = term; break }
+    console.log(`[wizard] zoekterm "${term}" gaf 0 relevante resultaten — probeer volgende`)
+  }
+  return { candidates, searchTermsTried: terms, searchTermUsed, source: adapter.isMock ? 'mock' : 'rest' }
+}
+
 export async function buildShortlist(
   niche: string,
   persona: WizardPersona,
   options: { maxResults?: number } = {},
-): Promise<{ candidates: number; shortlist: ShortlistedProduct[]; supplierIsMock: boolean; searchTermsTried: string[]; searchTermUsed: string | null }> {
+): Promise<{ candidates: number; shortlist: ShortlistedProduct[]; supplierIsMock: boolean; searchTermsTried: string[]; searchTermUsed: string | null; source: 'mcp' | 'rest' | 'mock' }> {
   const adapter = getSupplier('cj')
-
-  // Idee → korte Engelse zoektermen; probeer ze in volgorde tot er resultaten zijn
-  const terms = adapter.isMock ? [niche] : await deriveSearchTerms(niche, persona)
-  console.log(`[wizard] CJ zoektermen voor "${niche}": ${JSON.stringify(terms)}`)
-
-  let candidates: SupplierProduct[] = []
-  let searchTermUsed: string | null = null
-  for (const term of terms) {
-    candidates = await adapter.searchProducts(term, { maxResults: options.maxResults ?? 30 })
-    if (candidates.length > 0) { searchTermUsed = term; break }
-    console.log(`[wizard] zoekterm "${term}" gaf 0 relevante resultaten — probeer volgende`)
-  }
+  const { candidates, searchTermsTried, searchTermUsed, source } =
+    await discoverCandidates(niche, persona, options.maxResults ?? 30)
 
   if (candidates.length === 0) {
-    return { candidates: 0, shortlist: [], supplierIsMock: adapter.isMock, searchTermsTried: terms, searchTermUsed: null }
+    return { candidates: 0, shortlist: [], supplierIsMock: adapter.isMock, searchTermsTried, searchTermUsed: null, source }
   }
 
   // Compacte weergave voor het LLM (tokens besparen)
