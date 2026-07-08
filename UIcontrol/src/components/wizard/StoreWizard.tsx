@@ -87,6 +87,9 @@ export function StoreWizard({ onClose, onStarted }: Props) {
   const [error, setError] = useState<string | null>(null)
 
   // Stap 1 — idee & doelgroep
+  const [entryMode, setEntryMode] = useState<'idea' | 'suggest'>('idea')
+  const [nicheData, setNicheData] = useState<NicheDiscoveryResponse | null>(null)
+  const [loadingNiches, setLoadingNiches] = useState(false)
   const [idea, setIdea] = useState('')
   const [questions, setQuestions] = useState<WizardQuestion[] | null>(null)
   const [answers, setAnswers] = useState<Record<string, string>>({})
