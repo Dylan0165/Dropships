@@ -179,6 +179,7 @@ function ProductCard({ p, i, layout, reverse }: { p: Product; i: number; layout:
           {p.image ? <img className="pimg" src={p.image} alt={p.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : null}
         </div>
         <div style={{ direction: 'ltr' }}>
+          {NUMBERED ? <span className="pnum" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span> : null}
           <h3 style={{ fontFamily: DNA.heading, fontSize: '1.4rem', fontWeight: DNA.headingWeight, margin: '0 0 .6rem', letterSpacing: DNA.headingLetterSpacing }}>{p.title}</h3>
           {p.description ? <p style={{ color: DNA.textMuted, lineHeight: 1.7, margin: '0 0 1rem', maxWidth: '46ch' }}>{p.description}</p> : null}
           {Array.isArray(p.bullets) && p.bullets.length ? (
@@ -200,6 +201,7 @@ function ProductCard({ p, i, layout, reverse }: { p: Product; i: number; layout:
         {p.image ? <img className="pimg" src={p.image} alt={p.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : null}
       </div>
       <div style={{ padding: '1.2rem', display: 'flex', flexDirection: 'column', flex: 1 }}>
+        {NUMBERED ? <span className="pnum" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span> : null}
         <h3 style={{ fontFamily: DNA.heading, fontSize: layout === 'featured' ? '1.35rem' : '1rem', fontWeight: DNA.headingWeight, margin: '0 0 .5rem', letterSpacing: DNA.headingLetterSpacing }}>{p.title}</h3>
         {layout === 'featured' && p.description ? <p style={{ color: DNA.textMuted, lineHeight: 1.6, margin: '0 0 1rem', maxWidth: '52ch' }}>{p.description}</p> : null}
         <div style={{ marginTop: 'auto' }}>{price}{cta}</div>
@@ -226,33 +228,33 @@ function heroJsx(variant: HeroVariant): string {
       <section className="heroSplit" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', minHeight: '82vh' }}>
         <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: 'clamp(2.5rem,6vw,5rem)' }}>
           ${label}${h1}${sub}
-          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>${cta}<a href="/about/" className="btnp" style={S.btn2}>Learn more</a></div>
+          <div className="hi hi-4" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>${cta}<a href="/about/" className="btnp" style={S.btn2}>Learn more</a></div>
         </div>
         <div style={{ background: DNA.surfaceAlt, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', minHeight: '42vh' }}>
-          {${img0} ? <img src={PRODUCTS[0].image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ width: '58%', aspectRatio: '1', background: DNA.border, borderRadius: DNA.radiusLg }} />}
+          {${img0} ? <img className="hi-img" src={PRODUCTS[0].image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ width: '58%', aspectRatio: '1', background: DNA.border, borderRadius: DNA.radiusLg }} />}
         </div>
       </section>`
     case 'centered':
       return `
       <section style={{ minHeight: '78vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: 'clamp(3rem,8vw,6rem) clamp(1.5rem,5vw,3rem)', background: DNA.bg }}>
         ${label}
-        <h1 style={{ ...S.h1, maxWidth: '16ch' }}>{CONTENT.heroHeadline}</h1>
-        <p style={{ ...S.sub, textAlign: 'center', margin: '0 auto 2.25rem' }}>{CONTENT.heroSubheadline}</p>
-        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>${cta}</div>
-        {${img0} ? <div style={{ marginTop: '3rem', width: '100%', maxWidth: '820px', aspectRatio: '16/8', overflow: 'hidden', borderRadius: DNA.radiusLg, boxShadow: DNA.shadow }}><img src={PRODUCTS[0].image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /></div> : null}
+        <h1 className="hi hi-2" style={{ ...S.h1, maxWidth: '16ch' }}>{CONTENT.heroHeadline}</h1>
+        <p className="hi hi-3" style={{ ...S.sub, textAlign: 'center', margin: '0 auto 2.25rem' }}>{CONTENT.heroSubheadline}</p>
+        <div className="hi hi-4" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>${cta}</div>
+        {${img0} ? <div className="hi-img" style={{ marginTop: '3rem', width: '100%', maxWidth: '820px', aspectRatio: '16/8', overflow: 'hidden', borderRadius: DNA.radiusLg, boxShadow: DNA.shadow }}><img src={PRODUCTS[0].image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /></div> : null}
       </section>`
     case 'editorial':
       return `
       <section style={{ padding: 'clamp(3rem,7vw,6rem) clamp(1.5rem,5vw,4.5rem) 0', background: DNA.bg }}>
         <div style={{ maxWidth: '1150px', margin: '0 auto' }}>
           ${label}
-          <h1 style={{ ...S.h1, fontSize: 'clamp(2.6rem,8vw,6rem)', maxWidth: '18ch' }}>{CONTENT.heroHeadline}</h1>
+          <h1 className="hi hi-2" style={{ ...S.h1, fontSize: 'clamp(2.6rem,8vw,6rem)', maxWidth: '18ch' }}>{CONTENT.heroHeadline}</h1>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', alignItems: 'end', marginTop: '1.5rem' }}>
-            <p style={{ ...S.sub }}>{CONTENT.heroSubheadline}</p>
-            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>${cta}</div>
+            <p className="hi hi-3" style={{ ...S.sub }}>{CONTENT.heroSubheadline}</p>
+            <div className="hi hi-4" style={{ display: 'flex', justifyContent: 'flex-end' }}>${cta}</div>
           </div>
         </div>
-        {${img0} ? <div style={{ marginTop: '3rem', width: '100%', aspectRatio: '21/8', overflow: 'hidden', background: DNA.surfaceAlt }}><img src={PRODUCTS[0].image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /></div> : null}
+        {${img0} ? <div className="hi-img" style={{ marginTop: '3rem', width: '100%', aspectRatio: '21/8', overflow: 'hidden', background: DNA.surfaceAlt }}><img src={PRODUCTS[0].image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /></div> : null}
       </section>`
     case 'fullbleed':
       return `
@@ -260,10 +262,10 @@ function heroJsx(variant: HeroVariant): string {
         {${img0} ? <img src={PRODUCTS[0].image} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ position: 'absolute', inset: 0, background: DNA.secondary }} />}
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg, rgba(0,0,0,.72), rgba(0,0,0,.28))' }} />
         <div style={{ position: 'relative', padding: 'clamp(2.5rem,6vw,5rem)', maxWidth: '720px', color: '#fff' }}>
-          <span className="rv in" style={{ ...S.label, color: DNA.accent }}>{CONTENT.heroLabel}</span>
-          <h1 style={{ ...S.h1, color: '#fff' }}>{CONTENT.heroHeadline}</h1>
-          <p style={{ ...S.sub, color: 'rgba(255,255,255,.86)' }}>{CONTENT.heroSubheadline}</p>
-          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>${cta}</div>
+          <span className="hi hi-1" style={{ ...S.label, color: DNA.accent }}>{CONTENT.heroLabel}</span>
+          <h1 className="hi hi-2" style={{ ...S.h1, color: '#fff' }}>{CONTENT.heroHeadline}</h1>
+          <p className="hi hi-3" style={{ ...S.sub, color: 'rgba(255,255,255,.86)' }}>{CONTENT.heroSubheadline}</p>
+          <div className="hi hi-4" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>${cta}</div>
         </div>
       </section>`
     case 'minimal-left':
@@ -271,8 +273,8 @@ function heroJsx(variant: HeroVariant): string {
       return `
       <section style={{ minHeight: '72vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: 'clamp(3rem,10vw,8rem) clamp(1.5rem,6vw,6rem)', background: DNA.bg, maxWidth: '900px' }}>
         ${label}${h1}
-        <p style={{ ...S.sub, maxWidth: '38ch' }}>{CONTENT.heroSubheadline}</p>
-        <div>${cta}</div>
+        <p className="hi hi-3" style={{ ...S.sub, maxWidth: '38ch' }}>{CONTENT.heroSubheadline}</p>
+        <div className="hi hi-4">${cta}</div>
       </section>`
   }
 }
@@ -281,15 +283,18 @@ function heroJsx(variant: HeroVariant): string {
 
 function productsInner(variant: ProductVariant): string {
   switch (variant) {
+    // Reveal per weergavetype: grids staggeren per kaart (kolom-cascade),
+    // carousel fadet als geheel (horizontaal scrollen heeft eigen beweging),
+    // editorial rijen faden rustig zonder verticale sprong.
     case 'featured-grid':
-      return `<div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(260px,1fr))', gap: '1.5rem' }}>{PRODUCTS.map((p, i) => <ProductCard key={p.id} p={p} i={i} layout={i === 0 ? 'featured' : 'card'} />)}</div>`
+      return `<div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(260px,1fr))', gap: '1.5rem' }}>{PRODUCTS.map((p, i) => <Reveal key={p.id} v="up" delay={(i % 4) * 70}><ProductCard p={p} i={i} layout={i === 0 ? 'featured' : 'card'} /></Reveal>)}</div>`
     case 'carousel':
-      return `<div className="hscroll" style={{ display: 'flex', gap: '1.25rem', overflowX: 'auto', scrollSnapType: 'x mandatory', paddingBottom: '1rem' }}>{PRODUCTS.map((p, i) => <div key={p.id} style={{ flex: '0 0 300px', scrollSnapAlign: 'start' }}><ProductCard p={p} i={i} layout="card" /></div>)}</div>`
+      return `<Reveal v="fade"><div className="hscroll" style={{ display: 'flex', gap: '1.25rem', overflowX: 'auto', scrollSnapType: 'x mandatory', paddingBottom: '1rem' }}>{PRODUCTS.map((p, i) => <div key={p.id} style={{ flex: '0 0 300px', scrollSnapAlign: 'start' }}><ProductCard p={p} i={i} layout="card" /></div>)}</div></Reveal>`
     case 'editorial-list':
-      return `<div style={{ display: 'grid', gap: 'clamp(2.5rem,6vw,5rem)' }}>{PRODUCTS.map((p, i) => <Reveal key={p.id}><ProductCard p={p} i={i} layout="row" reverse={i % 2 === 1} /></Reveal>)}</div>`
+      return `<div style={{ display: 'grid', gap: 'clamp(2.5rem,6vw,5rem)' }}>{PRODUCTS.map((p, i) => <Reveal key={p.id} v="fade"><ProductCard p={p} i={i} layout="row" reverse={i % 2 === 1} /></Reveal>)}</div>`
     case 'grid':
     default:
-      return `<div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(260px,1fr))', gap: '1.5rem' }}>{PRODUCTS.map((p, i) => <ProductCard key={p.id} p={p} i={i} layout="card" />)}</div>`
+      return `<div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(260px,1fr))', gap: '1.5rem' }}>{PRODUCTS.map((p, i) => <Reveal key={p.id} v="up" delay={(i % 4) * 70}><ProductCard p={p} i={i} layout="card" /></Reveal>)}</div>`
   }
 }
 
@@ -302,7 +307,7 @@ function sectionJsx(id: SectionId, layout: LayoutPlan): string {
       <section style={{ padding: DNA.sectionPadY + ' clamp(1.5rem,5vw,4rem)', background: DNA.surface, borderTop: DNA.borderWidth + ' solid ' + DNA.border, borderBottom: DNA.borderWidth + ' solid ' + DNA.border }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: DNA.contentGap, maxWidth: '1000px', margin: '0 auto' }}>
           {CONTENT.usps.map((u: any, i: number) => (
-            <Reveal key={i} style={{ textAlign: 'center' }}>
+            <Reveal key={i} v="up" delay={i * 90} style={{ textAlign: 'center' }}>
               <div style={{ fontSize: '1.4rem', marginBottom: '.6rem', color: DNA.accent }}>&#9679;</div>
               <h3 style={{ fontFamily: DNA.heading, fontSize: '1rem', fontWeight: DNA.headingWeight, margin: '0 0 .4rem' }}>{u.title}</h3>
               <p style={{ color: DNA.textMuted, fontSize: '.9rem', lineHeight: 1.6, margin: 0 }}>{u.desc}</p>
@@ -313,7 +318,7 @@ function sectionJsx(id: SectionId, layout: LayoutPlan): string {
     case 'products':
       return `
       <section id="products" style={{ padding: DNA.sectionPadY + ' clamp(1.5rem,5vw,4rem)', background: DNA.bg }}>
-        <Reveal><h2 style={S.sectionTitle}>Shop the collection</h2></Reveal>
+        <Reveal v="up"><h2 style={S.sectionTitle}>Shop the collection</h2></Reveal>
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>${productsInner(layout.product)}</div>
       </section>`
     case 'reviews':
@@ -322,7 +327,7 @@ function sectionJsx(id: SectionId, layout: LayoutPlan): string {
         <Reveal><h2 style={S.sectionTitle}>What customers say</h2></Reveal>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))', gap: '1.5rem', maxWidth: '1000px', margin: '0 auto' }}>
           {CONTENT.reviews.map((r: any, i: number) => (
-            <Reveal key={i} style={{ padding: '1.75rem', border: DNA.borderWidth + ' solid ' + DNA.border, borderRadius: DNA.radiusLg, background: DNA.bg }}>
+            <Reveal key={i} v="fade" delay={i * 120} style={{ padding: '1.75rem', border: DNA.borderWidth + ' solid ' + DNA.border, borderRadius: DNA.radiusLg, background: DNA.bg }}>
               <div style={{ color: DNA.accent, marginBottom: '.75rem', letterSpacing: '2px' }}>{Array.from({ length: r.stars }).map((_, k) => <span key={k}>&#9733;</span>)}</div>
               <p style={{ color: DNA.text, lineHeight: 1.7, margin: '0 0 1rem', fontSize: '.95rem' }}>&#8220;{r.text}&#8221;</p>
               <span style={{ fontSize: '.85rem', fontWeight: 700, color: DNA.textMuted }}>{r.name}</span>
@@ -334,7 +339,7 @@ function sectionJsx(id: SectionId, layout: LayoutPlan): string {
       return `
       <section style={{ padding: DNA.sectionPadY + ' clamp(1.5rem,5vw,4rem)', background: DNA.bg }}>
         <div style={{ maxWidth: '760px', margin: '0 auto', textAlign: 'center' }}>
-          <Reveal>
+          <Reveal v="fade">
             <h2 style={{ ...S.sectionTitle, marginBottom: '1.25rem' }}>{CONTENT.story.title}</h2>
             <p style={{ color: DNA.textMuted, lineHeight: 1.9, fontSize: '1.05rem', margin: 0 }}>{CONTENT.story.body}</p>
           </Reveal>
@@ -403,6 +408,49 @@ function footerJsx(style: LayoutPlan['footerStyle']): string {
   </footer>`
 }
 
+// ── Signature-element JSX ─────────────────────────────────────────────────────
+// Elk element is decoratief (aria-hidden, pointer-events none waar absolute) en
+// wordt alleen gegenereerd als het plan erom vraagt — geen dode CSS/JSX.
+
+function signatureInHero(sig: SignatureElement | null): string {
+  if (!sig) return ''
+  switch (sig.type) {
+    case 'gradient-orb':
+      return `
+      <div className="sig-orb" aria-hidden="true" style={{ width: '46vw', height: '46vw', maxWidth: '620px', maxHeight: '620px', top: '-12%', right: '-10%', background: 'radial-gradient(circle, ' + DNA.accent + ' 0%, transparent 70%)' }} />
+      <div className="sig-orb" aria-hidden="true" style={{ width: '34vw', height: '34vw', maxWidth: '440px', maxHeight: '440px', bottom: '-16%', left: '-8%', background: 'radial-gradient(circle, ' + DNA.primary + ' 0%, transparent 70%)', animationDelay: '-7s' }} />`
+    case 'floating-badge':
+      return `
+      <div className="sig-badge" aria-hidden="true"><span>{SIG_TEXT}</span></div>`
+    case 'outline-word':
+      return `
+      <div className="sig-outline" aria-hidden="true">{SIG_TEXT}</div>`
+    default:
+      return ''
+  }
+}
+
+function signatureAfterHero(sig: SignatureElement | null): string {
+  if (!sig) return ''
+  if (sig.type === 'ticker-band') {
+    // Track 2x zodat de -50% translate naadloos loopt
+    return `
+      <div className="ticker" aria-hidden="true">
+        <div className="ticker-track">{[...TICKER_WORDS, ...TICKER_WORDS].map((w, i) => <span key={i}>{w}</span>)}</div>
+      </div>`
+  }
+  if (sig.type === 'pattern-divider') {
+    return `
+      <div aria-hidden="true" style={{ lineHeight: 0, background: DNA.bg }}>
+        <svg viewBox="0 0 1440 46" preserveAspectRatio="none" style={{ width: '100%', height: '46px', display: 'block' }}>
+          <path d="M0 24 C 180 46, 360 2, 540 24 C 720 46, 900 2, 1080 24 C 1260 46, 1350 12, 1440 24 L 1440 46 L 0 46 Z" fill={DNA.accent} opacity=".22" />
+          <path d="M0 32 C 180 50, 360 14, 540 32 C 720 50, 900 14, 1080 32 C 1260 50, 1350 22, 1440 32 L 1440 46 L 0 46 Z" fill={DNA.primary} opacity=".3" />
+        </svg>
+      </div>`
+  }
+  return ''
+}
+
 // ── Volledige page assembleren ────────────────────────────────────────────────
 
 export function renderStorePage(
@@ -410,10 +458,22 @@ export function renderStorePage(
   layout: LayoutPlan,
   content: RenderContent,
   products: RenderProduct[],
+  signature: SignatureElement | null = null,
 ): string {
   const dnaObj = flatDNA(dna)
-  const css = buildCss(dna)
+  const css = buildCss(dna, signature)
   const sections = layout.sections.map(s => sectionJsx(s, layout)).join('\n')
+
+  // Signature tekst-parameters (JSON-veilig geëmit — nooit rauw in code)
+  const sigText = (signature?.text ?? '').trim()
+  const tickerWords = signature?.type === 'ticker-band'
+    ? (sigText ? sigText.split(/\s*[·|/,]\s*/).filter(Boolean) : [content.brandName, content.heroCta, 'Free EU shipping'])
+    : []
+  const badgeOrOutlineText = signature?.type === 'outline-word'
+    ? (sigText || content.brandName.split(/\s+/)[0])
+    : signature?.type === 'floating-badge'
+      ? (sigText || `${content.brandName} · est ${new Date().getFullYear()}`)
+      : ''
 
   return `'use client';
 import { useEffect, useRef, useState } from 'react';
@@ -424,6 +484,10 @@ const PRODUCTS: Product[] = ${j(products)};
 const DNA: any = ${j(dnaObj)};
 const CONTENT: any = ${j(content)};
 const CSS: string = ${j(css)};
+const NUMBERED: boolean = ${j(signature?.type === 'numbered-collection')};
+const SIG_TEXT: string = ${j(badgeOrOutlineText)};
+const TICKER_WORDS: string[] = ${j(tickerWords)};
+void NUMBERED; void SIG_TEXT; void TICKER_WORDS;
 
 // Design-token style helpers (derived from the per-store design DNA)
 const S: any = {
@@ -439,7 +503,7 @@ function startCheckout(p: Product): void {
   window.location.href = '/checkout/?product=' + encodeURIComponent(p.id);
 }
 
-function Reveal({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) {
+function Reveal({ children, style, v = 'up', delay = 0 }: { children: React.ReactNode; style?: React.CSSProperties; v?: 'up' | 'fade' | 'left'; delay?: number }) {
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
   useEffect(() => {
@@ -448,7 +512,7 @@ function Reveal({ children, style }: { children: React.ReactNode; style?: React.
     obs.observe(el);
     return () => obs.disconnect();
   }, []);
-  return <div ref={ref} className={visible ? 'rv in' : 'rv'} style={style}>{children}</div>;
+  return <div ref={ref} className={'rv rv-' + v + (visible ? ' in' : '')} style={{ ...style, transitionDelay: delay + 'ms' }}>{children}</div>;
 }
 ${PRODUCT_CARD}
 export default function Home() {
