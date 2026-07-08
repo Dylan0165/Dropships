@@ -8,6 +8,8 @@
 
 import { getSupplier } from './suppliers/index.js'
 import type { SupplierProduct } from './suppliers/index.js'
+import { mcpProductDiscovery } from './suppliers/cj-mcp-search.js'
+import { isMcpConfigured, McpUnavailableError } from './suppliers/cj-mcp-client.js'
 
 const LLM_BASE = process.env.LLM_BASE_URL ?? 'https://api.deepseek.com/v1'
 const USD_TO_EUR = 0.92
