@@ -12,7 +12,7 @@
 // Faalt de MCP-verbinding of is-ie niet geconfigureerd → McpUnavailableError,
 // zodat de wizard terugvalt op de directe REST-search (CJAdapter).
 
-import { isRelevantToQuery, mapCjListProduct } from './cj-adapter.js'
+import { isRelevantToQuery, mapCjListProduct, sortByShippingPreference } from './cj-adapter.js'
 import { EU_WAREHOUSES, type SupplierProduct } from './types.js'
 import {
   callDiscoveryTool, isMcpConfigured, listDiscoveryTools, McpUnavailableError,
