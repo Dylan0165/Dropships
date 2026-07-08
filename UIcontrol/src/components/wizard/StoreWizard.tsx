@@ -313,6 +313,17 @@ export function StoreWizard({ onClose, onStarted }: Props) {
       .finally(() => setLoadingStructure(false))
   }, [step, chosenDirection, idea, selectedProducts.size, structure, loadingStructure])
 
+  // Weergave-lijsten: EU-only toggle filtert alleen wat je ZIET; de selectie
+  // en de zoekresultaten zelf blijven intact.
+  const visibleShortlist = useMemo(
+    () => euOnly ? shortlist.filter(p => isEuWh(p.warehouse)) : shortlist,
+    [shortlist, euOnly],
+  )
+  const visibleManualResults = useMemo(
+    () => euOnly ? manualResults.filter(p => isEuWh(p.warehouse)) : manualResults,
+    [manualResults, euOnly],
+  )
+
   // ── Stap 4: pipeline starten ─────────────────────────────────────────────────
 
   const products = useMemo(() => Array.from(selectedProducts.values()), [selectedProducts])
