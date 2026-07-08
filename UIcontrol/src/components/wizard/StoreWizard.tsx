@@ -519,6 +519,11 @@ export function StoreWizard({ onClose, onStarted }: Props) {
                     Zoek
                   </button>
                 </div>
+                {searching && cjRetry && (
+                  <p className="text-[11px] text-amber-400 mt-2">
+                    CJ rate limit bereikt — opnieuw proberen over {cjRetry.seconds}s (poging {cjRetry.attempt}/{cjRetry.maxAttempts})…
+                  </p>
+                )}
                 {manualResults.length > 0 && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-3">
                     {manualResults.map(p => (
