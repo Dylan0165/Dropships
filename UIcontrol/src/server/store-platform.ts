@@ -24,7 +24,7 @@ import fs from 'fs'
 import { spawn, type ChildProcess } from 'child_process'
 import { fileURLToPath } from 'url'
 import { v4 as uuid } from 'uuid'
-import db, { saveAgentOutput as _saveAgentOutput, claimPort as _claimPort } from './db.js'
+import db, { saveAgentOutput as _saveAgentOutput, allocatePort, reservePort } from './db.js'
 import {
   buildLayoutSharedFiles, buildTemplateVars,
   buildCheckoutAndInfoPages, ensureTailwindSupport,
