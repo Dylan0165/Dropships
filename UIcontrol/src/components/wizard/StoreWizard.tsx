@@ -21,6 +21,23 @@ interface Persona {
 
 interface Direction { id: string; title: string; rationale: string; persona: Persona }
 
+interface NicheSuggestion {
+  id: string
+  title: string
+  rationale: string
+  estimatedProducts: number
+  exampleKeywords: string[]
+  categories: string[]
+  persona: Persona & { label: string }
+}
+
+interface NicheDiscoveryResponse {
+  status: 'ready' | 'scanning' | 'stale-refreshing'
+  scannedAt?: string
+  source?: 'cj' | 'mock'
+  suggestions: NicheSuggestion[]
+}
+
 interface ShortlistProduct {
   supplier: string
   productId: string
