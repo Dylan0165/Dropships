@@ -117,6 +117,16 @@ async function getClient(): Promise<Client> {
   }
 }
 
+/**
+ * TEST-ONLY: injecteer een reeds-verbonden Client (bv. via InMemoryTransport)
+ * zodat de allowlist-filter en de callTool-guard tegen een in-memory MCP-server
+ * getest kunnen worden zonder echte CJ-verbinding. Niet gebruiken in productie.
+ */
+export function __setClientForTest(c: Client | null): void {
+  client = c
+  connecting = null
+}
+
 /** Reset de verbinding (bij fouten) zodat de volgende call opnieuw verbindt. */
 export async function resetCjMcp(): Promise<void> {
   const c = client
