@@ -56,3 +56,57 @@ jobs:
         run: |
           sleep 8
           curl -f http://localhost:3001/api/health && echo " UIcontrol OK"
+
+      # ── Cloudflare Tunnel: publiek adres voor de Mollie-webhook ──────────────
+      # Mollie weigert LAN-webhook-URLs (422 "unreachable"). Een Quick Tunnel
+      # (gratis, geen account/domein, geen open poorten) geeft de API een
+      # https://*.trycloudflare.com adres; de manager registreert dat runtime.
+
+      - name: Diagnose cloudflared (tool + store server)
+        run: |
+          echo "— tool-server (deze machine):"
+          (command -v cloudflared || ls -la $HOME/bin/cloudflared 2>/dev/null) && echo "  cloudflared aanwezig" || echo "  cloudflared NIET aanwezig (wordt hierna geinstalleerd)"
+          echo "— store-server (192.168.121.11):"
+          ssh -i /home/student/.ssh/deploy_key -o StrictHostKeyChecking=no -o ConnectTimeout=5 student@192.168.121.11 \
+            'command -v cloudflared || ls $HOME/bin/cloudflared 2>/dev/null' \
+            && echo "  cloudflared aanwezig op store-server" \
+            || echo "  cloudflared NIET aanwezig op store-server (niet nodig voor de webhook-fix)"
+
+      - name: Install cloudflared (static binary, geen sudo)
+        run: |
+          if [ ! -x "$HOME/bin/cloudflared" ] && ! command -v cloudflared >/dev/null; then
+            mkdir -p "$HOME/bin"
+            curl -fsSL -o "$HOME/bin/cloudflared" \
+              https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64
+            chmod +x "$HOME/bin/cloudflared"
+            "$HOME/bin/cloudflared" --version
+          else
+            echo "cloudflared al aanwezig"
+          fi
+
+      - name: Start cloudflared-api tunnel manager (PM2)
+        run: |
+          cd /home/student/Dropships
+          # Alleen starten als hij nog niet draait: elke tunnel-herstart geeft
+          # een NIEUWE trycloudflare-URL — onnodig wisselen vermijden we dus.
+          if pm2 describe cloudflared-api >/dev/null 2>&1; then
+            echo "cloudflared-api draait al — niet herstart (URL blijft stabiel)"
+          else
+            pm2 start scripts/cloudflared-manager.cjs --name cloudflared-api
+            pm2 save
+          fi
+
+      - name: Tunnel + Mollie webhook selftest
+        run: |
+          # Even tijd geven om de URL te registreren bij een verse start
+          for i in $(seq 1 12); do
+            PUB=$(curl -s http://localhost:3001/api/admin/public-url | grep -o '"configured":true' || true)
+            [ -n "$PUB" ] && break
+            sleep 5
+          done
+          echo "— publieke URL status:"
+          curl -s http://localhost:3001/api/admin/public-url
+          echo ""
+          echo "— Mollie selftest (echte 0.01 test-payment met webhookUrl):"
+          curl -s http://localhost:3001/api/admin/tunnel-selftest
+          echo ""
