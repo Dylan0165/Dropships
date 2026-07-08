@@ -255,6 +255,32 @@ for (const [col, sql] of runMigrations) {
   }
 }
 
+// ── Port-uniqueness migratie (fix voor dubbele poorten / nginx conflicten) ────
+// 1) De-dup bestaande stores.port: bij een dubbele poort houden we de meest
+//    recente store, de rest krijgt port = NULL (wordt bij volgende deploy opnieuw
+//    en uniek toegewezen). 2) UNIQUE index als database-vangnet tegen races.
+try {
+  const dupPorts = db.prepare(`
+    SELECT port FROM stores WHERE port IS NOT NULL GROUP BY port HAVING COUNT(*) > 1
+  `).all() as { port: number }[]
+  for (const { port } of dupPorts) {
+    // Behoud de winnaar: live boven building/local boven overige, dan nieuwste
+    const keep = db.prepare(`
+      SELECT store_id FROM stores WHERE port = ?
+      ORDER BY CASE status WHEN 'live' THEN 0 WHEN 'building' THEN 1 WHEN 'local' THEN 2 ELSE 3 END,
+               created_at DESC
+      LIMIT 1
+    `).get(port) as { store_id: string } | undefined
+    if (keep) {
+      db.prepare(`UPDATE stores SET port = NULL WHERE port = ? AND store_id != ?`).run(port, keep.store_id)
+      console.warn(`[db] dubbele poort ${port} opgeschoond — behouden: ${keep.store_id.slice(0, 8)}`)
+    }
+  }
+  db.exec(`CREATE UNIQUE INDEX IF NOT EXISTS idx_stores_port_unique ON stores(port) WHERE port IS NOT NULL`)
+} catch (err) {
+  console.error('[db] port-uniqueness migratie mislukt (server draait door):', err)
+}
+
 // Helper for the runner to persist agent outputs immediately on completion.
 export function saveAgentOutput(runId: string, agentId: string, output: Record<string, unknown>): void {
   try {
