@@ -26,6 +26,7 @@ interface NicheSuggestion {
   title: string
   rationale: string
   estimatedProducts: number
+  shippingProfile?: 'eu-fast' | 'mixed' | 'mostly-cn'
   exampleKeywords: string[]
   categories: string[]
   persona: Persona & { label: string }
