@@ -379,6 +379,9 @@ export class CJAdapter implements SupplierAdapter {
       throw new CJApiError(`CJ productzoekopdracht faalde voor alle warehouses — ${warehouseErrors[0]}`)
     }
 
+    if (rawSeen > 0) {
+      console.log(`[cj] zoekterm "${niche}": ${rawSeen} raw resultaten van CJ → ${seen.size} relevant na filter`)
+    }
     return Array.from(seen.values())
   }
 
