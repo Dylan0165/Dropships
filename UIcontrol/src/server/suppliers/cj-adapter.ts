@@ -385,6 +385,59 @@ export class CJAdapter implements SupplierAdapter {
     return Array.from(seen.values())
   }
 
+  // ── Catalogus-verkenning (niche-discovery) ──────────────────────────────────
+  // Read-only probes voor de "CJ-catalogus verkenning" in de wizard. Meet per
+  // categorie/keyword × warehouse de breedte (total), prijzen en populariteit
+  // (listedNum) zonder de volledige catalogus op te halen.
+
+  /** CJ categorie-boom (3 niveaus). Mock-modus geeft een vaste consumer-boom. */
+  async getCategoryTree(): Promise<CjCategoryLevel1[]> {
+    if (this.isMock) return mockCategoryTree()
+    const data = await this.request<Array<Record<string, unknown>>>('GET', '/product/getCategory')
+    return (data ?? []).map(l1 => ({
+      id: String(l1.categoryFirstId ?? l1.id ?? ''),
+      name: String(l1.categoryFirstName ?? l1.name ?? ''),
+      children: (Array.isArray(l1.categoryFirstList) ? l1.categoryFirstList as Array<Record<string, unknown>> : []).map(l2 => ({
+        id: String(l2.categorySecondId ?? l2.id ?? ''),
+        name: String(l2.categorySecondName ?? l2.name ?? ''),
+        children: (Array.isArray(l2.categorySecondList) ? l2.categorySecondList as Array<Record<string, unknown>> : []).map(l3 => ({
+          id: String(l3.categoryId ?? l3.id ?? ''),
+          name: String(l3.categoryName ?? l3.name ?? ''),
+        })),
+      })),
+    })).filter(c => c.id && c.name)
+  }
+
+  /**
+   * Meet één categorie (of keyword) in één warehouse-land: hoeveel producten
+   * (paginatie-`total`), plus een sample voor prijs/listedNum-statistiek.
+   */
+  async probeCategory(opts: {
+    categoryId?: string
+    keyword?: string
+    countryCode: string
+    pageSize?: number
+  }): Promise<CatalogProbe> {
+    if (this.isMock) return mockProbe(opts)
+    const data = await this.request<{
+      total: number
+      list: Array<Record<string, unknown>>
+    }>('GET', '/product/list', {
+      pageNum: 1,
+      pageSize: opts.pageSize ?? 40,
+      ...(opts.categoryId ? { categoryId: opts.categoryId } : {}),
+      ...(opts.keyword ? { productNameEn: opts.keyword } : {}),
+      countryCode: opts.countryCode,
+    })
+    const sample = (data?.list ?? []).map(raw => ({
+      title: String(raw.productNameEn ?? raw.nameEn ?? raw.productName ?? ''),
+      costPrice: parsePrice(raw.sellPrice ?? raw.variantSellPrice ?? raw.price) ?? 0,
+      listedNum: raw.listedNum != null ? Number(raw.listedNum) : undefined,
+      categoryName: raw.categoryName ? String(raw.categoryName) : undefined,
+    })).filter(s => s.title && s.costPrice > 0)
+    return { total: Number(data?.total ?? 0), sample }
+  }
+
   // ── getProduct (details + varianten) ───────────────────────────────────────
 
   async getProduct(productId: string): Promise<SupplierProduct | null> {
