@@ -159,7 +159,10 @@ async function writeNextScaffold(targetDir: string, data: StoreData): Promise<vo
     heroCta:         'Shop now',
     usps:            defaultUspsEn(),
     footerTagline:   data.slogan ?? data.brand_name,
-    story:           generateStory({ brandName: data.brand_name, niche: data.niche, persona, tone: dna.tone, seed: dna.seed }),
+    // Geen storyAngle hier (CMS-rebuild heeft geen LLM-brief) → generieke
+    // Engelse fallback. NOOIT persona.problem doorgeven: dat is rauwe
+    // (vaak Nederlandse) wizard-input.
+    story:           generateStory({ brandName: data.brand_name, niche: data.niche, tone: dna.tone, seed: dna.seed }),
     ctaBand:         generateCtaBand(dna.seed),
     reviews:         generateReviews(dna.seed),
     navLinks:        buildNavLinks(),
