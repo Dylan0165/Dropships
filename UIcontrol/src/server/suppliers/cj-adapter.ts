@@ -275,10 +275,11 @@ export class CJAdapter implements SupplierAdapter {
       const msg = body.message ?? `code ${body.code}`
       const isRateLimit = body.code === 429 || /too many|frequent/i.test(msg)
       if (isRateLimit && attempt < MAX_ATTEMPTS) {
-        const backoff = attempt * 3_000
-        console.warn(`[cj] rate limit in envelope op ${path} — retry na ${backoff}ms`)
-        await new Promise(r => setTimeout(r, backoff))
+        await rateLimitBackoff(path, attempt)
         return this.request<T>(method, path, payload, attempt + 1)
+      }
+      if (isRateLimit) {
+        throw new CJApiError(`CJ rate limit op ${path} — ${MAX_ATTEMPTS - 1} retries met backoff tot 48s uitgeput. Wacht ±1 minuut en probeer opnieuw.`, 429, true)
       }
       // Token verlopen/ongeldig → cache wissen en 1× opnieuw
       if ((body.code === 1600100 || /token/i.test(msg)) && attempt < MAX_ATTEMPTS) {
