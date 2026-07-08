@@ -879,6 +879,11 @@ app.post('/api/checkout/session', async (req, res) => {
       return
     }
     const origin = `${req.protocol}://${req.get('host')}`
+    // Webhook MOET publiek bereikbaar zijn (Mollie 422 op LAN-adressen). De
+    // publieke URL komt van de Cloudflare Tunnel (settings) of PUBLIC_BASE_URL;
+    // zonder die is de request-origin alleen bruikbaar als hij zelf publiek is.
+    const webhookUrl = getMollieWebhookUrl()
+      ?? (isPubliclyReachableUrl(`${origin}/api/webhooks/mollie`) ? `${origin}/api/webhooks/mollie` : undefined)
     const checkoutUrl = await createPayment({
       storeId,
       subdomain,
@@ -888,7 +893,7 @@ app.post('/api/checkout/session', async (req, res) => {
       // De store stuurt zijn eigen /bedankt/ URL mee zodat de klant na betaling
       // terugkomt in de webshop i.p.v. op de UIcontrol server
       redirectUrl: redirectUrl ?? `${origin}/bedankt?store=${subdomain}`,
-      webhookUrl: `${origin}/api/webhooks/mollie`,
+      webhookUrl,
       items,
       customer,
     })
