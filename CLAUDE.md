@@ -131,11 +131,14 @@ Reviewer output schema (locked): `{ verdict: "APPROVED"|"REJECTED"|"UNCERTAIN", 
 - `STORE_SERVER_HOST` moet `192.168.121.11` zijn (oud: `192.168.121.8` — fix: `sed -i 's/192.168.121.8/192.168.121.11/' .env && pm2 restart all`)
 - Auto-push git hook zit in `.claude/settings.json` — elke Edit/Write commit+pusht automatisch
 - Stores deployen naar port pool 4001-4999 op de store server. **Port-allocatie loopt
-  centraal via `allocatePort()` in db.ts** (single source of truth): range-scan tegen
-  `stores.port` + `port_allocations`, atomaire claim, UNIQUE index op `stores.port` als
-  vangnet tegen races. NOOIT meer `MAX(port)+1` gebruiken. `atomicDeploy` doet een
-  poort-conflict pre-flight tegen nginx vhosts; `/api/admin/nginx-audit` meldt orphans +
-  conflicten. Port wordt vrijgegeven bij `DELETE /api/stores/:id` (releasePort).
+  centraal via `allocatePort(storeId, reservedPorts)` in db.ts** (single source of truth):
+  range-scan tegen `stores.port` + `port_allocations` + de ECHTE server-poorten
+  (`scanDeployedStores()` wordt bij elke deploy meegegeven als `reservedPorts` — cruciaal
+  want de DB kan stale zijn), atomaire claim, UNIQUE index op `stores.port` als race-vangnet.
+  Redeploy van een bestaand subdomain hergebruikt z'n server-poort via `reservePort()`
+  (heelt de DB). NOOIT meer `MAX(port)+1`. `atomicDeploy` doet een poort-conflict pre-flight
+  tegen nginx vhosts; `/api/admin/nginx-audit` meldt orphans + conflicten. Port wordt
+  vrijgegeven bij `DELETE /api/stores/:id` (releasePort).
 - GitHub Actions CI/CD: push naar `main` → live in ~23s
 
 ## Development starten
