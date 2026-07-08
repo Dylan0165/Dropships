@@ -37,7 +37,7 @@ import {
   buildNavLinks, buildFooterLinks, heroLabel, badgeFor,
 } from './design/content-en.js'
 import { validateAndBuild } from './store-platform/build-validator.js'
-import { atomicDeploy, getHighestNginxPort } from './store-platform/deploy.js'
+import { atomicDeploy, scanDeployedStores } from './store-platform/deploy.js'
 void _saveAgentOutput
 
 // ── Supplier Adapter Pattern ──────────────────────────────────────────────────
