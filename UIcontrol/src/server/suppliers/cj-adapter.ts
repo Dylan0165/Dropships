@@ -236,7 +236,6 @@ export class CJAdapter implements SupplierAdapter {
     payload?: Record<string, unknown>,
     attempt = 1,
   ): Promise<T> {
-    const MAX_ATTEMPTS = 3
     const token = await this.getToken()
 
     const url = method === 'GET' && payload
