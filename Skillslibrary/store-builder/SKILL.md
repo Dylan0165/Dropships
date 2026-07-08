@@ -54,7 +54,8 @@ to fill in the brand brief that the template engine uses.
     { "icon": "✓", "title": "string", "desc": "string" },
     { "icon": "✓", "title": "string", "desc": "string" }
   ],
-  "footer_tagline": "string (max 10 words)"
+  "footer_tagline": "string (max 10 words)",
+  "story_angle":    "string (max 20 words) — one ENGLISH sentence framing the customer problem this store solves"
 }
 ```
 
@@ -68,6 +69,9 @@ to fill in the brand brief that the template engine uses.
 - `usps` must be EXACTLY 3 items. Re-use brand-agent USPs verbatim if good.
 - `icon` is a single emoji or short symbol — keep it minimal.
 - `footer_tagline` ≤ 10 words. Brand essence in one line.
+- `story_angle`: rewrite the persona's `problem` as ONE natural English sentence
+  (max 20 words) for the brand-story section. NEVER copy the raw persona text —
+  it is user input and often Dutch. Translate + rewrite as marketing copy.
 - **ALL text MUST be in English**, even if the niche or persona input is in Dutch
   or another language. Never output Dutch.
 - **Avoid generic patterns.** Don't default to the same hero structure or the

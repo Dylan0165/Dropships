@@ -217,12 +217,27 @@ export const STAGE_RUNNERS: Record<Stage, (ctx: StageContext) => Promise<StageOu
 
   'store-build': async (ctx) => {
     ctx.onLog('Calling store-builder...')
-    const brand = (ctx.previous.brand_agent as Record<string, unknown>) ?? (ctx.previous.brand as Record<string, unknown>) ?? {}
-    const productsRaw = ((ctx.previous.product_agent as Record<string, unknown>)?.products
+    // LET OP: collectPreviousOutputs (engine.ts) keyt stage-outputs als
+    // STAGE-NAAM met '-'→'_' (product_research, brand_creation,
+    // content_generation) — NIET als agent-naam (product_agent etc.). De oude
+    // agent-naam keys bestonden nooit, waardoor producten/brand stil leeg
+    // bleven en stores zonder producten deployden.
+    const brand = (ctx.previous.brand_creation as Record<string, unknown>)
+      ?? (ctx.previous.brand_agent as Record<string, unknown>)
+      ?? (ctx.previous.brand as Record<string, unknown>) ?? {}
+    const productsRaw = ((ctx.previous.product_research as Record<string, unknown>)?.products
+      ?? (ctx.previous.product_agent as Record<string, unknown>)?.products
       ?? (ctx.previous.products as unknown[])
       ?? []) as Array<Record<string, unknown>>
+    if (productsRaw.length === 0) {
+      // Zonder producten zou de store met een lege "Shop the collection" live
+      // gaan — dat is altijd fout. Hard falen met duidelijke reden.
+      return { ok: false, error: 'store-build: geen producten in product_research output — lege store wordt niet gebouwd' }
+    }
+    ctx.onLog(`store-build: ${productsRaw.length} producten uit product-research`)
     const contentMap = new Map<string, Record<string, unknown>>()
-    const contentProducts = ((ctx.previous.content_agent as Record<string, unknown>)?.products
+    const contentProducts = ((ctx.previous.content_generation as Record<string, unknown>)?.products
+      ?? (ctx.previous.content_agent as Record<string, unknown>)?.products
       ?? []) as Array<Record<string, unknown>>
     for (const c of contentProducts) {
       const id = (c.id as string) ?? (c.title as string)
