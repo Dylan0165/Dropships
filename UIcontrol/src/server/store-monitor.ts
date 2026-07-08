@@ -9,7 +9,7 @@
  * De poort wordt ook via nginx op 192.168.121.11 bereikbaar gemaakt (naast subdomain).
  */
 
-import db from './db.js'
+import db, { allocatePort } from './db.js'
 
 const MONITOR_INTERVAL_MS = 5 * 60 * 1000   // 5 minuten
 const HEALTH_TIMEOUT_MS   = 8_000            // 8 seconden per store
