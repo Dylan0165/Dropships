@@ -425,13 +425,14 @@ export class CJAdapter implements SupplierAdapter {
   }
 
   /**
-   * Meet één categorie (of keyword) in één warehouse-land: hoeveel producten
-   * (paginatie-`total`), plus een sample voor prijs/listedNum-statistiek.
+   * Meet één categorie (of keyword): hoeveel producten (paginatie-`total`),
+   * plus een sample voor prijs/listedNum-statistiek. Zonder countryCode meet
+   * hij ALLE warehouses wereldwijd; met countryCode alleen dat warehouse.
    */
   async probeCategory(opts: {
     categoryId?: string
     keyword?: string
-    countryCode: string
+    countryCode?: string
     pageSize?: number
   }): Promise<CatalogProbe> {
     if (this.isMock) return mockProbe(opts)
@@ -443,7 +444,7 @@ export class CJAdapter implements SupplierAdapter {
       pageSize: opts.pageSize ?? 40,
       ...(opts.categoryId ? { categoryId: opts.categoryId } : {}),
       ...(opts.keyword ? { productNameEn: opts.keyword } : {}),
-      countryCode: opts.countryCode,
+      ...(opts.countryCode ? { countryCode: opts.countryCode } : {}),
     })
     const sample = (data?.list ?? []).map(raw => ({
       title: String(raw.productNameEn ?? raw.nameEn ?? raw.productName ?? ''),
