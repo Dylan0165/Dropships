@@ -410,12 +410,19 @@ export function allocatePort(storeId: string): number {
 
     // Atomaire claim: nieuwe poort → INSERT slaagt; vrijgegeven poort → UPSERT
     // reactiveert; actieve poort van een ander (race) → 0 changes → opnieuw.
-    const info = db.prepare(`
-      INSERT INTO port_allocations (port, store_id, allocated_at, released_at) VALUES (?,?,?,NULL)
-      ON CONFLICT(port) DO UPDATE SET
-        store_id = excluded.store_id, allocated_at = excluded.allocated_at, released_at = NULL
-      WHERE port_allocations.released_at IS NOT NULL
-    `).run(port, storeId, now)
+    let info: { changes: number }
+    try {
+      info = db.prepare(`
+        INSERT INTO port_allocations (port, store_id, allocated_at, released_at) VALUES (?,?,?,NULL)
+        ON CONFLICT(port) DO UPDATE SET
+          store_id = excluded.store_id, allocated_at = excluded.allocated_at, released_at = NULL
+        WHERE port_allocations.released_at IS NOT NULL
+      `).run(port, storeId, now)
+    } catch (e) {
+      // Cross-process write-lock kortstondig bezet → opnieuw proberen
+      if (/SQLITE_BUSY|database is locked/i.test(String(e))) continue
+      throw e
+    }
 
     if (info.changes === 1) return port
     // changes === 0: poort werd net door een ander actief geclaimd → retry
