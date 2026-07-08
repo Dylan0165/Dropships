@@ -211,15 +211,26 @@ export function StoresView() {
           <div className="flex items-center gap-2">
             <ViewSwitcher mode={viewMode} onChange={changeViewMode} />
             {hasRemoteMode && (
-              <button
-                onClick={syncStores}
-                disabled={syncing}
-                title="Herstel bestaande stores van de store server via SSH"
-                className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-white border border-white/[0.08] hover:border-white/[0.2] px-2.5 py-1.5 rounded-lg disabled:opacity-40 transition-all"
-              >
-                <DownloadCloud size={13} className={syncing ? 'animate-pulse' : ''} />
-                {syncing ? 'Syncing...' : 'Sync'}
-              </button>
+              <>
+                <button
+                  onClick={runNginxAudit}
+                  disabled={auditing}
+                  title="Vergelijk nginx vhosts met de database: orphaned configs + poort-conflicten"
+                  className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-white border border-white/[0.08] hover:border-white/[0.2] px-2.5 py-1.5 rounded-lg disabled:opacity-40 transition-all"
+                >
+                  <AlertTriangle size={13} className={auditing ? 'animate-pulse' : ''} />
+                  {auditing ? 'Audit...' : 'Nginx-audit'}
+                </button>
+                <button
+                  onClick={syncStores}
+                  disabled={syncing}
+                  title="Herstel bestaande stores van de store server via SSH"
+                  className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-white border border-white/[0.08] hover:border-white/[0.2] px-2.5 py-1.5 rounded-lg disabled:opacity-40 transition-all"
+                >
+                  <DownloadCloud size={13} className={syncing ? 'animate-pulse' : ''} />
+                  {syncing ? 'Syncing...' : 'Sync'}
+                </button>
+              </>
             )}
             <button
               onClick={fetchStores}
