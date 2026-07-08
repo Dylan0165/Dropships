@@ -11,6 +11,7 @@
 //   zodat UI/pipeline-development zonder account werkt.
 
 import db from '../db.js'
+import { isConfigured } from '../load-env.js'
 import {
   EU_WAREHOUSES,
   type InventoryInfo,
