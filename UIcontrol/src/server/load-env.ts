@@ -27,29 +27,38 @@ export function isConfigured(value: string | undefined | null): boolean {
   return v !== '' && !PLACEHOLDER.test(v)
 }
 
-// Voorrang: UIcontrol/.env eerst, root daarna (root vult alleen gaten)
-const files = [path.join(uiRoot, '.env'), path.join(repoRoot, '.env')]
-const loadedFrom: Record<string, string> = {}
-
-for (const file of files) {
-  if (!fs.existsSync(file)) continue
-  let parsed: Record<string, string>
-  try {
-    parsed = dotenv.parse(fs.readFileSync(file))
-  } catch {
-    continue
-  }
-  for (const [key, val] of Object.entries(parsed)) {
-    const existing = process.env[key]
-    if (isConfigured(val) && !isConfigured(existing)) {
-      process.env[key] = val
-      loadedFrom[key] = path.basename(path.dirname(file)) + '/.env'
-    } else if (existing === undefined) {
-      // niet-echte waarde alleen zetten als de var nog helemaal niet bestaat
-      process.env[key] = val
+/**
+ * Merge .env-bestanden in `target` (default process.env), in volgorde. Echte
+ * waarden winnen; lege/placeholder-waarden overschrijven nooit een echte waarde.
+ * Retourneert per key uit welk bestand de gekozen echte waarde kwam (voor debug).
+ */
+export function applyEnvFiles(files: string[], target: NodeJS.ProcessEnv = process.env): Record<string, string> {
+  const loadedFrom: Record<string, string> = {}
+  for (const file of files) {
+    if (!fs.existsSync(file)) continue
+    let parsed: Record<string, string>
+    try {
+      parsed = dotenv.parse(fs.readFileSync(file))
+    } catch {
+      continue
+    }
+    const label = path.basename(path.dirname(file)) + '/.env'
+    for (const [key, val] of Object.entries(parsed)) {
+      const existing = target[key]
+      if (isConfigured(val) && !isConfigured(existing)) {
+        target[key] = val
+        loadedFrom[key] = label
+      } else if (existing === undefined) {
+        // niet-echte waarde alleen zetten als de var nog helemaal niet bestaat
+        target[key] = val
+      }
     }
   }
+  return loadedFrom
 }
+
+// Voorrang: UIcontrol/.env eerst, root daarna (root vult alleen gaten)
+const loadedFrom = applyEnvFiles([path.join(uiRoot, '.env'), path.join(repoRoot, '.env')])
 
 // Korte, key-veilige samenvatting voor debug (geen waarden loggen)
 const cjOk = isConfigured(process.env.CJ_API_KEY) && isConfigured(process.env.CJ_EMAIL)
