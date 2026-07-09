@@ -107,6 +107,16 @@ Reviewer output schema (locked): `{ verdict: "APPROVED"|"REJECTED"|"UNCERTAIN", 
   - `render-page.ts` — genereert `app/page.tsx`; 5 hero-varianten, 4 product-weergaven,
     6 sectie-volgordes, 3 nav- + 3 footer-stijlen. Structuur verschilt letterlijk per store.
   - `content-en.ts` — Engelse reviews/story/cta/badges/nav (seeded)
+  - `design-plan.ts` — **LLM art-direction** (sinds 9 juli 2026): de store-builder LLM levert per
+    store een `design`-blok in de brief (4-6 benoemde kleuren mét rollen, display+body font uit een
+    gecureerde Google-Fonts allowlist, hero/product/sectie-voorkeur, één signature-element uit:
+    ticker-band / outline-word / floating-badge / gradient-orb / pattern-divider / numbered-collection).
+    `applyDesignPlan()` valideert (WCAG-contrast-guard, font-allowlist) en legt het over het seeded
+    DNA (dat vangnet blijft). SKILL.md verbiedt de 3 AI-default looks (crème+terracotta+serif /
+    near-black+één neon / krantenstijl) + verplichte zelf-check in design_rationale.
+    Renderer heeft: hero-orkestratie (gefaseerde opkomst hi-1..4 + hi-img), reveal-varianten per
+    sectietype (up/fade + stagger, niet alles fade-up), subtiele hovers, `:focus-visible` ring,
+    `prefers-reduced-motion` support. Plan + warnings staan in design-dna.json.
   - Collectie-grootte varieert **6-15 producten per store** (`deriveProductCount` in layout.ts,
     seeded; impulse 6-10 / considered 9-15). `fitProducts` vult thin sourcing aan tot min. 6
     met unieke display-ids (supplier-velden gelijk → fulfillment blijft correct). `MAX_PRODUCTS_PER_STORE`
