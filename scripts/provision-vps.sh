@@ -113,9 +113,10 @@ cat <<NEXT
 
 2. Eerste build + PM2-start:
      cd ${APP_DIR}/UIcontrol && sudo -u ${APP_USER} npm ci && sudo -u ${APP_USER} npm run build
-     sudo -u ${APP_USER} pm2 start "npm run start:server" --name uicontrol
+     sudo -u ${APP_USER} pm2 start npm --name uicontrol -- run server
+     sudo -u ${APP_USER} pm2 start npm --name store-platform -- run store-platform
      sudo -u ${APP_USER} pm2 save
-     sudo -u ${APP_USER} pm2 startup   # volg de geprinte regel → processen overleven reboot
+     sudo env PATH=\$PATH pm2 startup systemd -u ${APP_USER} --hp ${APP_HOME}   # → processen overleven reboot
 
 3. Cloudflare named tunnel + wildcard DNS:  zie scripts/cloudflared-named-tunnel.md
 
