@@ -437,16 +437,16 @@ export async function deployStore(storeData: StoreData): Promise<DeployedStore> 
     fs.writeFileSync(path.join(baseDir, 'store.json'), JSON.stringify({ storeId, ...data, createdAt }, null, 2), 'utf-8')
 
     // SEO files
-    const storeBaseUrl = isRemote
+    const storeBaseUrl = isRealDeploy
       ? `https://${subdomain}.${STORE_BASE_DOMAIN}`
       : `http://localhost:${PORT}/preview/${subdomain}`
     writeSeoFiles(baseDir, data, storeBaseUrl)
 
-    if (!isRemote) {
-      // LOCAL mode — done. Express serves the static preview.
+    if (!isRealDeploy) {
+      // PREVIEW mode (dev-machine, geen nginx) — Express serveert de statische preview.
       const previewUrl = `http://localhost:${PORT}/preview/${subdomain}`
       persistStore({ storeId, subdomain, niche: data.niche, status: 'local', previewUrl, filesPath: baseDir, createdAt }, storeData.runId)
-      console.log(`[store-platform] local store ready: ${subdomain} → ${previewUrl}`)
+      console.log(`[store-platform] preview store ready: ${subdomain} → ${previewUrl}`)
       return { storeId, subdomain, niche: data.niche, status: 'local', previewUrl, filesPath: baseDir, createdAt }
     }
 
