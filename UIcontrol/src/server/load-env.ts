@@ -84,7 +84,14 @@ if ((deployMode === 'ssh' || deployMode === 'remote') && isPrivateOrLocalHost(st
 
 // Korte, key-veilige samenvatting voor debug (geen waarden loggen)
 const cjOk = isConfigured(process.env.CJ_API_KEY) && isConfigured(process.env.CJ_EMAIL)
+const mollieOk = isConfigured(process.env.MOLLIE_API_KEY)
+const deployTarget = (deployMode === 'ssh' || deployMode === 'remote' || (!isPrivateOrLocalHost(storeHost) && storeHost))
+  ? `ssh→${storeHost || '?'}`
+  : deployMode === 'local' ? 'local (deze VPS)' : 'preview (dev)'
 console.log(
   `[env] geladen — CJ: ${cjOk ? `geconfigureerd (${loadedFrom.CJ_API_KEY ?? 'shell'})` : 'niet geconfigureerd → mock-modus'}`
-  + `, LLM_API_KEY: ${isConfigured(process.env.LLM_API_KEY ?? process.env.DEEPSEEK_API_KEY) ? 'ja' : 'nee'}`,
+  + `, LLM_API_KEY: ${isConfigured(process.env.LLM_API_KEY ?? process.env.DEEPSEEK_API_KEY) ? 'ja' : 'nee'}`
+  + `, Mollie: ${mollieOk ? 'geconfigureerd' : 'mock'}`
+  + `, deploy: ${deployTarget}`
+  + `, domein: ${process.env.STORE_BASE_DOMAIN || 'localhost'}`,
 )
