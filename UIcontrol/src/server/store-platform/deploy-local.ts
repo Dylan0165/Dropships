@@ -129,13 +129,10 @@ export async function atomicDeploy(
       return { ok: false, port, releaseDir, error: 'health check: index.html ontbreekt na kopie' }
     }
 
-    // 2. Atomic symlink-swap: current → nieuwe release (rename is atomair)
-    log(`Step 2/4: atomic symlink-swap → release ${ts}`)
+    // 2. Symlink-swap: current → nieuwe release
+    log(`Step 2/4: symlink-swap → release ${ts}`)
     const currentLink = path.join(storeRoot, 'current')
-    const tmpLink = path.join(storeRoot, `current_new_${ts}`)
-    try { fs.rmSync(tmpLink, { force: true }) } catch { /* n/a */ }
-    fs.symlinkSync(releaseDir, tmpLink, 'dir')
-    fs.renameSync(tmpLink, currentLink)   // atomaire vervanging van de symlink
+    swapSymlink(currentLink, releaseDir, ts)
 
     // 3. Nginx vhost schrijven in de app-owned include-dir (geen sudo)
     log(`Step 3/4: nginx vhost schrijven (${sub}.conf)`)
