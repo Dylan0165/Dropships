@@ -40,9 +40,18 @@ function impl() {
   return isRemoteDeploy() ? ssh : local
 }
 
-/** Naam van de actieve deploy-modus (voor logging/diagnose). */
-export function deployMode(): 'local' | 'ssh' {
-  return isRemoteDeploy() ? 'ssh' : 'local'
+/**
+ * Drie deploy-doelen:
+ *   - 'ssh'     → aparte store-server via SSH (legacy twee-server / expliciet)
+ *   - 'local'   → échte deploy op deze VPS (next build → fs → nginx reload)
+ *   - 'preview' → geen echte deploy; Express serveert een statische preview
+ *                 (dev-machine zonder nginx). Dit is de veilige default.
+ * Zet `DEPLOY_MODE=local` op de productie-VPS.
+ */
+export function deployTargetKind(): 'preview' | 'local' | 'ssh' {
+  if (isRemoteDeploy()) return 'ssh'
+  if ((process.env.DEPLOY_MODE ?? '').trim().toLowerCase() === 'local') return 'local'
+  return 'preview'
 }
 
 // ── Doorgeef-functies (identieke signatures in beide implementaties) ──────────
