@@ -60,18 +60,26 @@ export function applyEnvFiles(files: string[], target: NodeJS.ProcessEnv = proce
 // Voorrang: UIcontrol/.env eerst, root daarna (root vult alleen gaten)
 const loadedFrom = applyEnvFiles([path.join(uiRoot, '.env'), path.join(repoRoot, '.env')])
 
-// ── Legacy-waarde guard ────────────────────────────────────────────────────────
-// 192.168.121.8 is het OUDE store-server IP; de juiste is 192.168.121.11. Het
-// oude adres dook herhaaldelijk op via stale .env-backups → "No route to host"
-// bij elke deploy. Corrigeer runtime en waarschuw luid; de CI patcht ondertussen
-// de backup zelf (zie .github/workflows/deploy.yml).
-const LEGACY_STORE_IP = '192.168.121.8'
-const CURRENT_STORE_IP = '192.168.121.11'
-for (const key of ['STORE_SERVER_HOST', 'VITE_STORE_SERVER_HOST'] as const) {
-  if (process.env[key]?.trim() === LEGACY_STORE_IP) {
-    console.warn(`[env] ⚠ ${key}=${LEGACY_STORE_IP} is het OUDE store-server IP — runtime gecorrigeerd naar ${CURRENT_STORE_IP}. Fix de .env(-backup) op de server!`)
-    process.env[key] = CURRENT_STORE_IP
-  }
+// ── Deploy-config sanity guard ──────────────────────────────────────────────────
+// De oude schoolomgeving had twee servers en een hardgecodeerde legacy-IP guard
+// (192.168.121.8 → .11). Sinds de één-server-VPS-migratie (juli 2026) is die weg:
+// STORE_SERVER_HOST is normaal LEEG en de deploy is lokaal (DEPLOY_MODE=local).
+// Wat blijft nuttig: waarschuwen bij een tegenstrijdige config — SSH-deploy
+// gevraagd terwijl het host-adres privé/lokaal is (kan niet werken vanaf één VPS
+// en was precies de bron van de "no route to host"-ellende).
+function isPrivateOrLocalHost(h: string): boolean {
+  const host = h.trim().toLowerCase()
+  if (!host) return false
+  if (host === 'localhost' || host === '::1') return true
+  const m = host.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/)
+  if (!m) return false
+  const [a, b] = [parseInt(m[1], 10), parseInt(m[2], 10)]
+  return a === 127 || a === 10 || a === 0 || (a === 192 && b === 168) || (a === 172 && b >= 16 && b <= 31) || (a === 169 && b === 254)
+}
+const deployMode = (process.env.DEPLOY_MODE ?? '').trim().toLowerCase()
+const storeHost = process.env.STORE_SERVER_HOST ?? ''
+if ((deployMode === 'ssh' || deployMode === 'remote') && isPrivateOrLocalHost(storeHost)) {
+  console.warn(`[env] ⚠ DEPLOY_MODE=${deployMode} maar STORE_SERVER_HOST="${storeHost}" is een privé/lokaal adres. Voor één-server-deploy hoort DEPLOY_MODE=local (geen STORE_SERVER_HOST). SSH-naar-localhost wordt bewust niet ondersteund.`)
 }
 
 // Korte, key-veilige samenvatting voor debug (geen waarden loggen)
