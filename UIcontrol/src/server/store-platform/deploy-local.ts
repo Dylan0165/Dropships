@@ -57,6 +57,25 @@ function runShell(cmd: string, timeoutMs = 30_000, onLog?: (m: string) => void):
   })
 }
 
+/**
+ * Vervang de `current`-symlink door één die naar `target` wijst. Op Linux is
+ * `rename(2)` over een bestaande symlink ATOMAIR (geen moment zonder current);
+ * dat is het primaire pad. Windows/dev staat dat niet toe → veilige fallback
+ * (unlink + rename) met een minimaal venster. `_ts` maakt de temp-naam uniek.
+ */
+function swapSymlink(currentLink: string, target: string, _ts: number): void {
+  const tmpLink = `${currentLink}_new_${_ts}`
+  try { fs.rmSync(tmpLink, { force: true }) } catch { /* n/a */ }
+  fs.symlinkSync(target, tmpLink, 'dir')
+  try {
+    fs.renameSync(tmpLink, currentLink)   // atomair op Linux
+  } catch {
+    // Fallback (Windows/dev): oude link weg, dan de nieuwe op z'n plek
+    try { fs.rmSync(currentLink, { recursive: false, force: true }) } catch { /* n/a */ }
+    fs.renameSync(tmpLink, currentLink)
+  }
+}
+
 function nginxVhost(subdomain: string, port: number): string {
   const { domain, storesRoot } = cfg()
   const root = `${storesRoot}/${subdomain}/current/out`
