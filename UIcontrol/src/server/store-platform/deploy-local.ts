@@ -189,9 +189,7 @@ export async function rollback(subdomain: string, onLog?: (msg: string) => void)
   if (releases.length < 2) { log('rollback: geen vorige release'); return { ok: false } }
   const target = releases[releases.length - 2]
   const currentLink = path.join(storesRoot, sub, 'current')
-  const tmp = path.join(storesRoot, sub, `current_rb_${Date.now()}`)
-  fs.symlinkSync(path.join(relDir, target), tmp, 'dir')
-  fs.renameSync(tmp, currentLink)
+  swapSymlink(currentLink, path.join(relDir, target), releases.length)
   const reload = await reloadNginx(log)
   return { ok: reload.ok, rolledBackTo: reload.ok ? target : undefined }
 }
