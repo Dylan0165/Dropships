@@ -422,8 +422,11 @@ export async function deployStore(storeData: StoreData): Promise<DeployedStore> 
     _storeId: storeId,
   }
 
-  const isRemote = !!STORE_SERVER_HOST
-  const baseDir = isRemote ? path.join(TMP_BUILD_DIR, subdomain) : path.join(LOCAL_STORES_DIR, subdomain)
+  // Deploy-doel: 'preview' (dev, statisch) | 'local' (echte deploy op deze VPS)
+  // | 'ssh' (aparte store-server). 'local' en 'ssh' bouwen + deployen echt.
+  const target = deployTargetKind()
+  const isRealDeploy = target === 'local' || target === 'ssh'
+  const baseDir = isRealDeploy ? path.join(TMP_BUILD_DIR, subdomain) : path.join(LOCAL_STORES_DIR, subdomain)
 
   try {
     // STEP 1 — generate files
