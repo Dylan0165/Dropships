@@ -60,8 +60,8 @@ jobs:
       - name: Restart backend (uicontrol + store-platform)
         run: |
           cd "$APP_DIR/UIcontrol"
-          pm2 restart uicontrol --update-env || pm2 start "npm run start:server" --name uicontrol
-          pm2 restart store-platform --update-env || true
+          pm2 restart uicontrol --update-env || pm2 start npm --name uicontrol -- run server
+          pm2 restart store-platform --update-env || pm2 start npm --name store-platform -- run store-platform
           pm2 save
 
       - name: Reload nginx
