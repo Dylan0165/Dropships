@@ -70,7 +70,11 @@ export async function deployStore(
     }
   }
 
-  const previewUrl = `http://${process.env.STORE_SERVER_HOST ?? 'localhost'}:${port}/`
+  // Publieke URL: op de VPS (met domein) is dat https://<sub>.<domein> via de
+  // Cloudflare named tunnel → nginx :80. Zonder domein een directe poort-URL.
+  const previewUrl = STORE_BASE_DOMAIN && STORE_BASE_DOMAIN !== 'localhost'
+    ? `https://${input.subdomain}.${STORE_BASE_DOMAIN}`
+    : `http://${process.env.STORE_SERVER_HOST || 'localhost'}:${port}/`
   log(`Live: ${previewUrl}`)
 
   return {
