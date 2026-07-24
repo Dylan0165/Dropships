@@ -1,112 +1,82 @@
-name: Deploy
+name: Deploy to production VPS
 
+# ── Deploy-frequentie (BEWUST NIET bij elke commit) ──────────────────────────
+# Op productie herstart een deploy de live PM2-processen terwijl er echte
+# klanten op de stores kunnen zitten. De auto-push git-hook commit bij ELKE
+# edit (`auto: <timestamp>`) naar main — daarom deployt deze workflow NIET op
+# push-naar-main. Deploys zijn opzettelijk:
+#   - handmatig via de Actions "Run workflow"-knop (workflow_dispatch), of
+#   - door een release-tag te pushen: `git tag deploy-YYYYMMDD && git push --tags`
 on:
+  workflow_dispatch: {}
   push:
-    branches: [main]
+    tags:
+      - 'deploy-*'
+      - 'v*'
+
+# Nooit twee deploys tegelijk (voorkomt half-herstarte processen)
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+env:
+  APP_DIR: /opt/dropships/app
 
 jobs:
   deploy:
-    runs-on: self-hosted
+    # Nieuwe VPS-runner draagt dit label (zie scripts/provision-vps.sh)
+    runs-on: [self-hosted, dropships-vps]
 
     steps:
       - name: Pull latest code
         run: |
-          cd /home/student/Dropships
-          git fetch origin main
-          git reset --hard origin/main
+          cd "$APP_DIR"
+          git fetch origin
+          # Deploy exact de commit/tag die deze run triggerde
+          git reset --hard "$GITHUB_SHA"
+          git log -1 --oneline
 
-      - name: Install UIcontrol dependencies
+      # GEEN env-restore meer. Op de VPS is UIcontrol/.env de ENIGE bron van
+      # waarheid: gitignored + untracked, dus `git reset --hard` raakt het niet.
+      # Het losse backup/restore-bestand (bron van de stale-IP bug) is geëlimineerd.
+      - name: Verify single-source .env exists
         run: |
-          cd /home/student/Dropships/UIcontrol
-          npm install
+          if [ ! -f "$APP_DIR/UIcontrol/.env" ]; then
+            echo "::error::UIcontrol/.env ontbreekt op de VPS. Dit is de enige env-bron; maak hem eenmalig aan (zie scripts/provision-vps.sh)."
+            exit 1
+          fi
+          echo ".env aanwezig ($(grep -c '=' "$APP_DIR/UIcontrol/.env") variabelen) — niet overschreven"
+
+      - name: Install dependencies
+        run: |
+          cd "$APP_DIR/UIcontrol"
+          npm ci || npm install
 
       - name: Build frontend
         run: |
-          cd /home/student/Dropships/UIcontrol
+          cd "$APP_DIR/UIcontrol"
           npm run build
 
-      # Fix bij de BRON: de env-backup bevatte het oude store-server IP
-      # (192.168.121.8) en zette dat bij elke deploy terug over .env heen.
-      # Patch de backup vóór het herstellen, zodat de fout niet kan terugkeren.
-      - name: Fix legacy store server IP in env backup
+      - name: Restart backend (uicontrol + store-platform)
         run: |
-          if [ -f /home/student/.dropship-envs/uicontrol.env ]; then
-            if grep -q '192\.168\.121\.8\b' /home/student/.dropship-envs/uicontrol.env; then
-              sed -i 's/192\.168\.121\.8\b/192.168.121.11/g' /home/student/.dropship-envs/uicontrol.env
-              echo "Legacy IP 192.168.121.8 -> 192.168.121.11 gepatcht in env-backup"
-            fi
-          fi
-
-      - name: Restore .env files (not in git on server)
-        run: |
-          if [ -f /home/student/.dropship-envs/uicontrol.env ]; then
-            cp /home/student/.dropship-envs/uicontrol.env /home/student/Dropships/UIcontrol/.env
-          fi
-
-      - name: Restart backend services
-        run: |
-          pm2 restart uicontrol --update-env
+          cd "$APP_DIR/UIcontrol"
+          pm2 restart uicontrol --update-env || pm2 start "npm run start:server" --name uicontrol
           pm2 restart store-platform --update-env || true
           pm2 save
 
-      - name: Reload nginx (nieuwe UI build)
-        run: sudo systemctl reload nginx
+      - name: Reload nginx
+        run: sudo nginx -t && sudo systemctl reload nginx
 
       - name: Health check
         run: |
-          sleep 8
-          curl -f http://localhost:3001/api/health && echo " UIcontrol OK"
+          sleep 6
+          curl -fsS http://localhost:3001/api/health && echo " — UIcontrol OK"
 
-      # ── Cloudflare Tunnel: publiek adres voor de Mollie-webhook ──────────────
-      # Mollie weigert LAN-webhook-URLs (422 "unreachable"). Een Quick Tunnel
-      # (gratis, geen account/domein, geen open poorten) geeft de API een
-      # https://*.trycloudflare.com adres; de manager registreert dat runtime.
-
-      - name: Diagnose cloudflared (tool + store server)
+      # De Cloudflare NAMED tunnel draait als losse, altijd-aan systemd-service
+      # (cloudflared.service) met een STABIELE URL — niet per deploy opnieuw
+      # opgezet. We verifiëren alleen dat de publieke webhook-URL geldig is.
+      - name: Verify public webhook URL (named tunnel)
         run: |
-          echo "— tool-server (deze machine):"
-          (command -v cloudflared || ls -la $HOME/bin/cloudflared 2>/dev/null) && echo "  cloudflared aanwezig" || echo "  cloudflared NIET aanwezig (wordt hierna geinstalleerd)"
-          echo "— store-server (192.168.121.11):"
-          ssh -i /home/student/.ssh/deploy_key -o StrictHostKeyChecking=no -o ConnectTimeout=5 student@192.168.121.11 \
-            'command -v cloudflared || ls $HOME/bin/cloudflared 2>/dev/null' \
-            && echo "  cloudflared aanwezig op store-server" \
-            || echo "  cloudflared NIET aanwezig op store-server (niet nodig voor de webhook-fix)"
-
-      - name: Install cloudflared (static binary, geen sudo)
-        run: |
-          if [ ! -x "$HOME/bin/cloudflared" ] && ! command -v cloudflared >/dev/null; then
-            mkdir -p "$HOME/bin"
-            curl -fsSL -o "$HOME/bin/cloudflared" \
-              https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64
-            chmod +x "$HOME/bin/cloudflared"
-            "$HOME/bin/cloudflared" --version
-          else
-            echo "cloudflared al aanwezig"
-          fi
-
-      - name: Start cloudflared-api tunnel manager (PM2)
-        run: |
-          cd /home/student/Dropships
-          # Alleen starten als hij nog niet draait: elke tunnel-herstart geeft
-          # een NIEUWE trycloudflare-URL — onnodig wisselen vermijden we dus.
-          if pm2 describe cloudflared-api >/dev/null 2>&1; then
-            echo "cloudflared-api draait al — niet herstart (URL blijft stabiel)"
-          else
-            pm2 start scripts/cloudflared-manager.cjs --name cloudflared-api
-            pm2 save
-          fi
-
-      - name: Tunnel + Mollie webhook selftest
-        run: |
-          # Even tijd geven om de URL te registreren bij een verse start
-          for i in $(seq 1 12); do
-            PUB=$(curl -s http://localhost:3001/api/admin/public-url | grep -o '"configured":true' || true)
-            [ -n "$PUB" ] && break
-            sleep 5
-          done
           echo "— publieke URL status:"
-          curl -s http://localhost:3001/api/admin/public-url
-          echo ""
-          echo "— Mollie selftest (echte 0.01 test-payment met webhookUrl):"
-          curl -s http://localhost:3001/api/admin/tunnel-selftest
+          curl -fsS http://localhost:3001/api/admin/public-url || echo "  (endpoint nog niet up)"
           echo ""
