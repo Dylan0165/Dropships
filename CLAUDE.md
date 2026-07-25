@@ -83,20 +83,33 @@ Reviewer output schema (locked): `{ verdict: "APPROVED"|"REJECTED"|"UNCERTAIN", 
 - UNCERTAIN → pause + human review via ApprovalApp
 - REJECTED → pipeline failed
 
-## Servers
-| Server | IP | Doel |
-|---|---|---|
-| Tool server | 192.168.121.133 | Draait UIcontrol via PM2 |
-| Store server | 192.168.121.11 | Gedeployde Next.js stores |
+## Servers — VPS-migratie (sinds 25 juli 2026, in uitvoering)
+Verhuizing van de tijdelijke schoolomgeving (2 servers) naar **één Hetzner
+Ubuntu 24.04 VPS** (IP/domein volgen apart). Code is al één-server-klaar; de VPS
+moet nog geprovisioned worden (`scripts/provision-vps.sh`).
 
-**PM2 services op tool server:**
-- `uicontrol` — port 3001 (API+WS) + 5173 (UI)
-- `store-platform` — port 3002
-- `trendscraper` — port 8001 (Python FastAPI, aparte service)
-- `inspector` — port 8002
-- `approvalapp` — port 5174
+| Omgeving | Opzet |
+|---|---|
+| **Nieuw (VPS)** | Alles op één server. Deploy = **lokale fs-operaties** (`DEPLOY_MODE=local`), geen SSH. Stores op `<sub>.STORE_BASE_DOMAIN` via Cloudflare **named tunnel** → nginx :80. |
+| Legacy (school) | Tool 192.168.121.133 + store-server 192.168.121.11 via SSH+scp. Alleen nog via `DEPLOY_MODE=ssh` + `STORE_SERVER_HOST`. |
 
-**SSH key voor deploy:** `/home/student/.ssh/deploy_key` (user: `student`)
+**Deploy-architectuur:** `store-platform/deploy.ts` is een **dispatcher** →
+`deploy-local.ts` (default, één server) of `deploy-ssh.ts` (legacy). `deployTargetKind()`:
+`preview` (dev, geen nginx) / `local` (echte VPS-deploy) / `ssh`. Lokale deploy:
+release-dir + atomaire `current`-symlink onder `STORES_ROOT` (app-owned), één
+`<sub>.conf` in `NGINX_CONF_DIR` (app-owned include-dir, `include .../dropships.d/*.conf`),
+enige sudo = `NGINX_RELOAD_CMD`. Poort-conflict/scan/audit lezen lokale conf i.p.v. SSH.
+
+**PM2 services (VPS):** `uicontrol` (:3001 API+WS, +5173 UI), `store-platform` (:3002),
+`cloudflared` (systemd, named tunnel — stabiele URL), evt. `trendscraper` (:8001).
+
+**Env = één bron:** alleen `UIcontrol/.env` op de VPS (gitignored, untracked →
+overleeft `git reset --hard`). GEEN los backup/restore-bestand meer (dat was de
+bron van de stale-IP bug). `PUBLIC_BASE_URL=https://api.<domein>` (named tunnel, stabiel).
+
+**Deploy-frequentie:** CI deployt NIET meer op elke push (de auto-push hook commit
+bij elke edit). Alleen `workflow_dispatch` (handmatig) of een `deploy-*`/`v*` tag.
+Runner-label `dropships-vps`.
 
 ## Store generatie & variatie (sinds juli 2026)
 - Stores worden NIET meer uit 5 vaste `.tmpl` templates gekozen, maar programmatisch
