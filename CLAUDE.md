@@ -192,10 +192,8 @@ Runner-label `dropships-vps`.
   (checkout werkt, geen 422; fulfillment dan handmatig via `/api/orders/:id/fulfill`).
 - Endpoints: `GET/POST /api/admin/public-url` (POST alleen localhost of `TUNNEL_TOKEN`),
   `GET /api/admin/tunnel-selftest` (maakt echte €0.01 Mollie test-payment mét webhookUrl → bewijst 422-fix).
-- CI (deploy.yml) doet: cloudflared-diagnose (tool + store server), binary-install naar `~/bin`
-  (geen sudo), PM2-start, en de selftest — resultaat in de Actions-log.
-- Stores zelf publiek maken (klant-facing) kan een Quick Tunnel NIET voor meerdere port-vhosts
-  tegelijk — daarvoor is een eigen domein + named tunnel (wildcard ingress per store) nodig.
+- Op de VPS maakt de named tunnel + wildcard DNS élke store publiek zonder per-store DNS-werk;
+  de Quick Tunnel (school) kon dat niet voor meerdere port-vhosts tegelijk.
 
 ## Bekende gotcha's
 - `.env` is gitignored én untracked (sinds juli 2026) — wijzigingen moeten direct op de server via `sed + pm2 restart`
