@@ -201,18 +201,20 @@ Runner-label `dropships-vps`.
   ZOWEL `UIcontrol/.env` als de repo-root `.env` — echte waarden winnen, lege/placeholder
   (`your_..._here`) tellen niet als geconfigureerd. Een CJ-key mag dus in root óf UIcontrol/.env.
   `isConfigured()` bepaalt overal of een key echt is (CJAdapter.isMock gebruikt dit).
-- `STORE_SERVER_HOST` moet `192.168.121.11` zijn (oud: `192.168.121.8` — fix: `sed -i 's/192.168.121.8/192.168.121.11/' .env && pm2 restart all`)
-- Auto-push git hook zit in `.claude/settings.json` — elke Edit/Write commit+pusht automatisch
-- Stores deployen naar port pool 4001-4999 op de store server. **Port-allocatie loopt
-  centraal via `allocatePort(storeId, reservedPorts)` in db.ts** (single source of truth):
-  range-scan tegen `stores.port` + `port_allocations` + de ECHTE server-poorten
-  (`scanDeployedStores()` wordt bij elke deploy meegegeven als `reservedPorts` — cruciaal
-  want de DB kan stale zijn), atomaire claim, UNIQUE index op `stores.port` als race-vangnet.
-  Redeploy van een bestaand subdomain hergebruikt z'n server-poort via `reservePort()`
-  (heelt de DB). NOOIT meer `MAX(port)+1`. `atomicDeploy` doet een poort-conflict pre-flight
-  tegen nginx vhosts; `/api/admin/nginx-audit` meldt orphans + conflicten. Port wordt
-  vrijgegeven bij `DELETE /api/stores/:id` (releasePort).
-- GitHub Actions CI/CD: push naar `main` → live in ~23s
+- **`DEPLOY_MODE`** bepaalt het deploy-pad: `local` (VPS, default via .env) / `ssh` (legacy) /
+  leeg=`preview` (dev). De oude legacy-IP guard (192.168.121.8→.11) in `load-env.ts` is WEG;
+  vervangen door een generieke waarschuwing bij `DEPLOY_MODE=ssh` met een privé/lokaal host.
+- Auto-push git hook zit in `.claude/settings.json` — elke Edit/Write commit+pusht automatisch.
+  **Push naar `main` deployt NIET meer** (workflow op `workflow_dispatch`/tag) → veilig op productie.
+- Stores deployen naar port pool 4001-4999 (nu de directe **debug**-poort; publiek loopt via
+  `<sub>.<domein>` op :80). **Port-allocatie loopt centraal via `allocatePort(storeId, reservedPorts)`
+  in db.ts**: range-scan tegen `stores.port` + `port_allocations` + de ECHTE server-poorten
+  (`scanDeployedStores()` leest nu LOKALE nginx-conf i.p.v. via SSH; bij elke deploy meegegeven als
+  `reservedPorts`), atomaire claim, UNIQUE index op `stores.port`. Redeploy hergebruikt z'n poort via
+  `reservePort()`. `atomicDeploy` (local) doet een poort-conflict pre-flight tegen de conf-dir;
+  `/api/admin/nginx-audit` meldt orphans + conflicten. Vrijgegeven bij `DELETE /api/stores/:id`.
+- Provisioning: `scripts/provision-vps.sh` (hardening + install + één-server nginx-model),
+  `scripts/cloudflared-named-tunnel.md` (named tunnel + DNS).
 
 ## Development starten
 ```bash
