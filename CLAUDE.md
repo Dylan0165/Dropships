@@ -61,7 +61,8 @@ d:\Dropshippingv0.1tool\          ← Windows dev machine
 - **Frontend:** React 18, Vite 5, TypeScript, Tailwind CSS, @xyflow/react (pipeline canvas)
 - **Backend:** Express 4, WebSocket, better-sqlite3, Zod 4, tsx
 - **LLM:** DeepSeek (`deepseek-chat` voor executors, `deepseek-reasoner` voor reviewers + store-builder)
-- **Deploy:** GitHub Actions → PM2 op 192.168.121.133, stores op 192.168.121.11 via SSH+rsync
+- **Deploy:** één-server VPS, lokale fs-operaties + nginx (`DEPLOY_MODE=local`); GitHub Actions
+  op `workflow_dispatch`/tag (niet elke push). Legacy: SSH naar aparte store-server (`DEPLOY_MODE=ssh`).
 
 ## Pipeline (11 stages in volgorde)
 ```
