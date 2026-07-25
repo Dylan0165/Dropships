@@ -178,12 +178,14 @@ Runner-label `dropships-vps`.
   kaart kiezen zet idea+persona (chosenDirection) en springt direct naar stap 2.
 
 ## Cloudflare Tunnel / Mollie webhook (sinds juli 2026)
-- **Probleem:** Mollie weigert LAN-webhook-URLs met 422 "unreachable" — 192.168.121.x is niet publiek.
-- **Opzet:** één gedeelde Quick Tunnel (gratis, geen account/domein/open poorten) naar de UIcontrol
-  API (:3001) op de tool-server. PM2-service `cloudflared-api` = `scripts/cloudflared-manager.cjs`:
-  spawnt `cloudflared tunnel --url http://127.0.0.1:3001`, parset de trycloudflare-URL en POST hem
-  naar `/api/admin/public-url` (settings-tabel, runtime — geen restart nodig; heartbeat 60s).
-  Quick-tunnel-URLs wisselen bij herstart → CI start de service alleen als hij nog niet draait.
+- **Probleem:** Mollie weigert LAN-webhook-URLs met 422 "unreachable" — een privé-IP is niet publiek.
+- **VPS (nieuw):** Cloudflare **named tunnel** met eigen domein → stabiele URL's die herstart
+  overleven. `scripts/cloudflared-named-tunnel.md`: `cloudflared tunnel create` + wildcard DNS
+  (`*.domein` + `api.domein`) → `config.yml` ingress → systemd `cloudflared.service`. Zet dan
+  `PUBLIC_BASE_URL=https://api.<domein>` statisch in `.env` — geen runtime-manager nodig.
+- **Legacy (school):** één gedeelde Quick Tunnel via PM2-service `cloudflared-api` =
+  `scripts/cloudflared-manager.cjs` (spawnt `cloudflared tunnel --url http://127.0.0.1:3001`,
+  parset de wisselende trycloudflare-URL en POST hem naar `/api/admin/public-url`, heartbeat 60s).
 - `server/public-url.ts`: `getPublicBaseUrl()` (settings → env `PUBLIC_BASE_URL` → null),
   `isPubliclyReachableUrl()` weigert privé-IP/localhost/.local. `mollie.ts` stuurt webhookUrl
   ALLEEN mee als er een publiek adres is — zonder tunnel wordt de payment zonder webhook aangemaakt
