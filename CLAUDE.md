@@ -74,7 +74,7 @@ d:\Dropshippingv0.1tool\          ← Windows dev machine
 6. content-generation  (deepseek-chat)     — Product beschrijvingen
 7. store-build         (deepseek-reasoner) — Content brief voor Next.js template
 8. build-validate      (geen LLM)          — npm install + tsc + next build
-9. deploy              (geen LLM)          — SSH+rsync naar store server
+9. deploy              (geen LLM)          — lokale fs-deploy + nginx reload (of SSH bij legacy)
 10. health-check       (geen LLM)          — HTTP probe met retries
 11. growth             (deepseek-chat)     — Groei analyse
 ```
