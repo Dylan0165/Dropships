@@ -122,6 +122,9 @@ export async function generateBrief(input: StoreBuildInput): Promise<StoreBrief 
       // Persona + site-structuur uit de wizard sturen de creatieve richting
       ...(input.persona ? { doelgroep_persona: input.persona } : {}),
       ...(input.siteStructure ? { site_structuur: input.siteStructure } : {}),
+      // Component-catalogus: de LLM KIEST hieruit (van genereren → combineren).
+      // Checkout staat er bewust NIET in — die is vast en wordt automatisch toegevoegd.
+      component_catalog: catalogForPrompt(),
     },
     outputSchema: StoreBriefSchema,
     timeoutMs: 240_000,
