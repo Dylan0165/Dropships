@@ -884,21 +884,19 @@ app.post('/api/checkout/session', async (req, res) => {
       return
     }
     const origin = `${req.protocol}://${req.get('host')}`
-    // Webhook MOET publiek bereikbaar zijn (Mollie 422 op LAN-adressen). De
-    // publieke URL komt van de Cloudflare Tunnel (settings) of PUBLIC_BASE_URL;
-    // zonder die is de request-origin alleen bruikbaar als hij zelf publiek is.
-    const webhookUrl = getMollieWebhookUrl()
-      ?? (isPubliclyReachableUrl(`${origin}/api/webhooks/mollie`) ? `${origin}/api/webhooks/mollie` : undefined)
-    const checkoutUrl = await createPayment({
+    // Stripe Checkout Session. De success/cancel-URL wijzen terug naar de store.
+    // De webhook-config (publiek bereikbaar adres) staat op het Stripe-dashboard
+    // → PUBLIC_BASE_URL/api/webhooks/stripe (zelfde tunnel/domein als de VPS).
+    const success = redirectUrl ?? `${origin}/thank-you/?store=${subdomain}`
+    const cancel = `${origin}/checkout/?store=${subdomain}`
+    const checkoutUrl = await createCheckoutSession({
       storeId,
       subdomain,
       runId,
       amountEur: Number(amountEur),
-      description: description ?? `Bestelling ${subdomain}`,
-      // De store stuurt zijn eigen /bedankt/ URL mee zodat de klant na betaling
-      // terugkomt in de webshop i.p.v. op de UIcontrol server
-      redirectUrl: redirectUrl ?? `${origin}/bedankt?store=${subdomain}`,
-      webhookUrl,
+      description: description ?? `Order ${subdomain}`,
+      successUrl: success,
+      cancelUrl: cancel,
       items,
       customer,
     })
