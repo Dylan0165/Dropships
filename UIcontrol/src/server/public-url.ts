@@ -80,3 +80,13 @@ export function getMollieWebhookUrl(): string | null {
   const base = getPublicBaseUrl()
   return base ? `${base}/api/webhooks/mollie` : null
 }
+
+/**
+ * Stripe-webhook-URL. Op het Stripe-dashboard configureer je dit adres als
+ * endpoint voor `checkout.session.completed`. Vereist een publiek adres (zelfde
+ * tunnel/domein als de VPS) — anders bereikt Stripe de webhook niet.
+ */
+export function getStripeWebhookUrl(): string | null {
+  const base = getPublicBaseUrl()
+  return base ? `${base}/api/webhooks/stripe` : null
+}
