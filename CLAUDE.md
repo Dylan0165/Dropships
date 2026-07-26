@@ -194,8 +194,20 @@ Runner-label `dropships-vps`.
 - Wizard stap 1 heeft nu twee entries: "Eigen idee" (bestaand) en "AI-niches uit CJ-voorraad" —
   kaart kiezen zet idea+persona (chosenDirection) en springt direct naar stap 2.
 
-## Cloudflare Tunnel / Mollie webhook (sinds juli 2026)
-- **Probleem:** Mollie weigert LAN-webhook-URLs met 422 "unreachable" — een privé-IP is niet publiek.
+## Betalingen — Stripe (vervangt Mollie, sinds 26 juli 2026)
+- `server/stripe.ts`: `createCheckoutSession()` (Stripe Checkout Session) + `handleStripeWebhook()`
+  (verifieert `stripe-signature` met `STRIPE_WEBHOOK_SECRET`, triggert op `checkout.session.completed`).
+  Env: `STRIPE_SECRET_KEY` (sk_test_/sk_live_), `STRIPE_WEBHOOK_SECRET` (whsec_). Geen key → mock-modus.
+- Checkout: vast component → POST `/api/checkout/session` → `createCheckoutSession` → Stripe → betaling
+  → webhook `/api/webhooks/stripe` (raw body via `express.json({verify})` → `req.rawBody`) → `fulfillment.ts`
+  → `getSupplier('cj').placeOrder()`. **fulfillment.ts is ONGEWIJZIGD** — alleen de trigger komt van Stripe.
+- `checkout_orders`-tabel hergebruikt; kolom `mollie_payment_id` bevat nu de Stripe session-id (semantiek =
+  payment-ref). Signatuur-verificatie hangt aan `STRIPE_WEBHOOK_SECRET`, niet aan de API-key (werkt ook in
+  session-mock). `getStripeWebhookUrl()` in public-url.ts; endpoint config op het Stripe-dashboard.
+- `mollie.ts` blijft LEGACY (webhook `/api/webhooks/mollie` nog gemount) tot Stripe live-getest is — daarna verwijderen.
+
+## Cloudflare Tunnel / webhooks (sinds juli 2026)
+- **Probleem:** betaalproviders weigeren LAN-webhook-URLs — een privé-IP is niet publiek.
 - **VPS (nieuw):** Cloudflare **named tunnel** met eigen domein → stabiele URL's die herstart
   overleven. `scripts/cloudflared-named-tunnel.md`: `cloudflared tunnel create` + wildcard DNS
   (`*.domein` + `api.domein`) → `config.yml` ingress → systemd `cloudflared.service`. Zet dan
