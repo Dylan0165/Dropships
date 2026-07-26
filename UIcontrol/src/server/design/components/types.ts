@@ -84,6 +84,21 @@ export interface ComponentSelection {
 /** JSON-veilige emit van dynamische tekst in gegenereerde TSX (nooit rauw). */
 export const j = (v: unknown): string => JSON.stringify(v)
 
+/** JSX-expressie die een string veilig rendert: {"..."}. Nooit rauwe tekst. */
+export const txt = (v: unknown, fallback = ''): string => `{${j(String(v ?? fallback))}}`
+
+/** Veilige array-literal voor .map() in JSX; valt terug op `fallback`. */
+export function arr(v: unknown, fallback: unknown[]): string {
+  return j(Array.isArray(v) && v.length ? v : fallback)
+}
+
+/** Reveal-wrapper met variant + optionele stagger-delay (respecteert anim). */
+export function reveal(anim: AnimationVariant, variant: 'up' | 'left' | 'right' | 'scale' | 'fade', inner: string, delay = 0): string {
+  if (anim === 'none') return inner
+  const v = anim === 'subtle' && variant !== 'fade' ? 'up' : variant
+  return `<Reveal v=${j(v)} delay={${delay}}>${inner}</Reveal>`
+}
+
 /** Stijl-afhankelijke schaal-tokens (spacing/typografie-accent per StyleVariant). */
 export function styleTokens(style: StyleVariant) {
   switch (style) {
