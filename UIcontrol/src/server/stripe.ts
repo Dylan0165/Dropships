@@ -107,14 +107,16 @@ export async function createCheckoutSession(params: StripeCheckoutParams): Promi
  * onbewerkte request-body zijn (niet de geparste JSON) voor de signatuur.
  */
 export async function handleStripeWebhook(rawBody: Buffer | string, signature: string | undefined): Promise<{ ok: boolean; status: number; error?: string }> {
-  // Mock-modus: geen secret → accepteer een reeds-geparsete completed-event (dev)
-  if (stripeIsMock() || !isConfigured(webhookSecret())) {
+  // Signatuur-verificatie hangt ALLEEN af van het webhook-secret, niet van de
+  // API-key: ook met mock session-creatie moet een echte webhook geverifieerd
+  // worden. Zonder webhook-secret (pure dev) → geparsete event accepteren.
+  if (!isConfigured(webhookSecret())) {
     try {
       const evt = JSON.parse(typeof rawBody === 'string' ? rawBody : rawBody.toString('utf-8')) as Stripe.Event
       await routeEvent(evt)
       return { ok: true, status: 200 }
     } catch (err) {
-      return { ok: false, status: 400, error: err instanceof Error ? err.message : 'mock webhook parse mislukt' }
+      return { ok: false, status: 400, error: err instanceof Error ? err.message : 'dev webhook parse mislukt' }
     }
   }
 
