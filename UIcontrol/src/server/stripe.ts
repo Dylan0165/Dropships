@@ -38,7 +38,10 @@ export function stripeIsMock(): boolean { return !isConfigured(secretKey()) }
 
 let _client: Stripe | null = null
 function client(): Stripe {
-  if (!_client) _client = new Stripe(secretKey(), { apiVersion: '2025-02-24.acacia' as Stripe.LatestApiVersion })
+  // Dummy-key als fallback: webhooks.constructEvent verifieert offline met het
+  // webhook-secret en raakt de API niet — zo werkt signatuur-verificatie ook als
+  // session-creatie in mock-modus draait (geen STRIPE_SECRET_KEY).
+  if (!_client) _client = new Stripe(secretKey() || 'sk_test_dummy_for_webhook_verify', { apiVersion: '2025-02-24.acacia' as Stripe.LatestApiVersion })
   return _client
 }
 
