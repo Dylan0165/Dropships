@@ -27,7 +27,8 @@ function heroText(ctx: RenderCtx, p: ComponentProps, opts: { center?: boolean; o
 function txtRaw(v: unknown, fb: string): string { return JSON.stringify(String(v ?? fb)) }
 
 function imgBox(style: string, extraClass = 'hi-img'): string {
-  return `{${P0IMG} ? <img className=${JSON.stringify(extraClass)} src={PRODUCTS[0].image} alt="" style={${style}} /> : <div style={{ width:'60%', aspectRatio:'1', background:'var(--c-border)', borderRadius:'var(--r-lg)' }} />}`
+  // `style` bevat al de {{ }} — geen extra braces eromheen (anders {{{ }}} → crash)
+  return `{${P0IMG} ? <img className=${JSON.stringify(extraClass)} src={PRODUCTS[0].image} alt="" style=${style} /> : <div style={{ width:'60%', aspectRatio:'1', background:'var(--c-border)', borderRadius:'var(--r-lg)' }} />}`
 }
 
 const heroDefs: ComponentDef[] = [
