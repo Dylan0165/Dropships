@@ -81,6 +81,14 @@ to fill in the brand brief that the template engine uses.
       "text": "optional text parameter (ticker words separated by ·, badge text, or the outline word)",
       "why": "1 sentence: why THIS element fits THIS niche"
     }
+  },
+  "components": {
+    "style": "minimal | bold | playful | editorial (overall vibe)",
+    "nav": "one nav id from the catalog",
+    "footer": "one footer id from the catalog",
+    "sections": [
+      { "id": "component id from the catalog", "style": "optional per-component style", "anim": "none|subtle|expressive", "props": { "...component props..." } }
+    ]
   }
 }
 ```
@@ -143,6 +151,31 @@ as a fallback:
 **SELF-CHECK (mandatory, part of design_rationale).** End your rationale by
 answering: "Would this exact design work for any other store?" If yes — revise
 until the answer is honestly no. Name the niche-specific choice that anchors it.
+
+## Component selection — COMBINE, don't generate
+
+You receive a `component_catalog` in the input: pre-built, tested components
+grouped by category, each with an `id`, `label`, allowed `styles`, `tags` and
+`props`. Your job is to CHOOSE and CONFIGURE — never write raw JSX/CSS.
+
+Fill the `components` field:
+- Pick ONE `nav` and ONE `footer` id.
+- Pick 4-8 `sections` in the order they should appear top-to-bottom. The FIRST
+  section should be a `hero.*`. You MUST include exactly one `products.*` section
+  (the collection). Add social-proof, content and CTA components that fit the
+  niche and persona — use the `tags` to match (e.g. `urgency`/`impulse` for a
+  cheap impulse niche, `premium`/`considered` for a considered purchase).
+- Choose ids that VARY the store from a generic layout — two different stores
+  should rarely share the same set.
+- Only use ids and styles that exist in the catalog. Only use `props` keys listed
+  for that component; leave text props empty to accept sensible English defaults,
+  or supply concrete English copy.
+
+**CHECKOUT IS NOT IN THE CATALOG — and that is intentional.** The checkout
+(cart, address form, payment) is a single FIXED component that the pipeline adds
+to every store automatically. It always has the same structure, fields, validation
+and flow; only your color/font DNA is applied to it. Never try to design or choose
+a checkout — it is the one thing that must be identical everywhere for reliability.
 - **ALL text MUST be in English**, even if the niche or persona input is in Dutch
   or another language. Never output Dutch.
 - **Avoid generic patterns.** Don't default to the same hero structure or the
