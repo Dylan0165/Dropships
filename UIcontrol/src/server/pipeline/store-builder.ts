@@ -41,6 +41,10 @@ export const StoreBriefSchema = z.object({
   // layout-concept, signature-element). Optioneel: zonder plan valt de renderer
   // terug op het seeded design-DNA. Zie design/design-plan.ts.
   design: DesignPlanSchema.optional(),
+  // Component-keuze uit de catalogus (van "genereren" → "combineren"). De LLM
+  // kiest nav/sections/footer + varianten; ontbreekt het, dan leidt de pipeline
+  // een selectie af uit toon + layout. Checkout valt hier NOOIT onder (vast).
+  components: ComponentSelectionSchema.optional(),
 }).passthrough()
 
 export type StoreBrief = z.infer<typeof StoreBriefSchema>
