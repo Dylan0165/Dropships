@@ -232,10 +232,42 @@ export function renderStore(input: StoreBuildInput, brief: StoreBrief): StoreBui
     runId:         input.runId,
   })
 
-  // ── 6. Schrijf de gegenereerde page + shared files ──────────────────────────
+  // ── 6. Home-pagina samenstellen uit de component-catalogus ──────────────────
+  // Van "genereren" → "combineren": de pipeline voegt de gekozen componenten
+  // deterministisch samen. Bij een assemble-fout valt hij terug op de oude
+  // directe renderer (renderStorePage) zodat een store nooit crasht.
   const appDir = path.join(buildDir, 'app')
   fs.mkdirSync(appDir, { recursive: true })
-  fs.writeFileSync(path.join(appDir, 'page.tsx'), renderStorePage(dna, layout, content, products, applied.signature), 'utf-8')
+
+  let pageTsx: string
+  let componentMeta: Record<string, unknown> = { renderer: 'render-page (fallback)' }
+  try {
+    const selection = buildSelection(dna, layout, {
+      brandName,
+      eyebrow: content.heroLabel,
+      headline: brief.hero_headline,
+      subheadline: brief.hero_subheadline,
+      cta: brief.hero_cta,
+      usps: content.usps,
+      storyTitle: content.story.title,
+      storyBody: content.story.body,
+      reviews: content.reviews,
+      footerTagline: brief.footer_tagline,
+    }, brief.components)
+    const assembled = assemblePage({ dna, brandName, nav: selection.nav, sections: selection.sections, footer: selection.footer, products, defaultStyle: selection.style })
+    for (const w of assembled.warnings) input.onLog?.(`[assemble] ⚠ ${w}`)
+    input.onLog?.(`[assemble] ${assembled.usedComponents.length} componenten (${selection.source}): ${assembled.usedComponents.join(', ')}${assembled.cssConflicts.length ? ` — ${assembled.cssConflicts.length} CSS-conflict!` : ''}`)
+    if (assembled.cssConflicts.length === 0 && assembled.usedComponents.length >= 3) {
+      pageTsx = assembled.page
+      componentMeta = { renderer: 'component-catalog', source: selection.source, used: assembled.usedComponents, cssConflicts: assembled.cssConflicts }
+    } else {
+      throw new Error(assembled.cssConflicts.length ? 'CSS-conflicten in assemblage' : 'te weinig componenten')
+    }
+  } catch (err) {
+    input.onLog?.(`[assemble] terugval op directe renderer: ${err instanceof Error ? err.message : err}`)
+    pageTsx = renderStorePage(dna, layout, content, products, applied.signature)
+  }
+  fs.writeFileSync(path.join(appDir, 'page.tsx'), pageTsx, 'utf-8')
 
   buildLayoutSharedFiles(buildDir, vars)
   buildCheckoutAndInfoPages(buildDir, vars)
