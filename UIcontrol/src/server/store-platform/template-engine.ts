@@ -307,7 +307,7 @@ export default function CheckoutPage() {
               <span>Total</span>
               <span>&euro;{total.toFixed(2)}</span>
             </div>
-            <p style={{ fontSize: '0.75rem', color: '#999', marginTop: '0.75rem' }}>Free shipping &middot; Secure payment via iDEAL, Bancontact, credit card or PayPal</p>
+            <p style={{ fontSize: '0.75rem', color: '#999', marginTop: '0.75rem' }}>Free shipping &middot; Secure payment via Stripe (cards, iDEAL, Bancontact & more)</p>
           </section>
 
           {/* Shipping details */}
@@ -422,7 +422,7 @@ export default function CheckoutPage() {
         <h3>Can I track my order?</h3>
         <p>Yes — as soon as your order ships you'll receive a track &amp; trace code by email.</p>
         <h3>How can I pay?</h3>
-        <p>Via iDEAL, Bancontact, credit card or PayPal. Payments are processed securely through Mollie.</p>
+        <p>Cards, iDEAL, Bancontact and more. Payments are processed securely through Stripe.</p>
         <h3>What if I'm not satisfied?</h3>
         <p>You have 30 days to change your mind. See our <a href="/returns/">returns page</a>.</p>`,
     },
