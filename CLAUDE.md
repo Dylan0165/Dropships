@@ -135,6 +135,22 @@ Runner-label `dropships-vps`.
     seeded; impulse 6-10 / considered 9-15). `fitProducts` vult thin sourcing aan tot min. 6
     met unieke display-ids (supplier-velden gelijk → fulfillment blijft correct). `MAX_PRODUCTS_PER_STORE`
     default nu 15; product-agent sourcet 8-15, wizard-shortlist idem.
+## Component-bibliotheek — "combineren i.p.v. genereren" (sinds 26 juli 2026)
+- `server/design/components/`: **43 vooraf gebouwde componenten** over 10 categorieën
+  (hero 8, products 6, testimonials 4, cta 4, content 6, badges 3, gallery 2, form 2, nav 4,
+  footer 4), elk met 2-4 stijl-varianten (minimal/bold/playful/editorial) + animatie-varianten
+  (none/subtle/expressive) → honderden combinaties. Alles op **CSS-variabelen** uit het design-DNA
+  (`dnaCssVars` → `--c-*`/`--f-*`/`--r-*`), nooit hardcoded.
+- De store-builder LLM KIEST uit de catalogus (`catalogForPrompt()` gaat mee als input; SKILL.md
+  sectie "Component selection") en levert een `components`-blok {nav, sections[], footer, style}.
+  `buildSelection` (selection.ts) valideert tegen de registry; ontbreekt de LLM-keuze → afgeleide
+  selectie uit toon+layout (nooit crash). `assemblePage` (assemble.ts) voegt deterministisch samen
+  met CSS-ontdubbeling + **CSS-conflict-audit** + kwaliteitsbodem (focus-visible, reduced-motion,
+  reveal-varianten). Bij audit-fail/te-weinig-componenten → terugval op de oude `renderStorePage`.
+  Meta (renderer/used/source/conflicts) in design-dna.json.
+- **CHECKOUT is de vaste uitzondering** (components/checkout.ts documenteert waarom): NIET in de
+  catalogus, geen LLM-keuze, geen varianten. `buildCheckoutAndInfoPages` (template-engine.ts) voegt
+  het altijd toe; alleen kleur/font uit het DNA verschilt, structuur/velden/flow zijn overal identiek.
 - **Alle klant-facing content is Engelstalig**, ook bij Nederlandse wizard-input. Skill-prompts
   (brand/content/store-builder) zeggen expliciet "all text in English" + anti-generiek.
 - Per-stage temperature in `agent.ts`: creatief (brand 0.95 / content 0.85 / store-build 0.9),
