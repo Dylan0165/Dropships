@@ -20,7 +20,7 @@ export interface AssembleInput {
   nav: ComponentSelection
   sections: ComponentSelection[]   // in volgorde, tussen nav en footer
   footer: ComponentSelection
-  products: Array<Record<string, unknown>>
+  products: Array<Record<string, unknown>> | ReadonlyArray<{ id: string; [k: string]: unknown }>
   /** default stijl/animatie als de selectie ze niet specificeert */
   defaultStyle?: StyleVariant
   defaultAnim?: AnimationVariant
