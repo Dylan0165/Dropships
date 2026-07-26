@@ -20,7 +20,7 @@ export interface AssembleInput {
   nav: ComponentSelection
   sections: ComponentSelection[]   // in volgorde, tussen nav en footer
   footer: ComponentSelection
-  products: ReadonlyArray<{ id: string; title: string; image: string; price: number; [k: string]: unknown }>
+  products: ReadonlyArray<{ id: string; title: string; image: string; price: number }>
   /** default stijl/animatie als de selectie ze niet specificeert */
   defaultStyle?: StyleVariant
   defaultAnim?: AnimationVariant
