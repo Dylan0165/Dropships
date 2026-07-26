@@ -932,9 +932,10 @@ app.get('/api/admin/public-url', (_req, res) => {
   const base = getPublicBaseUrl()
   res.json({
     publicBaseUrl: base,
-    mollieWebhookUrl: getMollieWebhookUrl(),
+    stripeWebhookUrl: getStripeWebhookUrl(),
+    mollieWebhookUrl: getMollieWebhookUrl(),   // legacy
     configured: base !== null,
-    note: base ? 'Mollie-webhooks gaan via dit adres' : 'Geen publiek adres — payments worden ZONDER webhook aangemaakt (geen 422, wel handmatige fulfillment)',
+    note: base ? 'Stripe-webhook configureren op het dashboard met stripeWebhookUrl' : 'Geen publiek adres — stel PUBLIC_BASE_URL in (named tunnel) zodat Stripe de webhook kan bereiken',
   })
 })
 
