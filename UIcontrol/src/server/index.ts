@@ -45,7 +45,11 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const PORT = parseInt(process.env.PORT ?? '3001', 10)
 
 const app = express()
-app.use(express.json())
+// Stripe-webhook heeft de ONBEWERKTE body nodig voor signatuur-verificatie →
+// vang de raw body af in de json-parser (req.rawBody) i.p.v. een aparte parser.
+app.use(express.json({
+  verify: (req, _res, buf) => { (req as express.Request & { rawBody?: Buffer }).rawBody = buf },
+}))
 app.use(express.urlencoded({ extended: false }))
 
 const server = createServer(app)
