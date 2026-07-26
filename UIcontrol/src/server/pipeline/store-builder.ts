@@ -8,6 +8,8 @@ import { deriveDesignDNA, fallbackPersona, type PersonaLike } from '../design/to
 import { DesignPlanSchema, applyDesignPlan } from '../design/design-plan.js'
 import { selectLayout, recordLayout, deriveProductCount, fitProducts } from '../design/layout.js'
 import { renderStorePage, type RenderProduct } from '../design/render-page.js'
+import { assemblePage } from '../design/components/assemble.js'
+import { buildSelection, ComponentSelectionSchema } from '../design/components/selection.js'
 import {
   generateReviews, generateStory, generateCtaBand,
   buildNavLinks, buildFooterLinks, heroLabel, badgeFor,
