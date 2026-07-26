@@ -972,7 +972,22 @@ app.get('/api/admin/tunnel-selftest', async (_req, res) => {
   }
 })
 
-// Mollie sends URLEncoded POST; always respond 200 regardless of outcome
+// ── Stripe webhook — signatuur-geverifieerd (checkout.session.completed) ──────
+app.post('/api/webhooks/stripe', async (req, res) => {
+  const raw = (req as express.Request & { rawBody?: Buffer }).rawBody ?? Buffer.from(JSON.stringify(req.body ?? {}))
+  const sig = req.header('stripe-signature')
+  try {
+    const result = await handleStripeWebhook(raw, sig)
+    if (!result.ok) console.error(`[server] stripe webhook geweigerd: ${result.error}`)
+    res.status(result.status).send(result.ok ? 'ok' : (result.error ?? 'error'))
+  } catch (err) {
+    console.error('[server] stripe webhook verwerking mislukt:', err)
+    res.sendStatus(500)
+  }
+})
+
+// Mollie webhook (LEGACY — vervangen door Stripe; blijft staan tot Stripe live-
+// getest is, daarna te verwijderen). Always 200 regardless of outcome.
 app.post('/api/webhooks/mollie', async (req, res) => {
   res.sendStatus(200)
   try {
