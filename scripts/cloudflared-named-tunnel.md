@@ -75,10 +75,23 @@ PUBLIC_BASE_URL=https://api.jouwdomein.nl
 runtime Quick-Tunnel-manager is hier **niet** meer nodig (die blijft alleen voor
 de oude schoolomgeving in de repo staan).
 
-## 7. Verifiëren
+## 7. Stripe-webhook koppelen
+Nu `api.jouwdomein.nl` publiek is, configureer je in het Stripe-dashboard
+(Developers → Webhooks → Add endpoint):
+- **URL:** `https://api.jouwdomein.nl/api/webhooks/stripe`
+- **Event:** `checkout.session.completed`
+- Kopieer het **Signing secret** (`whsec_...`) naar `STRIPE_WEBHOOK_SECRET` in `.env`.
+
+Geen aparte tunnel-route nodig: de Stripe-webhook komt binnen op `api.jouwdomein.nl`
+(→ nginx → :3001), dezelfde ingress als de rest van de API.
+
+## 8. Verifiëren
 ```bash
-curl -fsS https://api.jouwdomein.nl/api/health           # tool bereikbaar
-curl -fsS http://localhost:3001/api/admin/tunnel-selftest # Mollie accepteert webhook (geen 422)
+curl -fsS https://api.jouwdomein.nl/api/health            # tool bereikbaar
+curl -fsS http://localhost:3001/api/admin/public-url      # toont stripeWebhookUrl
+# Stripe test-checkout: gebruik testkaart 4242 4242 4242 4242 op een store en
+# controleer in het Stripe-dashboard dat het webhook-event 200 kreeg → de order
+# verschijnt als 'fulfilled' in /api/orders (CJ mock/sandbox).
 ```
 Test een store-URL (`https://<sub>.jouwdomein.nl`) het beste vanaf **mobiele
 data** (buiten je eigen netwerk) om echt publieke bereikbaarheid te bewijzen.
