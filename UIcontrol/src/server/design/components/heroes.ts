@@ -26,7 +26,7 @@ function heroText(ctx: RenderCtx, p: ComponentProps, opts: { center?: boolean; o
 // helper: inner expression without wrapping braces (voor plekken waar we zelf { } zetten)
 function txtRaw(v: unknown, fb: string): string { return JSON.stringify(String(v ?? fb)) }
 
-function imgBox(style: React.CSSProperties | string, extraClass = 'hi-img'): string {
+function imgBox(style: string, extraClass = 'hi-img'): string {
   return `{${P0IMG} ? <img className=${JSON.stringify(extraClass)} src={PRODUCTS[0].image} alt="" style={${style}} /> : <div style={{ width:'60%', aspectRatio:'1', background:'var(--c-border)', borderRadius:'var(--r-lg)' }} />}`
 }
 
