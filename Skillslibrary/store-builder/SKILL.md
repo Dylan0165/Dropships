@@ -159,6 +159,14 @@ grouped by category, each with an `id`, `label`, allowed `styles`, `tags` and
 `props`. Your job is to CHOOSE and CONFIGURE — never write raw JSX/CSS.
 
 Fill the `components` field:
+- Pick ONE `topbar` id. The topbar is the thin bar above the navigation, and it
+  is one of the strongest signals of what kind of shop this is — match its TONE
+  to the niche, not just its message. A sportswear shop wants something short and
+  energetic (`topbar.energy-ticker`, `topbar.bold-statement`); a wellness shop
+  wants something quiet (`topbar.calm-line`, `topbar.rotating-soft`); a household
+  shop wants practical reassurance (`topbar.practical-columns`,
+  `topbar.trust-mini`); a tech shop wants precision (`topbar.status-strip`).
+  Use the `tags` to find the right family.
 - Pick ONE `nav` and ONE `footer` id.
 - Pick 4-8 `sections` in the order they should appear top-to-bottom. The FIRST
   section should be a `hero.*`. You MUST include exactly one `products.*` section
