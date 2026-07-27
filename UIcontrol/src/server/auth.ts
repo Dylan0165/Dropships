@@ -15,7 +15,8 @@
 
 import crypto from 'crypto'
 import bcrypt from 'bcryptjs'
-import { authenticator } from 'otplib'
+// otplib v13 heeft een functionele API (geen `authenticator`-object zoals v12).
+import { generateSecret, generateURI, verifySync } from 'otplib'
 import db from './db.js'
 
 // ── Vaste accounts ────────────────────────────────────────────────────────────
