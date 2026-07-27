@@ -340,6 +340,8 @@ export function renderStore(input: StoreBuildInput, briefRaw: StoreBrief): Store
       layout, seed: dna.seed,
       designPlan: brief.design ?? null, signature: applied.signature, planWarnings: applied.warnings,
       components: componentMeta,
+      uniqueness: uniqueMeta,
+      sanitize: emojiReport,
     }, null, 2), 'utf-8')
 
   // templateName behouden we voor backward-compat logging (niet meer bepalend)
