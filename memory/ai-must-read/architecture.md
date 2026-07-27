@@ -45,14 +45,45 @@ internet
    ▼
 cloudflared named tunnel 'dropships'  (systemd)
    ├── api.clynado.com  →  127.0.0.1:3001   (uicontrol: admin + API + webhooks)
-   └── *.clynado.com    →  127.0.0.1:80     (nginx)
+   ├── clynado.com      →  127.0.0.1:80     (nginx → _apex.conf)
+   ├── www.clynado.com  →  127.0.0.1:80
+   └── *.clynado.com    →  127.0.0.1:80     (nginx → <sub>.conf)
                                 │
-                                ├── clynado.com (apex)   → kopers-dashboard
+                                ├── clynado.com (apex)   → proxy naar :3001/market
                                 └── <sub>.clynado.com    → store op :4001-4999
 ```
 
 Stores luisteren op 127.0.0.1:<poort> en zijn **niet** direct van buiten
 bereikbaar — alleen nginx praat met ze. TLS eindigt bij Cloudflare.
+
+**Let op:** de wildcard `*.clynado.com` dekt de apex **niet**. Zonder een eigen
+ingress-regel én DNS-record voor `clynado.com` geeft de apex een 404 uit de
+tunnel. Zie `scripts/cloudflared-named-tunnel.md`.
+
+## Twee dashboards, bewust gescheiden
+
+| | Publiek kopers-dashboard | Admin-dashboard |
+|---|---|---|
+| Adres | `clynado.com` (apex) | `api.clynado.com` |
+| Toegang | iedereen | achter wachtwoord + TOTP |
+| Wat | etalage van alle live stores, zoeken/filteren, deals-strip | pipeline, stores, kosten, instellingen |
+| Code | `server/marketplace.ts` (server-rendered HTML) | React-bundel uit `UIcontrol/dist` |
+
+Beide draaien in **hetzelfde Express-proces** op :3001. De marketplace-routes
+worden gemount vóór `requireAuth`; alles daarna zit achter de gate. De
+uitzonderingen staan op één plek: `isPublicPath()` in `auth-routes.ts`.
+
+Waarom in hetzelfde proces en niet een losse app: de data zit hier al (dezelfde
+SQLite-verbinding), er komt geen extra PM2-proces bij, en een store die deployt
+of verdwijnt verschijnt of verdwijnt vanzelf — geen synchronisatie tussen twee
+processen die uit de pas kan lopen.
+
+**Apex-routing.** `_apex.conf` in `NGINX_CONF_DIR` wordt door de app zelf
+geschreven (`ensureApexVhost()` bij het opstarten van `uicontrol`, alleen bij
+`DEPLOY_MODE=local` met een echte `STORE_BASE_DOMAIN`). Hij proxyt `/` naar
+`127.0.0.1:3001/market/` en `/api/market/` één-op-één door. Conf-bestanden die
+met `_` beginnen worden overgeslagen door de store-scan en de nginx-audit — het
+is infrastructuur, geen winkel.
 
 ## Deploy-architectuur
 
