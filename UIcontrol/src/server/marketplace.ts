@@ -271,11 +271,16 @@ footer.foot{border-top:1px solid var(--line);background:var(--paper);padding:1.6
 
 function storeCard(s: PublicStore): string {
   const initials = s.brand.split(/\s+/).slice(0, 2).map(w => w.charAt(0)).join('').toUpperCase() || '?'
-  const thumb = s.thumbnail
-    ? `<img src="${esc(s.thumbnail)}" alt="" loading="lazy" />`
-    : `<span class="fallback" style="background:linear-gradient(135deg, ${esc(s.colors.primary)}, ${esc(s.colors.accent)})">${esc(initials)}</span>`
+  // Het kleurvlak staat er ALTIJD onder, ook als er een afbeelding is. Een
+  // productbeeld komt van de leverancier en kan zonder waarschuwing verdwijnen;
+  // zonder deze laag zou de kaart dan een leeg gat tonen in plaats van een
+  // herkenbaar merkvlak. De <img> dekt hem af zolang hij laadt.
+  const fallback = `<span class="fallback" style="background:linear-gradient(135deg, ${esc(s.colors.primary)}, ${esc(s.colors.accent)})">${esc(initials)}</span>`
+  const img = s.thumbnail
+    ? `<img src="${esc(s.thumbnail)}" alt="" loading="lazy" onerror="this.remove()" />`
+    : ''
   return `<a class="card" href="${esc(s.url)}" data-cat="${esc(s.category)}" data-text="${esc((s.brand + ' ' + s.niche + ' ' + s.categoryLabel).toLowerCase())}">
-  <div class="thumb">${thumb}<span class="badge">${esc(s.categoryLabel)}</span></div>
+  <div class="thumb">${fallback}${img}<span class="badge">${esc(s.categoryLabel)}</span></div>
   <div class="body">
     <h3>${esc(s.brand)}</h3>
     <span class="niche">${esc(s.niche)}</span>
