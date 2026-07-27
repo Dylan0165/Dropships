@@ -229,6 +229,7 @@ export function assemblePage(input: AssembleInput): AssembleResult {
     return { jsx: res.jsx, hasProducts: !!res.hasProducts }
   }
 
+  const topR = input.topbar ? renderOne(input.topbar, 0) : null
   const navR = renderOne(input.nav, 0)
   const bodyParts: string[] = []
   let hasProducts = false
