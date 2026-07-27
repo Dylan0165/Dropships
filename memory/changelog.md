@@ -2,6 +2,25 @@
 
 Nieuwste bovenaan. Zie `ai-must-read/release-and-changelog.md` voor het formaat.
 
+## 2026-07-28 — Publiek kopers-dashboard op de apex
+**Tag:** zie `memory/logs/fase-2-kopers-dashboard.md`
+
+- `server/marketplace.ts`: server-rendered etalage op `clynado.com` met alle live
+  stores, zoeken, categoriefilters en een deals-strip. Geen build-stap, dus met
+  `curl` te verifiëren en bruikbaar zonder JavaScript.
+- Categorieën komen uit dezelfde `iconThemeFor()` die ook de store-iconen kiest —
+  één bron voor "wat voor winkel is dit".
+- Deals worden beheerd vanuit het admin-dashboard (`MarketplaceView`, achter 2FA);
+  `market_deals`-tabel met actief-vlag en optioneel zichtbaarheidsvenster.
+- `ensureApexVhost()` schrijft `_apex.conf` bij het opstarten; conf-namen met `_`
+  worden overgeslagen door de store-scan en nginx-audit.
+- Tunnel-doc uitgebreid: de wildcard dekt de apex níet, daar hoort een eigen
+  ingress-regel en DNS-record bij.
+- **Geverifieerd:** apex geeft 200 met de drie teststores in de HTML;
+  `/api/admin/deals` geeft 401 zonder sessie en 200 met; een store op `killed`
+  zetten laat hem meteen uit de etalage verdwijnen; headless Chromium toont geen
+  horizontale overflow op desktop/mobiel/donker en geen JS-fouten.
+
 ## 2026-07-28 — Componentbibliotheek naar 106 + Anime.js + uniciteit
 **Tag:** zie `memory/logs/fase-1-componenten-en-animatie.md`
 
