@@ -28,8 +28,22 @@ export const TOPBAR_BY_THEME: Record<IconTheme, string[]> = {
   universal: ['topbar.simple-line', 'topbar.trust-mini', 'topbar.practical-columns'],
 }
 
-const BAR = (extra: string): string =>
-  `fontSize:'.76rem', letterSpacing:'.04em', padding:'.5rem clamp(1rem,4vw,2rem)', ${extra}`
+/**
+ * Bouwt de style-literal van een topbar door de basis met de overrides te
+ * MERGEN. Eerder werd de basis als string vooraan geplakt en de rest erachter;
+ * een variant die `padding` opnieuw zette leverde dan twee keer dezelfde sleutel
+ * in één object-literal op — in CSS "laatste wint", in TypeScript een compile-
+ * fout. Mergen maakt die fout structureel onmogelijk.
+ */
+const BAR = (overrides: Record<string, string> = {}): string => {
+  const merged: Record<string, string> = {
+    fontSize: "'.76rem'",
+    letterSpacing: "'.04em'",
+    padding: "'.5rem clamp(1rem,4vw,2rem)'",
+    ...overrides,
+  }
+  return Object.entries(merged).map(([k, v]) => `${k}:${v}`).join(', ')
+}
 
 const theme = (ctx: RenderCtx, p: ComponentProps): IconTheme =>
   (typeof p.iconTheme === 'string' ? p.iconTheme : 'universal') as IconTheme
