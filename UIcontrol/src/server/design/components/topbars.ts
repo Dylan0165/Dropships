@@ -35,14 +35,19 @@ export const TOPBAR_BY_THEME: Record<IconTheme, string[]> = {
  * in één object-literal op — in CSS "laatste wint", in TypeScript een compile-
  * fout. Mergen maakt die fout structureel onmogelijk.
  */
-const BAR = (overrides: Record<string, string> = {}): string => {
-  const merged: Record<string, string> = {
-    fontSize: "'.76rem'",
-    letterSpacing: "'.04em'",
-    padding: "'.5rem clamp(1rem,4vw,2rem)'",
-    ...overrides,
-  }
-  return Object.entries(merged).map(([k, v]) => `${k}:${v}`).join(', ')
+const BAR_BASE: Record<string, string> = {
+  fontSize: "'.76rem'",
+  letterSpacing: "'.04em'",
+  padding: "'.5rem clamp(1rem,4vw,2rem)'",
+}
+const BAR = (extra: string): string => {
+  // Basis-sleutels die de variant zelf al zet, laten we weg. In CSS wint de
+  // laatste declaratie, maar dit wordt een JS-object-literal — en dáár is een
+  // dubbele sleutel een compile-fout. Weglaten i.p.v. dupliceren dus.
+  const kept = Object.entries(BAR_BASE)
+    .filter(([k]) => !new RegExp(`(^|[\\s,{])${k}\\s*:`).test(extra))
+    .map(([k, v]) => `${k}:${v}`)
+  return [...kept, extra].join(', ')
 }
 
 const theme = (ctx: RenderCtx, p: ComponentProps): IconTheme =>
