@@ -188,6 +188,111 @@ const defs: ComponentDef[] = [
       </footer>`,
     }),
   },
+  {
+    id: 'footer.big-wordmark', category: 'footer', label: 'Enorm merkwoord over de volle breedte', styles: ['bold', 'editorial'], anims: ['none', 'subtle'],
+    tags: ['statement', 'fashion', 'urban', 'premium'], props: { tagline: '' },
+    render: (ctx, p): RenderResult => ({
+      jsx: `<footer style={{ background:'var(--c-text)', color:'var(--c-bg)', padding:'clamp(3rem,6vw,5rem) clamp(1.5rem,5vw,4rem) 0', overflow:'hidden' }}>
+        <div className="wrap" style={{ display:'flex', justifyContent:'space-between', gap:'2rem', flexWrap:'wrap', marginBottom:'2.5rem' }}>
+          <p style={{ maxWidth:'34ch', opacity:.72, lineHeight:1.7, margin:0 }}>${txt(p.tagline, 'A focused collection, delivered fast across Europe.')}</p>
+          <div style={{ display:'flex', gap:'1.5rem', flexWrap:'wrap', alignItems:'flex-start' }}>{[['Shop','#products'],['About','/about/'],['FAQ','/faq/'],['Returns','/returns/'],['Contact','/contact/']].map(([l,h])=><a key={l} href={h} className="navl" style={{ fontSize:'.82rem', opacity:.8 }}>{l}</a>)}</div>
+        </div>
+        <div${am(ctx.anim, 'mask')} style={{ fontFamily:'var(--f-head)', fontWeight:'var(--fw-head)', fontSize:'clamp(3rem,15vw,11rem)', lineHeight:.9, letterSpacing:'-.02em', textTransform:'var(--tt-head)', whiteSpace:'nowrap', overflow:'hidden' }}>${'{'}BRAND${'}'}</div>
+        <p style={{ opacity:.5, fontSize:'.72rem', padding:'1.2rem 0 1.5rem', margin:0 }}>&#169; ${new Date().getFullYear()} — All rights reserved.</p>
+      </footer>`,
+    }),
+  },
+  {
+    id: 'footer.contact-block', category: 'footer', label: 'Met contactgegevens en openingstijden', styles: ['minimal', 'editorial'], anims: ['none'],
+    tags: ['trust', 'home', 'kitchen', 'pets', 'service'], props: { tagline: '', email: '', hours: '' },
+    render: (_ctx, p): RenderResult => ({
+      jsx: `<footer style={{ background:'var(--c-surface)', color:'var(--c-text)', padding:'clamp(3rem,6vw,4.5rem) clamp(1.5rem,5vw,4rem)', borderTop:'var(--bw) solid var(--c-border)' }}>
+        <div className="wrap grid3" style={{ display:'grid', gridTemplateColumns:'1.4fr 1fr 1fr', gap:'2rem' }}>
+          <div>
+            <p style={{ fontFamily:'var(--f-head)', fontWeight:'var(--fw-head)', fontSize:'1.15rem', margin:'0 0 .5rem', textTransform:'var(--tt-head)' }}>${'{'}BRAND${'}'}</p>
+            <p style={{ color:'var(--c-muted)', fontSize:'.86rem', lineHeight:1.7, maxWidth:'34ch', margin:0 }}>${txt(p.tagline, 'Questions before you order? We answer within one working day.')}</p>
+          </div>
+          <div style={{ display:'flex', flexDirection:'column', gap:'.5rem' }}>
+            <b style={{ fontSize:'.75rem', letterSpacing:'.14em', textTransform:'uppercase', color:'var(--c-accent)' }}>Reach us</b>
+            <span style={{ color:'var(--c-muted)', fontSize:'.86rem' }}>${txt(p.email, 'hello@example.com')}</span>
+            <span style={{ color:'var(--c-muted)', fontSize:'.86rem' }}>${txt(p.hours, 'Mon-Fri, 09:00-17:00 CET')}</span>
+          </div>
+          <div style={{ display:'flex', flexDirection:'column', gap:'.55rem' }}>
+            <b style={{ fontSize:'.75rem', letterSpacing:'.14em', textTransform:'uppercase', color:'var(--c-accent)' }}>Info</b>
+            {[['FAQ','/faq/'],['Returns','/returns/'],['Contact','/contact/'],['About','/about/']].map(([l,h])=><a key={l} href={h} className="navl" style={{ color:'var(--c-muted)', fontSize:'.86rem' }}>{l}</a>)}
+          </div>
+        </div>
+        <p style={{ color:'var(--c-muted)', fontSize:'.74rem', marginTop:'2.5rem' }}>&#169; ${new Date().getFullYear()}</p>
+      </footer>`,
+    }),
+  },
+  {
+    id: 'footer.social-strip', category: 'footer', label: 'Sociale iconen boven een smalle linkbalk', styles: ['playful', 'bold', 'minimal'], anims: ['none'],
+    tags: ['kids', 'beauty', 'fashion', 'community'], props: { tagline: '' },
+    render: (_ctx, p): RenderResult => ({
+      jsx: `<footer style={{ background:'var(--c-surface-alt)', color:'var(--c-text)', padding:'clamp(2.5rem,5vw,4rem) clamp(1.5rem,5vw,4rem)', borderTop:'var(--bw) solid var(--c-border)', textAlign:'center' }}>
+        <p style={{ fontFamily:'var(--f-head)', fontWeight:'var(--fw-head)', fontSize:'1.3rem', margin:'0 0 .4rem', textTransform:'var(--tt-head)' }}>${'{'}BRAND${'}'}</p>
+        <p style={{ color:'var(--c-muted)', fontSize:'.88rem', margin:'0 0 1.6rem' }}>${txt(p.tagline, 'Follow along for new arrivals.')}</p>
+        <div style={{ display:'flex', gap:'1.1rem', justifyContent:'center', marginBottom:'1.8rem' }}>
+          {[
+            ['Instagram','M7 3h10a4 4 0 0 1 4 4v10a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V7a4 4 0 0 1 4-4z M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7z M17.5 6.6v.01'],
+            ['Pinterest','M12 3a9 9 0 0 0-3.3 17.4c-.1-.8-.2-2 0-2.9l1.2-5s-.3-.6-.3-1.5c0-1.4.8-2.4 1.8-2.4.9 0 1.3.6 1.3 1.4 0 .9-.5 2.2-.8 3.4-.2 1 .5 1.8 1.5 1.8 1.8 0 3-2.3 3-5 0-2-1.4-3.6-3.9-3.6-2.9 0-4.6 2.1-4.6 4.4 0 .8.2 1.4.6 1.8.2.2.2.3.1.5l-.2.7c0 .2-.2.3-.4.2-1.2-.5-1.8-1.9-1.8-3.4 0-2.5 2.1-5.5 6.3-5.5 3.4 0 5.6 2.4 5.6 5 0 3.4-1.9 6-4.7 6-1 0-1.9-.5-2.2-1.1l-.6 2.4c-.2.7-.6 1.6-1 2.2A9 9 0 1 0 12 3z'],
+            ['TikTok','M14 3v10.5a3.5 3.5 0 1 1-3-3.46 M14 3c.6 2.2 2.2 3.6 4.5 3.8'],
+          ].map(([label,d])=>(
+            <a key={label} href="#" aria-label={label} className="navl" style={{ display:'inline-flex', color:'var(--c-text)' }} onClick={(e)=>e.preventDefault()}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={d} /></svg>
+            </a>
+          ))}
+        </div>
+        <div style={{ display:'flex', gap:'1.4rem', justifyContent:'center', flexWrap:'wrap', borderTop:'var(--bw) solid var(--c-border)', paddingTop:'1.4rem' }}>${NAV_LINKS}</div>
+        <p style={{ color:'var(--c-muted)', fontSize:'.72rem', marginTop:'1.2rem' }}>&#169; ${new Date().getFullYear()}</p>
+      </footer>`,
+    }),
+  },
+  {
+    id: 'footer.dark-compact', category: 'footer', label: 'Donker en compact — één regel met scheiding', styles: ['minimal', 'bold', 'editorial'], anims: ['none'],
+    tags: ['tech', 'minimal', 'premium', 'compact'], props: { tagline: '' },
+    render: (): RenderResult => ({
+      jsx: `<footer style={{ background:'var(--c-text)', color:'var(--c-bg)', padding:'1.6rem clamp(1.5rem,5vw,4rem)', display:'flex', justifyContent:'space-between', alignItems:'center', flexWrap:'wrap', gap:'1rem' }}>
+        <span style={{ fontFamily:'var(--f-head)', fontWeight:'var(--fw-head)', textTransform:'var(--tt-head)', fontSize:'.95rem' }}>${'{'}BRAND${'}'}</span>
+        <div style={{ display:'flex', gap:'1.4rem', flexWrap:'wrap' }}>{[['Shop','#products'],['FAQ','/faq/'],['Returns','/returns/'],['Contact','/contact/']].map(([l,h])=><a key={l} href={h} className="navl" style={{ fontSize:'.78rem', opacity:.75 }}>{l}</a>)}</div>
+        <span style={{ fontSize:'.72rem', opacity:.5 }}>&#169; ${new Date().getFullYear()}</span>
+      </footer>`,
+    }),
+  },
+  {
+    id: 'footer.sitemap-columns', category: 'footer', label: 'Vier kolommen sitemap met betaalbadges', styles: ['minimal', 'bold'], anims: ['none'],
+    tags: ['catalog', 'trust', 'considered', 'home', 'tech'], props: { tagline: '' },
+    render: (_ctx, p): RenderResult => ({
+      jsx: `<footer style={{ background:'var(--c-surface-alt)', color:'var(--c-text)', padding:'clamp(3rem,6vw,4.5rem) clamp(1.5rem,5vw,4rem) 2rem', borderTop:'var(--bw) solid var(--c-border)' }}>
+        <div className="wrap grid4" style={{ display:'grid', gridTemplateColumns:'1.6fr 1fr 1fr 1fr', gap:'2rem' }}>
+          <div>
+            <p style={{ fontFamily:'var(--f-head)', fontWeight:'var(--fw-head)', fontSize:'1.15rem', margin:'0 0 .5rem', textTransform:'var(--tt-head)' }}>${'{'}BRAND${'}'}</p>
+            <p style={{ color:'var(--c-muted)', fontSize:'.85rem', lineHeight:1.7, maxWidth:'30ch', margin:0 }}>${txt(p.tagline, 'Shipped from European warehouses, returnable for 30 days.')}</p>
+          </div>
+          {[
+            ['Shop', [['All products','#products'],['New in','#products']]],
+            ['Help', [['FAQ','/faq/'],['Returns','/returns/'],['Contact','/contact/']]],
+            ['Brand', [['About','/about/'],['Our promise','/about/']]],
+          ].map(([title, links]:any)=>(
+            <div key={title} style={{ display:'flex', flexDirection:'column', gap:'.5rem' }}>
+              <b style={{ fontSize:'.72rem', letterSpacing:'.14em', textTransform:'uppercase', color:'var(--c-accent)' }}>{title}</b>
+              {links.map(([l,h]:any)=><a key={l} href={h} className="navl" style={{ color:'var(--c-muted)', fontSize:'.84rem' }}>{l}</a>)}
+            </div>
+          ))}
+        </div>
+        <div className="wrap" style={{ display:'flex', justifyContent:'space-between', alignItems:'center', flexWrap:'wrap', gap:'1rem', marginTop:'2.5rem', paddingTop:'1.5rem', borderTop:'var(--bw) solid var(--c-border)' }}>
+          <span style={{ color:'var(--c-muted)', fontSize:'.73rem' }}>&#169; ${new Date().getFullYear()} — All rights reserved.</span>
+          <div style={{ display:'flex', gap:'.5rem', alignItems:'center' }}>
+            {['VISA','MC','AMEX','iDEAL'].map(b=>(
+              <span key={b} style={{ fontSize:'.6rem', fontWeight:700, letterSpacing:'.06em', color:'var(--c-muted)', border:'var(--bw) solid var(--c-border)', borderRadius:'var(--r-sm)', padding:'.25rem .5rem', background:'var(--c-surface)' }}>{b}</span>
+            ))}
+          </div>
+        </div>
+      </footer>`,
+      css: '@media(max-width:900px){.grid4{grid-template-columns:1fr 1fr !important}}',
+    }),
+  },
 ]
 
 // De assembler vervangt de letterlijke token BRAND door {${j(brandName)}} zodat
