@@ -45,13 +45,9 @@ export function attachUser(
   req: express.Request, _res: express.Response, next: express.NextFunction,
 ): void {
   const cookies = (req as express.Request & { cookies?: Record<string, string> }).cookies
-  const token = cookies?.[SESSION_COOKIE]
-  // getSessionUser is lazy geïmporteerd om circulaire imports te vermijden
-  import('./auth.js').then(({ getSessionUser }) => {
-    const user = getSessionUser(token)
-    if (user) (req as express.Request & { authUser?: string }).authUser = user
-    next()
-  }).catch(() => next())
+  const user = getSessionUser(cookies?.[SESSION_COOKIE])
+  if (user) (req as express.Request & { authUser?: string }).authUser = user
+  next()
 }
 
 // ── Rate limiting ─────────────────────────────────────────────────────────────
