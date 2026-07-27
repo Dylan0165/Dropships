@@ -77,6 +77,120 @@ function Countdown({hours}:{hours:number}){
   const cell=(v:string,l:string)=>(<div style={{textAlign:'center'}}><div style={{fontFamily:'var(--f-head)',fontSize:'2rem',fontWeight:800,minWidth:'2.4ch'}}>{v}</div><div style={{fontSize:'.6rem',letterSpacing:'.15em',textTransform:'uppercase',opacity:.7}}>{l}</div></div>);
   return <div style={{display:'inline-flex',gap:'1.2rem',alignItems:'center'}}>{cell(pad(h),'hrs')}<span>:</span>{cell(pad(m),'min')}<span>:</span>{cell(pad(s),'sec')}</div>;
 }
+function MiniCountdown({hours}:{hours:number}){
+  const[left,setLeft]=useState(hours*3600);
+  useEffect(()=>{const t=setInterval(()=>setLeft(s=>s>0?s-1:0),1000);return()=>clearInterval(t);},[]);
+  const pad=(n:number)=>String(n).padStart(2,'0');
+  return <span style={{fontVariantNumeric:'tabular-nums',fontWeight:800}}>{pad(Math.floor(left/3600))}:{pad(Math.floor((left%3600)/60))}:{pad(left%60)}</span>;
+}
+function RotatingText({items}:{items:string[]}){
+  const list=items&&items.length?items:[''];
+  const[i,setI]=useState(0);const[on,setOn]=useState(true);
+  useEffect(()=>{
+    if(list.length<2)return;
+    if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+    const t=setInterval(()=>{setOn(false);setTimeout(()=>{setI(v=>(v+1)%list.length);setOn(true);},260);},4200);
+    return()=>clearInterval(t);
+  },[list.length]);
+  return <span aria-live="polite" style={{opacity:on?1:0,transition:'opacity .26s'}}>{list[i]}</span>;
+}
+function StickyNav(){
+  const[solid,setSolid]=useState(false);
+  useEffect(()=>{const f=()=>setSolid(window.scrollY>70);f();window.addEventListener('scroll',f,{passive:true});return()=>window.removeEventListener('scroll',f);},[]);
+  return(<nav className={'sn'+(solid?' solid':'')}>
+    <a href="/" style={{fontFamily:'var(--f-head)',fontWeight:'var(--fw-head)',fontSize:'1.05rem',textTransform:'var(--tt-head)'}}>{BRAND}</a>
+    <div style={{display:'flex',gap:'clamp(1.25rem,3vw,2.5rem)'}}>{[['Shop','#products'],['About','/about/'],['FAQ','/faq/'],['Contact','/contact/']].map(([l,h])=><a key={l} href={h} className="navl" style={{fontSize:'.82rem'}}>{l}</a>)}</div>
+  </nav>);
+}
+function DrawerNav(){
+  const[open,setOpen]=useState(false);
+  useEffect(()=>{const k=(e:KeyboardEvent)=>{if(e.key==='Escape')setOpen(false);};window.addEventListener('keydown',k);return()=>window.removeEventListener('keydown',k);},[]);
+  return(<>
+    <nav style={{background:'color-mix(in srgb, var(--c-bg) 82%, transparent)',backdropFilter:'blur(12px)',borderBottom:'var(--bw) solid var(--c-border)',position:'sticky',top:0,zIndex:50,padding:'1.1rem clamp(1.5rem,5vw,4rem)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+      <a href="/" style={{fontFamily:'var(--f-head)',fontWeight:'var(--fw-head)',fontSize:'1.05rem',textTransform:'var(--tt-head)'}}>{BRAND}</a>
+      <button type="button" aria-label="Open menu" aria-expanded={open} onClick={()=>setOpen(true)} style={{background:'none',border:'none',cursor:'pointer',color:'var(--c-text)',padding:'.3rem',display:'inline-flex'}}>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+    </nav>
+    <div className={'dn-scrim'+(open?' open':'')} onClick={()=>setOpen(false)} aria-hidden="true" />
+    <div className={'dn-panel'+(open?' open':'')} role="dialog" aria-modal="true" aria-label="Menu">
+      <button type="button" aria-label="Close menu" onClick={()=>setOpen(false)} style={{position:'absolute',top:'1.4rem',right:'1.6rem',background:'none',border:'none',cursor:'pointer',color:'var(--c-text)',display:'inline-flex'}}>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+      {[['Shop','#products'],['About','/about/'],['FAQ','/faq/'],['Returns','/returns/'],['Contact','/contact/']].map(([l,h])=>(
+        <a key={l} href={h} onClick={()=>setOpen(false)} style={{fontFamily:'var(--f-head)',fontSize:'1.3rem',fontWeight:'var(--fw-head)'}}>{l}</a>
+      ))}
+    </div>
+  </>);
+}
+function ProductTabs({tabs}:{tabs:string[]}){
+  const list=tabs&&tabs.length?tabs:['All'];
+  const[t,setT]=useState(0);
+  // Deterministische verdeling: elk product hoort bij precies één tab, zodat
+  // "All" alles toont en de andere tabs een vaste, herhaalbare deelverzameling.
+  const shown=t===0?PRODUCTS:PRODUCTS.filter((_:any,i:number)=>i%(list.length-1||1)===(t-1));
+  return(<div>
+    <div role="tablist" style={{display:'flex',gap:'.5rem',justifyContent:'center',flexWrap:'wrap',marginBottom:'2rem'}}>
+      {list.map((label,i)=>(
+        <button key={label} type="button" role="tab" aria-selected={t===i} onClick={()=>setT(i)}
+          style={{padding:'.5rem 1.1rem',borderRadius:'var(--r-pill)',border:'var(--bw) solid var(--c-border)',cursor:'pointer',fontFamily:'inherit',fontSize:'.82rem',fontWeight:600,
+            background:t===i?'var(--c-primary)':'transparent',color:t===i?'var(--c-primary-text)':'var(--c-muted)'}}>{label}</button>
+      ))}
+    </div>
+    <div className="grid3" style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(240px,1fr))',gap:'1.5rem'}}>
+      {(shown.length?shown:PRODUCTS).map((pr:any,i:number)=><Card key={pr.id} p={pr} i={i} layout="card" />)}
+    </div>
+  </div>);
+}
+function InfoTabs({items}:{items:{label:string;body:string}[]}){
+  const list=items&&items.length?items:[{label:'Info',body:''}];
+  const[t,setT]=useState(0);
+  return(<div>
+    <div role="tablist" style={{display:'flex',gap:'.4rem',flexWrap:'wrap',marginBottom:'1.2rem'}}>
+      {list.map((it,i)=>(
+        <button key={it.label} type="button" role="tab" aria-selected={t===i} onClick={()=>setT(i)}
+          style={{padding:'.5rem 1rem',border:'none',borderBottom:'2px solid '+(t===i?'var(--c-accent)':'transparent'),background:'none',cursor:'pointer',fontFamily:'inherit',fontSize:'.85rem',fontWeight:600,color:t===i?'var(--c-text)':'var(--c-muted)'}}>{it.label}</button>
+      ))}
+    </div>
+    <p style={{margin:0,lineHeight:1.8,color:'var(--c-muted)'}}>{list[t]?.body}</p>
+  </div>);
+}
+function ProductFinder(){
+  const[step,setStep]=useState(0);
+  const opts=[['Daily use','Now and then'],['Keep it simple','Give me options']];
+  if(step>=opts.length){
+    const pick=PRODUCTS[0];
+    return(<div style={{background:'var(--c-surface)',border:'var(--bw) solid var(--c-border)',borderRadius:'var(--r-lg)',padding:'1.6rem'}}>
+      <p style={{margin:'0 0 1rem',color:'var(--c-muted)'}}>Based on that, start here:</p>
+      {pick?<><b style={{display:'block',marginBottom:'.8rem'}}>{pick.title}</b>
+      <button type="button" className="btnp btn" onClick={()=>startCheckout(pick)}>Order this one</button></>:null}
+      <button type="button" onClick={()=>setStep(0)} style={{display:'block',margin:'1rem auto 0',background:'none',border:'none',color:'var(--c-muted)',fontSize:'.8rem',cursor:'pointer',textDecoration:'underline'}}>Start over</button>
+    </div>);
+  }
+  return(<div style={{background:'var(--c-surface)',border:'var(--bw) solid var(--c-border)',borderRadius:'var(--r-lg)',padding:'1.6rem'}}>
+    <p style={{margin:'0 0 1rem',fontWeight:600}}>{step===0?'How often will you use it?':'How much choice do you want?'}</p>
+    <div style={{display:'flex',gap:'.7rem',justifyContent:'center',flexWrap:'wrap'}}>
+      {opts[step].map(o=><button key={o} type="button" className="btnp btn2" onClick={()=>setStep(step+1)}>{o}</button>)}
+    </div>
+  </div>);
+}
+function SimpleForm({submitLabel,placeholder,done,onPanel}:{submitLabel:string;placeholder:string;done:string;onPanel?:boolean}){
+  const[sent,setSent]=useState(false);
+  if(sent)return <p style={{margin:0,fontWeight:600}} role="status">{done}</p>;
+  return(<form onSubmit={(e)=>{e.preventDefault();setSent(true);}} style={{display:'flex',gap:'.6rem',justifyContent:'center',flexWrap:'wrap'}}>
+    <input type="email" required placeholder={placeholder} aria-label="Email"
+      style={{padding:'.75rem 1rem',borderRadius:'var(--r-btn)',border:onPanel?'none':'var(--bw) solid var(--c-border)',minWidth:'240px',fontFamily:'inherit',background:onPanel?'var(--c-bg)':'var(--c-surface)',color:'var(--c-text)'}} />
+    <button type="submit" className="btnp btn" style={onPanel?{background:'var(--c-accent)'}:undefined}>{submitLabel}</button>
+  </form>);
+}
+function QuickFeedback({question}:{question:string}){
+  const[v,setV]=useState<string|null>(null);
+  if(v)return <p style={{margin:0,color:'var(--c-muted)'}} role="status">Thanks for letting us know.</p>;
+  return(<div style={{display:'inline-flex',gap:'.8rem',alignItems:'center',flexWrap:'wrap',justifyContent:'center'}}>
+    <span style={{color:'var(--c-muted)',fontSize:'.88rem'}}>{question}</span>
+    {['Yes','Not really'].map(o=><button key={o} type="button" className="btnp btn2" style={{padding:'.45rem 1rem',fontSize:'.8rem'}} onClick={()=>setV(o)}>{o}</button>)}
+  </div>);
+}
 function Card({p,i,layout='card',reverse}:{p:any;i:number;layout?:'card'|'featured'|'row';reverse?:boolean}){
   const price=(<div style={{display:'flex',gap:'.6rem',alignItems:'baseline',marginBottom:'.9rem'}}><span style={{fontWeight:700,fontSize:layout==='featured'?'1.4rem':'1.05rem'}}>&#8364;{Number(p.price).toFixed(2)}</span>{p.compareAtPrice?<span style={{color:'var(--c-muted)',fontSize:'.9rem',textDecoration:'line-through'}}>&#8364;{Number(p.compareAtPrice).toFixed(2)}</span>:null}</div>);
   const cta=(<button type="button" className="btnp btn" style={{width:layout==='row'?'auto':'100%'}} onClick={()=>startCheckout(p)}>Order now</button>);
