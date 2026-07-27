@@ -8,7 +8,7 @@ import { txt, styleTokens, am, arr } from './types.js'
 const P0IMG = 'PRODUCTS[0] && PRODUCTS[0].image'
 
 // Gedeelde hero-tekstblokken (gefaseerde opkomst via hi-1..hi-4)
-function heroText(ctx: RenderCtx, p: ComponentProps, opts: { center?: boolean; onDark?: boolean } = {}): string {
+function heroText(ctx: RenderCtx, p: ComponentProps, opts: { center?: boolean; onDark?: boolean; charTitle?: boolean } = {}): string {
   const st = styleTokens(ctx.style)
   const col = opts.onDark ? '#fff' : 'var(--c-text)'
   const subcol = opts.onDark ? 'rgba(255,255,255,.86)' : 'var(--c-muted)'
