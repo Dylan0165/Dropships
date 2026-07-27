@@ -172,12 +172,45 @@ testoppervlak.
 
 ## Anti-generiek
 
-De skill-prompt verbiedt expliciet de drie herkenbare AI-default looks:
-crème+terracotta+serif, near-black+één neon, krantenstijl. `detectDefaultLook()`
-in `design-plan.ts` is de heuristische controle daarop. Er is een verplichte
-zelfcheck in `design_rationale`.
+**Emoji worden hard geweerd.** `sanitizeCopyDeep()` in `design/sanitize.ts` loopt
+door de complete brief vóór er iets gerenderd wordt en strípt elk emoji uit elke
+string, met een rapport van wat er geblokkeerd is. De skill-prompts vragen er ook
+om, maar een prompt-instructie is een verzoek — dit is de garantie. Legitieme
+typografie (€, ©, %, —) blijft staan.
+
+**De drie AI-default looks** zijn verboden in de skill-prompt en meetbaar
+gecontroleerd door `detectDefaultLook()` in `design-plan.ts`:
+
+| | Look | Detectie |
+|---|---|---|
+| a | crème + terracotta | lichte warme bg + terracotta accent/primary |
+| b | near-black + één neon | zeer donkere bg + hoog-verzadigd accent op dezelfde hue |
+| c | krantenstijl | bijna-wit + bijna-zwart + kleurloos palet + serif-kop |
+
+Variant (c) kijkt naar palet én lettertype: elk element apart is prima, de
+combinatie is wat elke AI-webshop krijgt als er geen richting gekozen wordt.
+
+**Stijlruimte.** `ALLOWED_STYLE_SPACE` in `sanitize.ts` legt vast wat een store
+mag zijn: clean, modern, warm, premium, playful-but-polished. Buiten de grenzen:
+brutalist, anti-design, glitch, grunge, chaotisch. Een webshop moet vertrouwd
+worden, niet bewonderd.
+
+**Iconen** zijn eigen SVG-lijntekeningen per nichethema (`icons.ts`), geen
+icon-font en geen stock-set — precies die uitwisselbaarheid willen we vermijden.
 
 Alle klant-facing content is **Engels**, ook bij Nederlandse wizard-input.
+
+## Regressietests
+
+```bash
+npm run verify:components   # elk component × elke stijl → 1 store → next build
+npm run verify:variation    # 3 stores → unieke hashes, anime.js, emoji-filter
+```
+
+`verify:components` is de belangrijkste: een gewone store kiest maar ~10 van de
+106 componenten, dus zonder deze test blijft een JSX-fout in een zelden gekozen
+variant jarenlang onopgemerkt. Hij heeft bij invoering direct drie echte
+compileerfouten gevonden.
 
 ## Debug
 
