@@ -119,7 +119,7 @@ export function generateTotpSecret(): string {
 }
 
 export function totpKeyUri(username: string, secret: string): string {
-  return generateURI({ type: 'totp', secret, label: username, issuer: 'Dropships' })
+  return generateURI({ strategy: 'totp', secret, label: username, issuer: 'Dropships' })
 }
 
 /** Verifieert een TOTP-code tegen een secret (zonder replay-check). */
