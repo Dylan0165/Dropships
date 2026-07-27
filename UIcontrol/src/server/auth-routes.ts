@@ -9,8 +9,8 @@ import QRCode from 'qrcode'
 import {
   ALLOWED_USERS, MIN_PASSWORD_LENGTH, SESSION_COOKIE,
   accountsStatus, beginSetup, completeSetup, consumePendingLogin, createPendingLogin,
-  createSession, destroySession, isAllowedUser, resetPasswordWithTotp,
-  sessionCookieOptions, userExists, verifyPassword, verifyTotpForUser,
+  createSession, destroySession, getSessionUser, isAllowedUser, resetPasswordWithTotp,
+  sessionCookieOptions, userExists, validatePassword, verifyPassword, verifyTotpForUser,
 } from './auth.js'
 
 // ── Routes die ZONDER sessie bereikbaar blijven ───────────────────────────────
