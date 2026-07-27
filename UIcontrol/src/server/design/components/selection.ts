@@ -8,10 +8,13 @@ import { z } from 'zod'
 import type { DesignDNA, VisualTone } from '../tokens.js'
 import type { LayoutPlan } from '../layout.js'
 import type { ComponentSelection, StyleVariant } from './types.js'
-import { getComponent } from './registry.js'
+import { getComponent, allComponents } from './registry.js'
+import { TOPBAR_BY_THEME } from './topbars.js'
+import { iconThemeFor, type IconTheme } from './icons.js'
 
 export const ComponentSelectionSchema = z.object({
   style: z.enum(['minimal', 'bold', 'playful', 'editorial']).optional(),
+  topbar: z.string().optional(),
   nav: z.string().optional(),
   footer: z.string().optional(),
   sections: z.array(z.object({
