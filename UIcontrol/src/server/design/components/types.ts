@@ -10,7 +10,7 @@ import type { DesignDNA } from '../tokens.js'
 
 export type ComponentCategory =
   | 'hero' | 'products' | 'testimonials' | 'cta' | 'nav' | 'footer'
-  | 'content' | 'form' | 'badges' | 'gallery'
+  | 'content' | 'form' | 'badges' | 'gallery' | 'topbar'
 
 /** Interne stijl-varianten die bovenop de structurele variant liggen. */
 export type StyleVariant = 'minimal' | 'bold' | 'playful' | 'editorial'
