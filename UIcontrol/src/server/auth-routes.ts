@@ -295,7 +295,6 @@ $('b').onclick=async()=>{err.classList.remove('on');
   app.post('/api/auth/setup/begin', attemptLimiter, async (req, res) => {
     const { username, password } = (req.body ?? {}) as { username?: string; password?: string }
     const u = String(username ?? '').toLowerCase().trim()
-    const { validatePassword } = await import('./auth.js')
     const pwCheck = validatePassword(String(password ?? ''))
     if (!pwCheck.ok) { res.status(400).json({ error: pwCheck.error }); return }
 
