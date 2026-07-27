@@ -144,8 +144,17 @@ export async function generateBrief(input: StoreBuildInput): Promise<StoreBrief 
 // layout-plan (hero/product/sectie-varianten met anti-herhaling). De pagina wordt
 // programmatisch gegenereerd i.p.v. uit een van 5 vaste templates → aantoonbaar
 // verschillende output per persona. Alle content is Engelstalig.
-export function renderStore(input: StoreBuildInput, brief: StoreBrief): StoreBuildOutput {
+export function renderStore(input: StoreBuildInput, briefRaw: StoreBrief): StoreBuildOutput {
   const ws = ensureWorkspace()
+
+  // ── 0. Emoji-filter op ALLE LLM-copy ────────────────────────────────────────
+  // Eén poort, vóór er iets gerenderd wordt. De skill-prompt vraagt al om geen
+  // emoji, maar een verzoek is geen garantie — dit is de garantie.
+  const { value: brief, report: emojiReport } = sanitizeCopyDeep(briefRaw)
+  if (emojiReport.changed > 0) {
+    input.onLog?.(`[sanitize] ${emojiReport.changed} veld(en) ontdaan van emoji (${emojiReport.blocked.join(' ')}) — velden: ${emojiReport.fields.slice(0, 6).join(', ')}`)
+  }
+
   const brandName = brief.brand_name || input.brand.name || input.niche
   const subdomain = slugify(brandName) || `store-${input.runId.slice(0, 8)}`
   const buildDir = path.join(ws, `${input.runId}-${subdomain}`)
