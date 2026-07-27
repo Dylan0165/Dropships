@@ -28,6 +28,21 @@ jobs:
     runs-on: [self-hosted, dropships-vps]
 
     steps:
+      # De runner hoort als 'dropships' te draaien (svc.sh install dropships),
+      # NIET als root: pm2 is per-user, dus een root-runner zou een tweede,
+      # lege pm2-daemon aansturen en de echte processen nooit herstarten.
+      - name: Verify runner user + tooling
+        run: |
+          echo "user: $(whoami)  |  cwd: $(pwd)"
+          if [ "$(id -u)" = "0" ]; then
+            echo "::error::Runner draait als root. Herinstalleer met: sudo ./svc.sh install dropships"
+            exit 1
+          fi
+          command -v node >/dev/null || { echo "::error::node ontbreekt in PATH van de runner"; exit 1; }
+          command -v pm2  >/dev/null || { echo "::error::pm2 ontbreekt in PATH van de runner"; exit 1; }
+          echo "node $(node -v) | npm $(npm -v) | pm2 $(pm2 -v)"
+          echo "pm2-processen vóór deploy:"; pm2 list || true
+
       - name: Pull latest code
         run: |
           cd "$APP_DIR"
