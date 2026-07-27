@@ -92,6 +92,17 @@ export function arr(v: unknown, fallback: unknown[]): string {
   return j(Array.isArray(v) && v.length ? v : fallback)
 }
 
+/**
+ * Markeert een element voor de Anime.js-bewegingslaag (zie anime-presets.ts).
+ * Geeft een lege string terug bij anim==='none', zodat "geen beweging" ook
+ * letterlijk geen data-attribuut oplevert.
+ */
+export function am(anim: AnimationVariant, family: string, extra: Record<string, string | number> = {}): string {
+  if (anim === 'none') return ''
+  const attrs = Object.entries(extra).map(([k, v]) => ` data-am-${k}=${j(String(v))}`).join('')
+  return ` data-am=${j(family)}${attrs}`
+}
+
 /** Reveal-wrapper met variant + optionele stagger-delay (respecteert anim). */
 export function reveal(anim: AnimationVariant, variant: 'up' | 'left' | 'right' | 'scale' | 'fade', inner: string, delay = 0): string {
   if (anim === 'none') return inner
