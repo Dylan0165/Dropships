@@ -106,7 +106,10 @@ img { max-width: 100%; display: block; }
     version: '0.1.0',
     private: true,
     scripts: { build: 'next build', start: 'next start', dev: 'next dev' },
-    dependencies: { next: '^14.2.0', react: '^18.3.0', 'react-dom': '^18.3.0' },
+    // animejs draagt de bewegingslaag (design/anime-presets.ts). De pagina
+    // importeert het dynamisch en heeft een failsafe, dus een store blijft
+    // bruikbaar als het pakket onverhoopt niet laadt — maar het hoort er te zijn.
+    dependencies: { next: '^14.2.0', react: '^18.3.0', 'react-dom': '^18.3.0', animejs: ANIME_VERSION },
     devDependencies: { typescript: '^5.4.0', '@types/react': '^18.3.0', '@types/react-dom': '^18.3.0', '@types/node': '^20.0.0' },
   }, null, 2), 'utf-8')
 
