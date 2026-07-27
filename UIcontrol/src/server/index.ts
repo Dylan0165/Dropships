@@ -1401,6 +1401,45 @@ app.get('/api/seasonal', (_req, res) => {
   res.json(getActiveSeasons())
 })
 
+// ═══════ Static UI (Vite build) ═══════
+// MOET na alle /api/*-routes staan zodat API-calls voorrang houden, en vóór de
+// error-handler (Express vereist dat de 4-arg error-middleware als laatste komt).
+// `npm run build` produceert UIcontrol/dist; zonder deze serving gaf / in
+// productie "Cannot GET /".
+//
+// __dirname = UIcontrol/src/server (draait via tsx op de bron) → ../../dist.
+const UI_DIST = path.resolve(__dirname, '../../dist')
+const UI_INDEX = path.join(UI_DIST, 'index.html')
+
+if (fs.existsSync(UI_INDEX)) {
+  // Gehashte Vite-assets mogen lang gecachet worden; index.html nooit (anders
+  // blijft een oude bundle-verwijzing hangen na een deploy).
+  app.use(express.static(UI_DIST, {
+    index: false,
+    setHeaders: (res, filePath) => {
+      if (filePath.endsWith('index.html')) res.setHeader('Cache-Control', 'no-cache')
+      else if (/[.-][0-9a-f]{8,}\.(js|css|woff2?|png|jpg|svg)$/i.test(filePath)) {
+        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable')
+      }
+    },
+  }))
+
+  // SPA-fallback: alles wat GEEN /api/* is → index.html (client-side routing).
+  // Bewust géén '*'-pattern: Express 5 / path-to-regexp v6 accepteert dat niet
+  // meer. Een middleware met expliciete guards is versie-onafhankelijk.
+  app.use((req, res, next) => {
+    if (req.method !== 'GET' && req.method !== 'HEAD') return next()
+    if (req.path.startsWith('/api/')) return next()          // API houdt voorrang
+    if (req.path.startsWith('/ws')) return next()            // WebSocket-upgrade
+    if (path.extname(req.path)) return next()                // ontbrekend asset → 404
+    res.setHeader('Cache-Control', 'no-cache')
+    res.sendFile(UI_INDEX)
+  })
+  console.log(`[server] UI served from ${UI_DIST}`)
+} else {
+  console.warn(`[server] ⚠ geen UI-build gevonden op ${UI_DIST} — draai \`npm run build\` (API blijft werken)`)
+}
+
 // Global error handler — returns JSON instead of HTML for all thrown errors
 app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error('[server] Unhandled error:', err.message)
