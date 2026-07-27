@@ -45,16 +45,15 @@ function main() {
 
   // Eén pagina per nav/footer/topbar-instantie is niet nodig; we stapelen ze
   // allemaal als losse pagina's zodat ook chrome-varianten compileren.
-  const vars = {
-    BRAND_NAME: 'Testshop', SLOGAN: 'Testing every component', NICHE: 'test',
-    PRIMARY_COLOR: dna.palette.primary, SECONDARY_COLOR: dna.palette.secondary, ACCENT_COLOR: dna.palette.accent,
-    HERO_HEADLINE: 'All components', FONT_URL: dna.typography.fontUrl,
-    HEADING_FONT: dna.typography.heading, BODY_FONT: dna.typography.body,
-    PRODUCTS_JSON: JSON.stringify(products), USPS_JSON: JSON.stringify([]),
-    STORE_ID: 'all-components', SUBDOMAIN: 'allcomponents', RUN_ID: 'all-components', YEAR: '2026',
-  } as never
+  const vars = buildTemplateVars({
+    brandName: 'Testshop', slogan: 'Testing every component', niche: 'test niche',
+    primary: dna.palette.primary, secondary: dna.palette.secondary, accent: dna.palette.accent,
+    products, usps: [{ title: 'One', desc: 'First' }, { title: 'Two', desc: 'Second' }, { title: 'Three', desc: 'Third' }],
+    heroHeadline: 'All components', fontUrl: dna.typography.fontUrl,
+    headingFont: dna.typography.heading, bodyFont: dna.typography.body,
+    storeId: 'all-components', subdomain: 'allcomponents', runId: 'all-components',
+  })
 
-  writeNextScaffold(OUTDIR, vars)
   buildLayoutSharedFiles(OUTDIR, vars)
   buildCheckoutAndInfoPages(OUTDIR, vars)
 
