@@ -264,11 +264,14 @@ import { useEffect, useRef, useState } from 'react';
 const PRODUCTS: any[] = ${j(products)};
 const BRAND: string = ${j(brandName)};
 const CSS: string = ${j(dedupedCss)};
-${HELPERS}
+const AM_PLAN: any = ${j(input.motion?.plan ?? {})};
+${HELPERS}${input.motion ? motionRuntime() : ''}
 export default function Home() {
+  ${input.motion ? 'useMotion(AM_PLAN);' : ''}
   return (
     <div style={{ minHeight:'100dvh', background:'var(--c-bg)', color:'var(--c-text)', fontFamily:'var(--f-body)' }}>
       <style dangerouslySetInnerHTML={{ __html: CSS }} />
+      ${topR?.jsx ?? ''}
       ${heroWrapOpen}
       ${navR.jsx}
       ${firstBody}
