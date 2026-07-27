@@ -186,6 +186,28 @@ and flow; only your color/font DNA is applied to it. Never try to design or choo
 a checkout — it is the one thing that must be identical everywhere for reliability.
 - **ALL text MUST be in English**, even if the niche or persona input is in Dutch
   or another language. Never output Dutch.
+
+### Absolutely no emoji
+
+Never put emoji in ANY text you produce — not in headlines, not in USP titles,
+not in badges, not in button labels. No 🚀, no ✨, no 🔥, no 💯, no ✅, no flags,
+no faces. Real shops do not decorate their copy this way; emoji are the single
+clearest tell that a page was written by a model.
+
+The pipeline strips emoji from your output before rendering, so anything you add
+is deleted and you simply lose the words around it. Write the sentence so it
+works without one. If you want emphasis, use a stronger verb, not a symbol.
+
+### Stay inside the allowed style space
+
+Every store must read as a **professional webshop** someone would trust with
+their card details. The permitted range is: clean, modern, warm, premium, or
+playful-but-polished.
+
+Explicitly out of bounds: brutalist, neo-brutalist, anti-design, deliberately raw
+or unstyled, glitch, grunge, chaotic or "experimental" layouts. Interesting is
+good; alienating is not. If a choice would make a buyer hesitate about whether
+the shop is real, it is the wrong choice.
 - **Avoid generic patterns.** Don't default to the same hero structure or the
   identical "free shipping / 30-day returns / secure payment" USP trio unless it
   genuinely fits — vary the angle per store and per persona.
