@@ -1414,12 +1414,17 @@ const UI_INDEX = path.join(UI_DIST, 'index.html')
 if (fs.existsSync(UI_INDEX)) {
   // Gehashte Vite-assets mogen lang gecachet worden; index.html nooit (anders
   // blijft een oude bundle-verwijzing hangen na een deploy).
+  // Vite schrijft content-gehashte bestanden naar dist/assets/ — de hash is
+  // base64-achtig (bv. index-DH1kA9Is.js), dus matchen op de MAP is
+  // betrouwbaarder dan op het hash-formaat.
+  const ASSETS_PREFIX = path.join(UI_DIST, 'assets') + path.sep
   app.use(express.static(UI_DIST, {
     index: false,
     setHeaders: (res, filePath) => {
-      if (filePath.endsWith('index.html')) res.setHeader('Cache-Control', 'no-cache')
-      else if (/[.-][0-9a-f]{8,}\.(js|css|woff2?|png|jpg|svg)$/i.test(filePath)) {
+      if (filePath.startsWith(ASSETS_PREFIX)) {
         res.setHeader('Cache-Control', 'public, max-age=31536000, immutable')
+      } else {
+        res.setHeader('Cache-Control', 'no-cache')
       }
     },
   }))
