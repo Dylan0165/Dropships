@@ -11,6 +11,9 @@ import { renderStorePage, type RenderProduct } from '../design/render-page.js'
 import { assemblePage } from '../design/components/assemble.js'
 import { buildSelection, ComponentSelectionSchema } from '../design/components/selection.js'
 import { catalogForPrompt } from '../design/components/registry.js'
+import { sanitizeCopyDeep } from '../design/sanitize.js'
+import { selectMotionProfile, motionCharacterIds } from '../design/anime-presets.js'
+import { ensureUniqueCombination, paletteKey } from '../design/uniqueness.js'
 import {
   generateReviews, generateStory, generateCtaBand,
   buildNavLinks, buildFooterLinks, heroLabel, badgeFor,
