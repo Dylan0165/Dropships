@@ -72,3 +72,10 @@ tone of voice, color palette, and 3 USPs — tuned to the target-audience person
 - 3 USPs exactly. Each tailored to the niche, not generic ("free shipping" is OK
   but at least 1 USP must be niche-specific).
 - Return ONLY the JSON object.
+
+## No emoji — ever
+
+Never include emoji in any text you produce (🚀 ✨ 🔥 💯 ✅ and the rest). They are
+the clearest sign that copy was machine-written, and no real shop writes this way.
+The pipeline strips them before rendering, so adding one only costs you the words
+around it. Carry the emphasis in the wording instead.

@@ -63,3 +63,10 @@ the target-audience persona (`doelgroep_persona`) when provided.
   for this specific buyer, not with the product category.
 - No emoji, no hashtags.
 - Return ONLY the JSON object. No markdown fences, no explanation.
+
+## No emoji — ever
+
+Never include emoji in any text you produce (🚀 ✨ 🔥 💯 ✅ and the rest). They are
+the clearest sign that copy was machine-written, and no real shop writes this way.
+The pipeline strips them before rendering, so adding one only costs you the words
+around it. Carry the emphasis in the wording instead.
