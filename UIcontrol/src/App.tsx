@@ -6,8 +6,9 @@ import { RunsView } from './components/views/RunsView'
 import { StoresView } from './components/views/StoresView'
 import { SettingsView } from './components/views/SettingsView'
 import { ObservabilityView } from './components/views/ObservabilityView'
+import { MarketplaceView } from './components/views/MarketplaceView'
 
-export type View = 'pipeline' | 'stores' | 'runs' | 'settings' | 'observability'
+export type View = 'pipeline' | 'stores' | 'marketplace' | 'runs' | 'settings' | 'observability'
 
 export default function App() {
   const [view, setView] = useState<View>('pipeline')
@@ -22,6 +23,7 @@ export default function App() {
           <div className="flex-1 flex overflow-hidden">
             {view === 'pipeline'      && <PipelineCanvas />}
             {view === 'stores'        && <StoresView />}
+            {view === 'marketplace'   && <MarketplaceView />}
             {view === 'observability' && <ObservabilityView />}
             {view === 'runs'          && <RunsView onSelectRun={() => setView('pipeline')} />}
             {view === 'settings'      && <SettingsView />}

@@ -1,10 +1,11 @@
-import { Workflow, Store, History, Settings, ActivitySquare } from 'lucide-react'
+import { Workflow, Store, History, Settings, ActivitySquare, LayoutGrid } from 'lucide-react'
 import clsx from 'clsx'
 import type { View } from '@/App'
 
 const NAV_ITEMS: { view: View; Icon: typeof Workflow; tooltip: string }[] = [
   { view: 'pipeline',      Icon: Workflow,        tooltip: 'Pipeline' },
   { view: 'stores',        Icon: Store,           tooltip: 'Stores' },
+  { view: 'marketplace',   Icon: LayoutGrid,      tooltip: 'Kopers-dashboard' },
   { view: 'observability', Icon: ActivitySquare,  tooltip: 'Observability' },
   { view: 'runs',          Icon: History,         tooltip: 'Run History' },
   { view: 'settings',      Icon: Settings,        tooltip: 'Instellingen' },

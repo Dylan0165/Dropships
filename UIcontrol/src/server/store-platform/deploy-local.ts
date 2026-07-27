@@ -179,6 +179,72 @@ export async function atomicDeploy(
   }
 }
 
+// ── Apex-vhost: clynado.com → het publieke kopers-dashboard ────────────────────
+// De apex is de enige host die niet naar een store wijst maar naar de Express-app
+// (:3001, pad /market). Cloudflare's wildcard `*.clynado.com` dekt de apex NIET,
+// dus daar hoort een eigen ingress-regel bij in de tunnel-config — zie
+// scripts/cloudflared-named-tunnel.md.
+//
+// De conf heet `_apex.conf`; de underscore houdt hem uit de weg van de
+// subdomain-scan (die leest `<sub>.conf` en zou hem anders als store zien).
+
+export const APEX_CONF_NAME = '_apex'
+
+function apexConf(domain: string, port: number): string {
+  return `# managed by Dropships — publiek kopers-dashboard (apex)
+server {
+  listen 80;
+  server_name ${domain} www.${domain};
+
+  add_header X-Content-Type-Options "nosniff" always;
+  add_header X-Frame-Options "SAMEORIGIN" always;
+  add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+
+  # Publieke etalage-data eerst: langste prefix wint bij nginx, dus deze regel
+  # moet er staan vóórdat / alles naar /market herschrijft.
+  location /api/market/ {
+    proxy_pass http://127.0.0.1:${port}/api/market/;
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto https;
+  }
+
+  location / {
+    proxy_pass http://127.0.0.1:${port}/market/;
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto https;
+  }
+}
+`
+}
+
+/**
+ * Schrijft (of ververst) de apex-vhost. Idempotent: alleen wegschrijven als de
+ * inhoud daadwerkelijk verandert, zodat een herstart niet elke keer een
+ * nginx-reload uitlokt.
+ */
+export async function ensureApexVhost(onLog?: (m: string) => void): Promise<{ ok: boolean; changed: boolean; error?: string }> {
+  const { nginxConfDir, domain } = cfg()
+  const port = Number(process.env.PORT ?? 3001)
+  if (!domain || domain === 'localhost') {
+    return { ok: false, changed: false, error: 'STORE_BASE_DOMAIN niet gezet — apex-vhost overgeslagen' }
+  }
+  try {
+    fs.mkdirSync(nginxConfDir, { recursive: true })
+    const confPath = path.join(nginxConfDir, `${APEX_CONF_NAME}.conf`)
+    const next = apexConf(domain, port)
+    const current = fs.existsSync(confPath) ? fs.readFileSync(confPath, 'utf-8') : ''
+    if (current === next) return { ok: true, changed: false }
+    fs.writeFileSync(confPath, next, 'utf-8')
+    onLog?.(`[apex] ${confPath} bijgewerkt → ${domain} naar 127.0.0.1:${port}/market`)
+    const reload = await reloadNginx(onLog)
+    return { ok: reload.ok, changed: true, error: reload.ok ? undefined : reload.output }
+  } catch (err) {
+    return { ok: false, changed: false, error: err instanceof Error ? err.message : String(err) }
+  }
+}
+
 export async function rollback(subdomain: string, onLog?: (msg: string) => void): Promise<{ ok: boolean; rolledBackTo?: string }> {
   const log = onLog ?? ((m: string) => console.log(`[deploy-local] ${m}`))
   const { storesRoot } = cfg()
