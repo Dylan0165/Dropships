@@ -247,6 +247,8 @@ export function assemblePage(input: AssembleInput): AssembleResult {
   const heroWrapClose = transparentNav ? '</div>' : ''
   const firstBody = bodyParts.shift() ?? ''
 
+  if (input.motion) cssParts.push(motionCss())
+
   // CSS ontdubbelen (identieke regels één keer) + audit
   const seenCss = new Set<string>()
   const dedupedCss = cssParts.flatMap(block => block.split('\n')).filter(line => {
