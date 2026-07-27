@@ -1,5 +1,7 @@
 import './load-env.js'
 import express from 'express'
+import cookieParser from 'cookie-parser'
+import { attachUser, registerAuthRoutes, requireAuth } from './auth-routes.js'
 import { createServer } from 'http'
 import { WebSocketServer, WebSocket } from 'ws'
 import { v4 as uuid } from 'uuid'
