@@ -14,13 +14,21 @@ import {
 } from './auth.js'
 
 // ── Routes die ZONDER sessie bereikbaar blijven ───────────────────────────────
-// Stripe kan geen cookie meesturen en monitoring moet altijd werken.
+// Dit is de ENIGE plek waar uitzonderingen op de gate staan. Alles wat hier niet
+// in staat, vereist een sessie — ook nieuwe routes die later worden toegevoegd.
+//
+//  • /api/webhooks/stripe — Stripe kan geen cookie meesturen
+//  • /api/health          — monitoring moet altijd werken
+//  • /market, /api/market — het publieke kopers-dashboard op de apex
+//                           (clynado.com). Bewust openbaar: dit is de etalage.
+//                           Het ADMIN-dashboard blijft volledig achter de gate.
 const PUBLIC_API = new Set(['/api/webhooks/stripe', '/api/health'])
-const PUBLIC_PAGES = ['/login', '/setup', '/reset']
+const PUBLIC_PAGES = ['/login', '/setup', '/reset', '/market']
 
 function isPublicPath(p: string): boolean {
   if (PUBLIC_API.has(p)) return true
   if (p.startsWith('/api/auth/')) return true                    // login/setup zelf
+  if (p.startsWith('/api/market/')) return true                  // publieke etalage-data
   if (PUBLIC_PAGES.some(base => p === base || p.startsWith(base + '/'))) return true
   return false
 }
