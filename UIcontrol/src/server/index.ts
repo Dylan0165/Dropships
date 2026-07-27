@@ -53,6 +53,17 @@ app.use(express.json({
   verify: (req, _res, buf) => { (req as express.Request & { rawBody?: Buffer }).rawBody = buf },
 }))
 app.use(express.urlencoded({ extended: false }))
+app.use(cookieParser())
+
+// ── Authenticatie ─────────────────────────────────────────────────────────────
+// Volgorde is kritiek: attachUser leest de sessie → auth-routes (login/setup zijn
+// zelf publiek) → requireAuth sluit ALLES daarna af. Omdat requireAuth hier vóór
+// alle /api/*-routes én vóór de static UI staat, is elke route automatisch
+// beveiligd; nieuwe routes hoeven niets extra's te doen. Uitzonderingen staan op
+// één plek in auth-routes.ts: /api/webhooks/stripe en /api/health.
+app.use(attachUser)
+registerAuthRoutes(app)
+app.use(requireAuth)
 
 const server = createServer(app)
 const wss = new WebSocketServer({ noServer: true })
