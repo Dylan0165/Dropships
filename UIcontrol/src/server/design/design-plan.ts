@@ -210,7 +210,7 @@ export function applyDesignPlan(dna: DesignDNA, plan: DesignPlan | undefined | n
       accent: accent ?? primary,
       border: mixHex(safeText, bg, 0.86),
     }
-    const defaultLook = detectDefaultLook(out.palette)
+    const defaultLook = detectDefaultLook(out.palette, plan?.typography?.display ?? out.typography.heading)
     if (defaultLook) warnings.push(`LLM koos alsnog een ${defaultLook} — prompt-regel genegeerd (palet wél toegepast)`)
   } else {
     warnings.push('palet mist background/text/primary rollen — seeded DNA-palet behouden')
