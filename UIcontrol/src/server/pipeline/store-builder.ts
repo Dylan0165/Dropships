@@ -254,6 +254,7 @@ export function renderStore(input: StoreBuildInput, briefRaw: StoreBrief): Store
 
   let pageTsx: string
   let componentMeta: Record<string, unknown> = { renderer: 'render-page (fallback)' }
+  let uniqueMeta: Record<string, unknown> = {}
   try {
     const selection = buildSelection(dna, layout, {
       brandName,
@@ -266,13 +267,59 @@ export function renderStore(input: StoreBuildInput, briefRaw: StoreBrief): Store
       storyBody: content.story.body,
       reviews: content.reviews,
       footerTagline: brief.footer_tagline,
-    }, brief.components)
-    const assembled = assemblePage({ dna, brandName, nav: selection.nav, sections: selection.sections, footer: selection.footer, products, defaultStyle: selection.style })
+    }, brief.components, {
+      niche: input.niche,
+      interests: persona.interests ?? [],
+      seed: dna.seed,
+    })
+
+    // ── Bewegingskarakter (Anime.js-laag) ────────────────────────────────────
+    const motion = selectMotionProfile(dna.tone, dna.seed)
+
+    // ── Uniciteit afdwingen over de zes assen ────────────────────────────────
+    // Botst deze store met een bestaande, dan draait ensureUniqueCombination aan
+    // hero/topbar/motion tot de hash vrij is. Palet en fonts blijven staan: die
+    // komen uit de persona en de art-direction, en dáár aan sleutelen zou de
+    // store minder passend maken dan een andere hero-variant.
+    const heroIdx = selection.sections.findIndex(s => s.id.startsWith('hero.'))
+    const unique = ensureUniqueCombination(
+      {
+        layout: layout.sections.join('>'),
+        hero: heroIdx >= 0 ? selection.sections[heroIdx].id : 'none',
+        topbar: selection.topbar.id,
+        motion: motion.id,
+        palette: paletteKey(dna.palette),
+        fonts: `${dna.typography.heading}/${dna.typography.body}`,
+      },
+      { hero: selection.alternatives.hero, topbar: selection.alternatives.topbar, motion: motionCharacterIds() },
+      subdomain,
+      dna.seed,
+    )
+    if (unique.attempts > 0) {
+      input.onLog?.(`[uniqueness] combinatie botste — ${unique.rotated.join('+')} gedraaid na ${unique.attempts} poging(en) → ${unique.hash}`)
+      if (heroIdx >= 0 && unique.combination.hero !== selection.sections[heroIdx].id) {
+        selection.sections[heroIdx] = { ...selection.sections[heroIdx], id: unique.combination.hero }
+      }
+      if (unique.combination.topbar !== selection.topbar.id) selection.topbar = { ...selection.topbar, id: unique.combination.topbar }
+    }
+    if (unique.warning) input.onLog?.(`[uniqueness] ⚠ ${unique.warning}`)
+    const activeMotion = unique.combination.motion === motion.id ? motion : selectMotionProfile(dna.tone, dna.seed)
+    uniqueMeta = { hash: unique.hash, combination: unique.combination, attempts: unique.attempts, rotated: unique.rotated }
+
+    const assembled = assemblePage({
+      dna, brandName, topbar: selection.topbar, nav: selection.nav,
+      sections: selection.sections, footer: selection.footer, products,
+      defaultStyle: selection.style, motion: activeMotion,
+    })
     for (const w of assembled.warnings) input.onLog?.(`[assemble] ⚠ ${w}`)
-    input.onLog?.(`[assemble] ${assembled.usedComponents.length} componenten (${selection.source}): ${assembled.usedComponents.join(', ')}${assembled.cssConflicts.length ? ` — ${assembled.cssConflicts.length} CSS-conflict!` : ''}`)
+    input.onLog?.(`[assemble] ${assembled.usedComponents.length} componenten (${selection.source}, thema ${selection.iconTheme}, beweging ${activeMotion.id}): ${assembled.usedComponents.join(', ')}${assembled.cssConflicts.length ? ` — ${assembled.cssConflicts.length} CSS-conflict!` : ''}`)
     if (assembled.cssConflicts.length === 0 && assembled.usedComponents.length >= 3) {
       pageTsx = assembled.page
-      componentMeta = { renderer: 'component-catalog', source: selection.source, used: assembled.usedComponents, cssConflicts: assembled.cssConflicts }
+      componentMeta = {
+        renderer: 'component-catalog', source: selection.source, iconTheme: selection.iconTheme,
+        topbar: selection.topbar.id, motion: { id: activeMotion.id, label: activeMotion.label },
+        used: assembled.usedComponents, cssConflicts: assembled.cssConflicts,
+      }
     } else {
       throw new Error(assembled.cssConflicts.length ? 'CSS-conflicten in assemblage' : 'te weinig componenten')
     }
