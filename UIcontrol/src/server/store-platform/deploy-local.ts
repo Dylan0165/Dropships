@@ -304,7 +304,12 @@ function readConfPort(confPath: string): number | null {
 function listConfs(): string[] {
   const { nginxConfDir } = cfg()
   if (!fs.existsSync(nginxConfDir)) return []
-  return fs.readdirSync(nginxConfDir).filter(f => f.endsWith('.conf')).map(f => f.replace(/\.conf$/, ''))
+  // Confs die met _ beginnen zijn infrastructuur (zoals _apex.conf), geen store.
+  // Zonder deze filter zou de audit `_apex` als weesbestand melden en zou de
+  // poort-scan de apex-poort meetellen.
+  return fs.readdirSync(nginxConfDir)
+    .filter(f => f.endsWith('.conf') && !f.startsWith('_'))
+    .map(f => f.replace(/\.conf$/, ''))
 }
 
 export async function portConflictOwner(selfSubdomain: string, port: number): Promise<string | null> {
