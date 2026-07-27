@@ -1574,6 +1574,13 @@ server.listen(PORT, () => {
   resumeInterruptedRuns()
   startHiggsfieldPoller()
 
+  // Apex-vhost (clynado.com → kopers-dashboard). Idempotent: schrijft alleen bij
+  // een echte wijziging, dus dit lokt geen nginx-reload uit bij elke herstart.
+  void ensureApexVhost(m => console.log(m)).then(r => {
+    if (r.changed && r.ok) console.log('[apex] kopers-dashboard-vhost geïnstalleerd')
+    else if (r.error) console.log(`[apex] ${r.error}`)
+  })
+
   // Poll deployed store health every 60s
   setInterval(pollStoreHealth, 60_000)
   setTimeout(pollStoreHealth, 5000) // initial check 5s after boot

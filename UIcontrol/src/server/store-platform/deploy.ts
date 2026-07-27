@@ -87,3 +87,15 @@ export function getHighestNginxPort(): Promise<number> {
 export function auditNginx(activeSubdomains: Set<string>): ReturnType<typeof local.auditNginx> {
   return impl().auditNginx(activeSubdomains)
 }
+
+/**
+ * Zorgt dat de apex-vhost (clynado.com → kopers-dashboard) bestaat. Alleen
+ * zinvol bij een echte lokale VPS-deploy; in preview- en SSH-modus is er geen
+ * lokale nginx om te configureren.
+ */
+export async function ensureApexVhost(onLog?: (m: string) => void): Promise<{ ok: boolean; changed: boolean; error?: string }> {
+  if (deployTargetKind() !== 'local') {
+    return { ok: false, changed: false, error: `apex-vhost overgeslagen (deploy-modus: ${deployTargetKind()})` }
+  }
+  return local.ensureApexVhost(onLog)
+}
