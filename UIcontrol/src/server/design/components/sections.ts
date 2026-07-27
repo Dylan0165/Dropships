@@ -152,16 +152,23 @@ const defs: ComponentDef[] = [
   {
     id: 'content.story-split', category: 'content', label: 'Merkverhaal — tekst naast beeld', styles: ['editorial', 'minimal'], anims: ['subtle'],
     tags: ['brand', 'story', 'considered'], props: { title: '', body: '', image: 'optionele beeld-url' },
-    render: (ctx, p) => ({
-      jsx: sect(`<div className="split" style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'clamp(2rem,5vw,4rem)', alignItems:'center' }}>
+    render: (ctx, p) => {
+      // Zonder expliciete image-prop mag de `"" || …`-vorm er niet in staan: TS
+      // ziet dan een altijd-falsy expressie en `next build` weigert (strict).
+      const img = typeof p.image === 'string' && p.image.trim()
+        ? `<img src={${j(p.image)}} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} />`
+        : `{PRODUCTS[0] && PRODUCTS[0].image ? <img src={PRODUCTS[0].image} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} /> : null}`
+      return {
+        jsx: sect(`<div className="split" style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'clamp(2rem,5vw,4rem)', alignItems:'center' }}>
         ${reveal(ctx.anim, 'left', `<div>
           <span className="eyebrow" style={{ marginBottom:'1rem' }}>Our story</span>
           <h2 style={{ fontSize:'clamp(1.7rem,3.2vw,2.4rem)', margin:'0 0 1.1rem', textTransform:'var(--tt-head)' }}>${txt(p.title, 'Why we started')}</h2>
           <p style={{ color:'var(--c-muted)', lineHeight:1.9, fontSize:'1.05rem', margin:0 }}>${txt(p.body, 'We built this around one frustration, and kept the range focused ever since.')}</p>
         </div>`)}
-        <div style={{ aspectRatio:'4/3', overflow:'hidden', borderRadius:'var(--r-lg)', background:'var(--c-surface-alt)' }}>{(${j(p.image ?? '')} || (PRODUCTS[0] && PRODUCTS[0].image)) ? <img src={${j(p.image ?? '')} || PRODUCTS[0].image} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} /> : null}</div>
+        <div style={{ aspectRatio:'4/3', overflow:'hidden', borderRadius:'var(--r-lg)', background:'var(--c-surface-alt)' }}>${img}</div>
       </div>`, 'var(--c-surface-alt)'),
-    }),
+      }
+    },
   },
   {
     id: 'content.stats-showcase', category: 'content', label: 'Cijfers-showcase (3-4 stats)', styles: ['bold', 'minimal'], anims: ['subtle', 'expressive'],
