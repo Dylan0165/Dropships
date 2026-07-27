@@ -7,7 +7,7 @@ import { renderStore } from '../pipeline/store-builder.js'
 import { sanitizeCopyDeep, containsAiEmoji, stripAiEmoji } from './sanitize.js'
 import { catalogStats } from './components/registry.js'
 import { listCombinations } from './uniqueness.js'
-import type { StoreBrief } from '../pipeline/stages.js'
+import type { StoreBrief } from '../pipeline/store-builder.js'
 
 const OUT: string[] = []
 const say = (s: string) => { console.log(s); OUT.push(s) }
