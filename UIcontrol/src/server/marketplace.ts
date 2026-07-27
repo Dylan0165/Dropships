@@ -246,9 +246,9 @@ header.top{background:var(--paper);border-bottom:1px solid var(--line);position:
 .card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;display:flex;flex-direction:column;transition:transform .22s cubic-bezier(.22,1,.36,1),box-shadow .22s,border-color .22s}
 .card:hover{transform:translateY(-3px);box-shadow:var(--shadow);border-color:#cfd5df}
 .thumb{aspect-ratio:16/10;position:relative;overflow:hidden;background:var(--wash)}
-.thumb img{width:100%;height:100%;object-fit:cover;transition:transform .5s cubic-bezier(.22,1,.36,1)}
+.thumb img{position:relative;z-index:1;width:100%;height:100%;object-fit:cover;transition:transform .5s cubic-bezier(.22,1,.36,1)}
 .card:hover .thumb img{transform:scale(1.04)}
-.thumb .fallback{position:absolute;inset:0;display:grid;place-items:center;color:#fff;font-weight:700;font-size:1.5rem;letter-spacing:-.02em}
+.thumb .fallback{position:absolute;inset:0;z-index:0;display:grid;place-items:center;color:#fff;font-weight:700;font-size:1.5rem;letter-spacing:-.02em}
 .badge{position:absolute;top:.6rem;left:.6rem;background:rgba(255,255,255,.94);color:var(--ink);font-size:.65rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:.26rem .55rem;border-radius:6px}
 .card .body{padding:.95rem 1rem 1.1rem;display:flex;flex-direction:column;gap:.25rem;flex:1}
 .card h3{margin:0;font-size:1rem;font-weight:650;letter-spacing:-.01em}
