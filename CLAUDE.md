@@ -276,3 +276,38 @@ Event types: `pipeline_started`, `agent_started`, `agent_log`, `agent_completed`
 - Wil autonome uitvoering — niet bij elke stap om toestemming vragen
 - Korte responses, geen lange samenvattingen
 - Windows (dev) + Linux servers (runtime). Kan niet direct SSH'en tijdens chat — visuele bevestiging via screenshots
+
+## Deploy-protocol — automatisch taggen bij afgeronde taak (VASTE AFSPRAAK)
+
+**Wanneer een taak volledig af én geverifieerd is, push je zelf een deploy-tag**
+om de productie-workflow te triggeren. Dit is een staande opdracht: niet elke
+keer opnieuw om toestemming vragen.
+
+```bash
+git tag deploy-$(date +%Y%m%d-%H%M%S)
+git push origin --tags
+```
+
+**Alle drie de voorwaarden moeten waar zijn** — "geverifieerd" betekent
+aantoonbaar, niet beweerd:
+1. Commit staat op `origin/main` (`git rev-list --left-right --count origin/main...HEAD` → `0  0`)
+2. `npx tsc --noEmit` schoon (en `npm run build` als de UI is geraakt)
+3. Tests of runtime-checks **daadwerkelijk uitgevoerd** met echte output — niet
+   "zou moeten werken". Kon een check niet draaien, dan is de taak niet
+   geverifieerd → **geen tag**, en zeg dat er expliciet bij.
+
+**Timing: precies één tag per afgeronde taak**, op het moment dat je "klaar en
+geverifieerd" rapporteert aan de gebruiker.
+
+**NIET taggen bij:**
+- elke losse Edit/Write — de auto-push hook commit al bij élke wijziging;
+  taggen per commit gaf eerder **500+ ongewenste deploy-runs**
+- tussentijdse commits binnen een nog lopende taak
+- werk dat faalde, half af is, of waarvan de verificatie niet lukte
+- puur lokale experimenten (scratchpad, wegwerp-testscripts)
+
+De workflow (`.github/workflows/deploy.yml`) triggert op `deploy-*` en `v*` tags
+plus handmatige `workflow_dispatch` — bewust **niet** op push-naar-branch. Een
+tag herstart live PM2-processen op productie; daarom alleen bij bewezen-werkende
+staat. Meld na het pushen van de tag welke tag je hebt gezet, zodat de run in
+Actions terug te vinden is.
