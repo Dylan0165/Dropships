@@ -56,6 +56,13 @@ db.exec(`
     totp_secret TEXT NOT NULL,
     expires_at  TEXT NOT NULL
   );
+  -- Tussenstap login: wachtwoord OK, wacht op TOTP. Kortlevend (5 min) en
+  -- eenmalig bruikbaar, zodat een onderschepte tussenstap niets waard is.
+  CREATE TABLE IF NOT EXISTS auth_pending_login (
+    token_hash TEXT PRIMARY KEY,
+    username   TEXT NOT NULL,
+    expires_at TEXT NOT NULL
+  );
 `)
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
