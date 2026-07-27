@@ -133,11 +133,19 @@ export async function handleStripeWebhook(rawBody: Buffer | string, signature: s
 }
 
 async function routeEvent(event: Stripe.Event): Promise<void> {
+  if (!event || typeof event !== 'object' || typeof event.type !== 'string') {
+    console.warn('[stripe] webhook zonder geldig event-type genegeerd')
+    return
+  }
   if (event.type !== 'checkout.session.completed') {
     console.log(`[stripe] event ${event.type} genegeerd`)
     return
   }
-  const session = event.data.object as Stripe.Checkout.Session
+  const session = (event.data as { object?: Stripe.Checkout.Session } | undefined)?.object
+  if (!session?.id) {
+    console.warn('[stripe] checkout.session.completed zonder session-object genegeerd')
+    return
+  }
   // Alleen betaalde sessies fulfillen
   if (session.payment_status && session.payment_status !== 'paid') {
     console.log(`[stripe] sessie ${session.id} payment_status=${session.payment_status} — niet fulfillen`)
