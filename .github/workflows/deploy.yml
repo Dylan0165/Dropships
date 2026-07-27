@@ -79,13 +79,33 @@ jobs:
           pm2 restart store-platform --update-env || pm2 start npm --name store-platform -- run store-platform
           pm2 save
 
-      - name: Reload nginx
-        run: sudo nginx -t && sudo systemctl reload nginx
+      # Exact de commando's uit de smalle sudoers-regel (/etc/sudoers.d/dropships-nginx):
+      #   dropships ALL=(root) NOPASSWD: /usr/sbin/nginx -t, /usr/bin/systemctl reload nginx
+      # Volledige paden zodat sudo gegarandeerd matcht. Een code-deploy wijzigt
+      # géén nginx-config (dat doet deploy-local.ts bij een store-deploy), dus
+      # dit is niet-fataal: de app-herstart hierboven is het kritieke deel.
+      - name: Reload nginx (optioneel, smalle sudoers)
+        continue-on-error: true
+        run: |
+          if sudo -n /usr/sbin/nginx -t 2>&1; then
+            sudo -n /usr/bin/systemctl reload nginx && echo "nginx herladen"
+          else
+            echo "::warning::nginx -t niet uitgevoerd (sudoers-regel ontbreekt of config ongeldig) — app draait wel"
+          fi
 
-      - name: Health check
+      - name: Health check (API + UI)
         run: |
           sleep 6
-          curl -fsS http://localhost:3001/api/health && echo " — UIcontrol OK"
+          echo "— API:"
+          curl -fsS http://localhost:3001/api/health >/dev/null && echo "  /api/health OK"
+          # Bewijst dat de Vite-build ook echt geserveerd wordt (was 'Cannot GET /')
+          echo "— UI:"
+          code=$(curl -s -o /tmp/ui-root.html -w '%{http_code}' http://localhost:3001/)
+          if [ "$code" != "200" ] || ! grep -qi '<div id="root"' /tmp/ui-root.html; then
+            echo "::error::UI-root gaf HTTP $code zonder React-mountpoint — is 'npm run build' gelukt en staat UIcontrol/dist er?"
+            head -c 200 /tmp/ui-root.html; exit 1
+          fi
+          echo "  / serveert de UI-build OK (HTTP $code)"
 
       # De Cloudflare NAMED tunnel draait als losse, altijd-aan systemd-service
       # (cloudflared.service) met een STABIELE URL — niet per deploy opnieuw
