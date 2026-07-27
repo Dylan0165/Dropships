@@ -333,6 +333,38 @@ app.get('/api/stores', (_req, res) => {
   }
 })
 
+// ── Deals op het publieke kopers-dashboard ────────────────────────────────────
+// Beheer zit achter de 2FA-gate (deze routes staan ná requireAuth); de deals
+// zelf zijn publiek zichtbaar via /api/market/deals.
+app.get('/api/admin/deals', (_req, res) => {
+  res.json({ deals: listDeals(false), stores: listPublicStores().map(s => ({ storeId: s.storeId, brand: s.brand, url: s.url })) })
+})
+
+app.post('/api/admin/deals', (req, res) => {
+  const b = (req.body ?? {}) as Record<string, unknown>
+  const title = String(b.title ?? '').trim()
+  if (!title) { res.status(400).json({ error: 'Titel is verplicht' }); return }
+  const deal = upsertDeal({
+    id: typeof b.id === 'number' ? b.id : undefined,
+    storeId: String(b.storeId ?? ''),
+    title,
+    subtitle: String(b.subtitle ?? ''),
+    label: String(b.label ?? ''),
+    url: String(b.url ?? ''),
+    active: b.active !== false,
+    sortOrder: Number(b.sortOrder ?? 0) || 0,
+    startsAt: b.startsAt ? String(b.startsAt) : null,
+    endsAt: b.endsAt ? String(b.endsAt) : null,
+  })
+  if (!deal) { res.status(500).json({ error: 'Opslaan mislukt' }); return }
+  res.json(deal)
+})
+
+app.delete('/api/admin/deals/:id', (req, res) => {
+  const ok = deleteDeal(Number(req.params.id))
+  res.status(ok ? 200 : 404).json({ ok })
+})
+
 // SSH-scan the deploy server for nginx vhosts → reconcile into stores table
 app.post('/api/admin/reconcile-stores', async (_req, res) => {
   try {
