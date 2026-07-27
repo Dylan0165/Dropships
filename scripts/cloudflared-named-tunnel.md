@@ -46,17 +46,44 @@ tunnel: <TUNNEL-UUID>
 credentials-file: /root/.cloudflared/<TUNNEL-UUID>.json
 
 ingress:
-  # Tool-dashboard/API (Mollie-webhook komt hier binnen)
+  # Tool-dashboard/API (Stripe-webhook komt hier binnen) — achter 2FA
   - hostname: api.jouwdomein.nl
     service: http://127.0.0.1:3001
+  # APEX: het publieke kopers-dashboard. LET OP — de wildcard hieronder dekt de
+  # apex NIET; zonder deze regel geeft jouwdomein.nl een 404 uit de tunnel.
+  - hostname: jouwdomein.nl
+    service: http://127.0.0.1:80
+  - hostname: www.jouwdomein.nl
+    service: http://127.0.0.1:80
   # Alle stores: nginx routeert op server_name naar de juiste store-root
   - hostname: "*.jouwdomein.nl"
     service: http://127.0.0.1:80
   - service: http_status:404
 ```
-Beide paden gaan naar nginx/localhost — nginx doet de `server_name`-routing naar
-de juiste store (`/etc/nginx/dropships.d/<sub>.conf`). Geen open poorten op de
-router; al het verkeer loopt via de uitgaande tunnel.
+Alle paden gaan naar nginx/localhost — nginx doet de `server_name`-routing naar
+de juiste store (`/etc/nginx/dropships.d/<sub>.conf`) of, voor de apex, naar het
+kopers-dashboard (`_apex.conf`). Geen open poorten op de router; al het verkeer
+loopt via de uitgaande tunnel.
+
+### DNS voor de apex
+
+De wildcard `*.jouwdomein.nl` uit stap 3 dekt subdomeinen, niet de apex zelf.
+Voeg daarom óók toe:
+
+```bash
+cloudflared tunnel route dns dropships jouwdomein.nl
+cloudflared tunnel route dns dropships www.jouwdomein.nl
+```
+
+### De apex-vhost
+
+`_apex.conf` in `/etc/nginx/dropships.d/` wordt **door de app zelf geschreven**
+(`ensureApexVhost()` bij het opstarten van `uicontrol`, alleen als
+`DEPLOY_MODE=local` en `STORE_BASE_DOMAIN` gezet is). Hij proxyt `/` naar
+`127.0.0.1:3001/market/` en `/api/market/` naar hetzelfde adres.
+
+Bestanden die met `_` beginnen worden overgeslagen door de store-scan en de
+nginx-audit — het is infrastructuur, geen winkel.
 
 ## 5. Als systemd-service (altijd aan, overleeft reboot)
 ```bash
