@@ -115,18 +115,19 @@ export function validatePassword(pw: string): { ok: boolean; error?: string } {
 // ── TOTP ──────────────────────────────────────────────────────────────────────
 
 export function generateTotpSecret(): string {
-  return authenticator.generateSecret()
+  return generateSecret()
 }
 
 export function totpKeyUri(username: string, secret: string): string {
-  return authenticator.keyuri(username, 'Dropships', secret)
+  return generateURI({ type: 'totp', secret, label: username, issuer: 'Dropships' })
 }
 
 /** Verifieert een TOTP-code tegen een secret (zonder replay-check). */
 export function verifyTotpRaw(token: string, secret: string): boolean {
   if (!/^\d{6}$/.test(String(token ?? '').trim())) return false
   try {
-    return authenticator.verify({ token: String(token).trim(), secret })
+    // verifySync geeft een OBJECT terug ({valid, delta, ...}), geen boolean.
+    return verifySync({ token: String(token).trim(), secret, epochTolerance: TOTP_TOLERANCE_SECONDS }).valid === true
   } catch {
     return false
   }
