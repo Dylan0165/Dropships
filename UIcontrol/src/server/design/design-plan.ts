@@ -141,7 +141,7 @@ function readable(bg: string): string {
 // De prompt verbiedt de defaults al; dit is het meetbare vangnet dat in de logs
 // laat zien wanneer de LLM er tóch een koos.
 
-export function detectDefaultLook(palette: DesignPalette): string | null {
+export function detectDefaultLook(palette: DesignPalette, headingFont?: string): string | null {
   const bg = hexToHsl(palette.bg)
   const accent = hexToHsl(palette.accent)
   const primary = hexToHsl(palette.primary)
@@ -153,6 +153,16 @@ export function detectDefaultLook(palette: DesignPalette): string | null {
   }
   if (bg.l < 11 && Math.abs(accent.h - primary.h) < 18 && accent.s > 70) {
     return 'default-look (b): near-black + één felle accentkleur'
+  }
+  // (c) krantenstijl: bijna-wit vlak, bijna-zwarte tekst, nauwelijks kleur in het
+  // hele palet, en een serif-kop. Elk element daarvan is prima; de combinatie is
+  // de look die elke AI-webshop krijgt als er geen richting gekozen wordt.
+  const text = hexToHsl(palette.text)
+  const colourless = accent.s < 16 && primary.s < 16 && bg.s < 8
+  const serif = /serif|playfair|lora|merriweather|libre baskerville|eb garamond|cormorant|dm serif|source serif|crimson|spectral/i.test(headingFont ?? '')
+    && !/sans/i.test(headingFont ?? '')
+  if (bg.l > 92 && text && text.l < 22 && colourless && serif) {
+    return 'default-look (c): krantenstijl — bijna-wit + bijna-zwart + serif, geen eigen kleur'
   }
   return null
 }
