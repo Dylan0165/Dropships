@@ -308,6 +308,7 @@ function cleanupExpired(): void {
   try {
     db.prepare('DELETE FROM auth_sessions WHERE expires_at < ?').run(nowIso())
     db.prepare('DELETE FROM auth_pending_setup WHERE expires_at < ?').run(nowIso())
+    db.prepare('DELETE FROM auth_pending_login WHERE expires_at < ?').run(nowIso())
   } catch { /* best-effort */ }
 }
 
