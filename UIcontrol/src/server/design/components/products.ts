@@ -3,7 +3,7 @@
 // grids/lijsten. #products anchor + hasProducts zodat checkout-CTA's kunnen linken.
 
 import type { ComponentDef, RenderCtx, ComponentProps, RenderResult } from './types.js'
-import { txt, reveal } from './types.js'
+import { txt, reveal, am, arr } from './types.js'
 
 function heading(ctx: RenderCtx, p: ComponentProps): string {
   return reveal(ctx.anim, 'up', `<h2 style={{ fontSize:'clamp(1.6rem,3vw,2.2rem)', textAlign:'center', margin:'0 0 2.5rem', textTransform:'var(--tt-head)' }}>${txt(p.title, 'Shop the collection')}</h2>`)
