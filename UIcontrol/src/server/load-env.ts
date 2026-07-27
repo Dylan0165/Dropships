@@ -82,16 +82,24 @@ if ((deployMode === 'ssh' || deployMode === 'remote') && isPrivateOrLocalHost(st
   console.warn(`[env] ⚠ DEPLOY_MODE=${deployMode} maar STORE_SERVER_HOST="${storeHost}" is een privé/lokaal adres. Voor één-server-deploy hoort DEPLOY_MODE=local (geen STORE_SERVER_HOST). SSH-naar-localhost wordt bewust niet ondersteund.`)
 }
 
-// Korte, key-veilige samenvatting voor debug (geen waarden loggen)
+// Korte, key-veilige samenvatting voor debug (geen waarden loggen).
+// Stripe is de ACTIEVE betaalprovider; Mollie staat er alleen nog als legacy.
+// De banner rapporteert daarom Stripe — een log die "Mollie: mock" toont is
+// per definitie oude code (van vóór de Stripe-migratie).
 const cjOk = isConfigured(process.env.CJ_API_KEY) && isConfigured(process.env.CJ_EMAIL)
-const mollieOk = isConfigured(process.env.MOLLIE_API_KEY)
+const stripeKeyOk = isConfigured(process.env.STRIPE_SECRET_KEY)
+const stripeHookOk = isConfigured(process.env.STRIPE_WEBHOOK_SECRET)
+const stripeStatus = stripeKeyOk
+  ? (stripeHookOk ? 'geconfigureerd' : 'key ok, WEBHOOK_SECRET ontbreekt')
+  : 'mock'
 const deployTarget = (deployMode === 'ssh' || deployMode === 'remote' || (!isPrivateOrLocalHost(storeHost) && storeHost))
   ? `ssh→${storeHost || '?'}`
   : deployMode === 'local' ? 'local (deze VPS)' : 'preview (dev)'
 console.log(
   `[env] geladen — CJ: ${cjOk ? `geconfigureerd (${loadedFrom.CJ_API_KEY ?? 'shell'})` : 'niet geconfigureerd → mock-modus'}`
   + `, LLM_API_KEY: ${isConfigured(process.env.LLM_API_KEY ?? process.env.DEEPSEEK_API_KEY) ? 'ja' : 'nee'}`
-  + `, Mollie: ${mollieOk ? 'geconfigureerd' : 'mock'}`
+  + `, Stripe: ${stripeStatus}`
+  + (isConfigured(process.env.MOLLIE_API_KEY) ? ', Mollie: legacy-key aanwezig (ongebruikt)' : '')
   + `, deploy: ${deployTarget}`
   + `, domein: ${process.env.STORE_BASE_DOMAIN || 'localhost'}`,
 )
