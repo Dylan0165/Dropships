@@ -227,6 +227,31 @@ export async function verifyPassword(username: string, password: string): Promis
   return bcrypt.compare(String(password ?? ''), user.password_hash)
 }
 
+// ── Tussenstap login (wachtwoord OK → wacht op TOTP) ──────────────────────────
+
+const PENDING_LOGIN_MINUTES = 5
+
+/** Maakt een eenmalig, kortlevend token na een geslaagde wachtwoord-stap. */
+export function createPendingLogin(username: string): string {
+  const token = crypto.randomBytes(24).toString('hex')
+  const expires = new Date(Date.now() + PENDING_LOGIN_MINUTES * 60_000).toISOString()
+  db.prepare('INSERT INTO auth_pending_login (token_hash, username, expires_at) VALUES (?, ?, ?)')
+    .run(sha256(token), username, expires)
+  return token
+}
+
+/** Wisselt het tussenstap-token in (eenmalig — wordt direct verwijderd). */
+export function consumePendingLogin(token: string | undefined): string | null {
+  if (!token || typeof token !== 'string') return null
+  const hash = sha256(token)
+  const row = db.prepare('SELECT username, expires_at FROM auth_pending_login WHERE token_hash = ?')
+    .get(hash) as { username: string; expires_at: string } | undefined
+  db.prepare('DELETE FROM auth_pending_login WHERE token_hash = ?').run(hash)   // eenmalig
+  if (!row) return null
+  if (new Date(row.expires_at).getTime() < Date.now()) return null
+  return row.username
+}
+
 // ── Wachtwoord-reset (alleen via TOTP) ────────────────────────────────────────
 
 export async function resetPasswordWithTotp(
