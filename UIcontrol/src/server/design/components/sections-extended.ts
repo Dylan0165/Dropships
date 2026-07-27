@@ -246,7 +246,7 @@ const defs: ComponentDef[] = [
             <div style={{ order: i%2===0?0:1, aspectRatio:'4/3', overflow:'hidden', borderRadius:'var(--r-lg)', background:'var(--c-surface-alt)' }}>
               {PRODUCTS[i] && PRODUCTS[i].image ? <img src={PRODUCTS[i].image} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} /> : null}
             </div>
-            <div${am(ctx.anim, i % 2 === 0 ? 'slide' : 'lift')}>
+            <div${ctx.anim === 'none' ? '' : ' data-am={i%2===0?"slide":"lift"}'}>
               <span className="eyebrow" style={{ marginBottom:'.6rem' }}>{'0'+(i+1)}</span>
               <h3 style={{ fontSize:'clamp(1.3rem,2.6vw,1.9rem)', margin:'0 0 .8rem' }}>{f.title}</h3>
               <p style={{ color:'var(--c-muted)', lineHeight:1.8, margin:0, maxWidth:'46ch' }}>{f.body}</p>
