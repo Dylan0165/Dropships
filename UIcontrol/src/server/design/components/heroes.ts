@@ -3,7 +3,7 @@
 // Alle kleuren/fonts via CSS-variabelen. Hero-content komt gefaseerd op (hi-*).
 
 import type { ComponentDef, RenderCtx, ComponentProps, RenderResult } from './types.js'
-import { txt, styleTokens } from './types.js'
+import { txt, styleTokens, am, arr } from './types.js'
 
 const P0IMG = 'PRODUCTS[0] && PRODUCTS[0].image'
 
