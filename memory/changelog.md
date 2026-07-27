@@ -2,8 +2,35 @@
 
 Nieuwste bovenaan. Zie `ai-must-read/release-and-changelog.md` voor het formaat.
 
+## 2026-07-28 — Componentbibliotheek naar 106 + Anime.js + uniciteit
+**Tag:** zie `memory/logs/fase-1-componenten-en-animatie.md`
+
+- **43 → 106 componenten**, minstens 8 varianten per categorie. Nieuwe categorie
+  **topbar** (12 varianten), gekoppeld aan het nichethema in `selection.ts` —
+  een sportwinkel krijgt een energieke balk, een wellness-winkel een rustige.
+- **Anime.js v4.5.0** als bewegingslaag (`design/anime-presets.ts`). Zes
+  bewegingskarakters × elf families, declaratief via `data-am`. Twee stores met
+  dezelfde componenten bewegen anders.
+- **Emoji-filter** (`design/sanitize.ts`): alle LLM-copy passeert
+  `sanitizeCopyDeep` vóór het renderen. Skill-prompts van store-builder, brand en
+  content aangescherpt.
+- **Uniciteit afgedwongen** (`design/uniqueness.ts`): hash over layout × hero ×
+  topbar × beweging × palet × fonts, met UNIQUE-index. Bij botsing wordt aan
+  hero/topbar/beweging gedraaid — nooit aan palet of fonts, die komen uit de
+  persona.
+- **Eigen SVG-iconen per nichethema** (`components/icons.ts`), geen stock-set.
+- `detectDefaultLook` uitgebreid met variant (c), de krantenstijl.
+- **Geverifieerd:** alle 106 componenten × 251 stijl-instanties compileren via
+  `next build`; headless Chromium meet `opacity 0 → 0.97` bij scroll-reveal en
+  splitText die de kop in 7 spans knipt; met `prefers-reduced-motion` start de
+  runtime niet en blijft alles zichtbaar; drie stores bouwen volledig; `tsc`
+  schoon. Volledige output in `memory/logs/fase-1-componenten-en-animatie.md`.
+- De nieuwe `npm run verify:components` vond meteen drie echte compileerfouten,
+  waaronder één in de bestaande `content.story-split` die elke store die dat
+  component koos zou hebben laten falen.
+
 ## 2026-07-27 — Memory-systeem opgezet
-**Tag:** volgt bij afronding van de fase
+**Tag:** `deploy-20260727-231624`
 
 - `memory/` toegevoegd: `ai-must-read/` (START-HERE, architecture,
   how-to-cut-a-release, release-and-changelog), onderwerp-dossiers per domein,
