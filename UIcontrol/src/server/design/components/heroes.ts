@@ -150,6 +150,101 @@ const heroDefs: ComponentDef[] = [
       </section>`,
     }),
   },
+  {
+    id: 'hero.video-backdrop', category: 'hero', label: 'Video-achtergrond met overlay (valt terug op beeld)',
+    styles: ['bold', 'editorial'], anims: ['subtle', 'expressive'],
+    tags: ['sport', 'outdoor', 'lifestyle', 'urban', 'cinematic'],
+    props: { eyebrow: '', headline: '', subheadline: '', cta: '', videoUrl: 'optionele mp4-url; leeg = productbeeld met langzame zoom' },
+    canBeSignature: true,
+    render: (ctx, p): RenderResult => {
+      // Geen externe video-URL? Dan een Ken Burns-zoom op het productbeeld. Dat
+      // geeft hetzelfde filmische gevoel zonder een extra netwerk-afhankelijkheid
+      // waar we de betrouwbaarheid niet van kennen.
+      const video = typeof p.videoUrl === 'string' && /^https?:\/\/.+\.(mp4|webm)$/i.test(p.videoUrl) ? p.videoUrl : ''
+      const bg = video
+        ? `<video autoPlay muted loop playsInline aria-hidden="true" style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover' }}><source src=${JSON.stringify(video)} /></video>`
+        : `{${P0IMG} ? <img className="hb-zoom" src={PRODUCTS[0].image} alt="" style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover' }} /> : <div style={{ position:'absolute', inset:0, background:'var(--c-secondary)' }} />}`
+      return {
+        jsx: `<section style={{ position:'relative', minHeight:'92vh', display:'flex', alignItems:'flex-end', overflow:'hidden' }}>
+          ${bg}
+          <div style={{ position:'absolute', inset:0, background:'linear-gradient(0deg, rgba(0,0,0,.82) 0%, rgba(0,0,0,.35) 45%, rgba(0,0,0,.15) 100%)' }} />
+          <div style={{ position:'relative', padding:'clamp(2.5rem,7vw,6rem)', maxWidth:'760px', width:'100%' }}>${heroText(ctx, p, { onDark: true })}</div>
+        </section>`,
+        css: '@keyframes hbZoom{from{transform:scale(1)}to{transform:scale(1.12)}}\n.hb-zoom{animation:hbZoom 18s ease-out forwards}\n@media(prefers-reduced-motion:reduce){.hb-zoom{animation:none}}',
+      }
+    },
+  },
+  {
+    id: 'hero.masonry-grid', category: 'hero', label: 'Tekst naast een masonry-raster van producten',
+    styles: ['playful', 'minimal', 'bold'], anims: ['subtle', 'expressive'],
+    tags: ['fashion', 'kids', 'beauty', 'catalog', 'many-products'],
+    props: { eyebrow: '', headline: '', subheadline: '', cta: '' },
+    render: (ctx, p): RenderResult => ({
+      jsx: `<section className="split" style={{ display:'grid', gridTemplateColumns:'1fr 1.15fr', gap:'clamp(1.5rem,4vw,3.5rem)', alignItems:'center', minHeight:'86vh', padding:'clamp(2.5rem,6vw,5rem)', background:'var(--c-bg)' }}>
+        <div>${heroText(ctx, p)}</div>
+        <div${am(ctx.anim, 'grid')} style={{ columnCount:3, columnGap:'.9rem' }} className="hm-cols">
+          {PRODUCTS.slice(0,6).map((pr:any,i:number)=>(
+            <div key={pr.id} style={{ breakInside:'avoid', marginBottom:'.9rem', borderRadius:'var(--r-md)', overflow:'hidden', background:'var(--c-surface-alt)', aspectRatio: i%3===0?'3/4':(i%3===1?'1':'4/5') }}>
+              {pr.image ? <img src={pr.image} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} /> : null}
+            </div>
+          ))}
+        </div>
+      </section>`,
+      css: '@media(max-width:820px){.hm-cols{column-count:2}}',
+    }),
+  },
+  {
+    id: 'hero.parallax-layers', category: 'hero', label: 'Parallax-lagen die bij scrollen uit elkaar lopen',
+    styles: ['bold', 'editorial', 'playful'], anims: ['subtle', 'expressive'],
+    tags: ['outdoor', 'tech', 'premium', 'depth'],
+    props: { eyebrow: '', headline: '', subheadline: '', cta: '' },
+    canBeSignature: true,
+    render: (ctx, p): RenderResult => ({
+      jsx: `<section className="hp-wrap" style={{ position:'relative', minHeight:'90vh', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', textAlign:'center', padding:'clamp(3rem,8vw,6rem) clamp(1.5rem,5vw,3rem)', background:'var(--c-bg)', overflow:'hidden' }}>
+        <div className="hp-l1" aria-hidden="true" style={{ position:'absolute', top:'12%', left:'-6%', width:'42vw', maxWidth:'520px', aspectRatio:'1', borderRadius:'50%', background:'var(--c-surface-alt)', filter:'blur(2px)' }} />
+        <div className="hp-l2" aria-hidden="true" style={{ position:'absolute', bottom:'-10%', right:'-4%', width:'34vw', maxWidth:'420px', aspectRatio:'1', borderRadius:'50%', background:'color-mix(in srgb, var(--c-accent) 22%, transparent)' }} />
+        <div style={{ position:'relative', display:'flex', flexDirection:'column', alignItems:'center' }}>${heroText(ctx, p, { center: true })}</div>
+        {${P0IMG} ? <div className="hp-l3 hi-img" style={{ position:'relative', marginTop:'2.5rem', width:'min(520px,80%)', aspectRatio:'4/3', overflow:'hidden', borderRadius:'var(--r-lg)', boxShadow:'var(--shadow)' }}><img src={PRODUCTS[0].image} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} /></div> : null}
+      </section>`,
+      // Parallax via CSS scroll-timeline waar ondersteund; elders staat alles
+      // gewoon stil. Bewust geen scroll-listener: dat kost frames op mobiel.
+      css: [
+        '@supports (animation-timeline: view()){',
+        '@keyframes hpUp{from{transform:translateY(60px)}to{transform:translateY(-60px)}}',
+        '@keyframes hpDown{from{transform:translateY(-40px)}to{transform:translateY(40px)}}',
+        '.hp-l1{animation:hpUp linear both;animation-timeline:view();animation-range:entry 0% exit 100%}',
+        '.hp-l2{animation:hpDown linear both;animation-timeline:view();animation-range:entry 0% exit 100%}',
+        '.hp-l3{animation:hpUp linear both;animation-timeline:view();animation-range:entry 20% exit 100%}',
+        '}',
+        '@media(prefers-reduced-motion:reduce){.hp-l1,.hp-l2,.hp-l3{animation:none !important}}',
+      ].join('\n'),
+    }),
+  },
+  {
+    id: 'hero.animated-gradient', category: 'hero', label: 'Zacht bewegend kleurverloop met gecentreerde kop',
+    styles: ['playful', 'bold', 'minimal'], anims: ['subtle', 'expressive'],
+    tags: ['tech', 'beauty', 'wellness', 'kids', 'colourful'],
+    props: { eyebrow: '', headline: '', subheadline: '', cta: '', badges: 'optionele korte trust-teksten' },
+    canBeSignature: true,
+    render: (ctx, p): RenderResult => ({
+      jsx: `<section className="hg-wrap" style={{ position:'relative', minHeight:'86vh', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', textAlign:'center', padding:'clamp(3rem,8vw,6rem) clamp(1.5rem,5vw,3rem)', overflow:'hidden' }}>
+        <div className="hg-bg" aria-hidden="true" style={{ position:'absolute', inset:'-25%' }} />
+        <div style={{ position:'relative', display:'flex', flexDirection:'column', alignItems:'center' }}>
+          ${heroText(ctx, p, { center: true, charTitle: true })}
+          <div style={{ display:'flex', gap:'1.4rem', flexWrap:'wrap', justifyContent:'center', marginTop:'2rem' }}>
+            {${arr(p.badges, ['Free EU shipping', '30-day returns', 'Secure checkout'])}.map((b:string,i:number)=>(
+              <span key={i} style={{ fontSize:'.76rem', color:'var(--c-muted)' }}>{b}</span>
+            ))}
+          </div>
+        </div>
+      </section>`,
+      css: [
+        '@keyframes hgDrift{0%{transform:translate3d(0,0,0) rotate(0deg)}50%{transform:translate3d(4%,-3%,0) rotate(8deg)}100%{transform:translate3d(0,0,0) rotate(0deg)}}',
+        '.hg-bg{background:radial-gradient(circle at 25% 30%, color-mix(in srgb, var(--c-accent) 40%, transparent) 0%, transparent 55%),radial-gradient(circle at 78% 65%, color-mix(in srgb, var(--c-primary) 32%, transparent) 0%, transparent 58%),var(--c-bg);animation:hgDrift 24s ease-in-out infinite}',
+        '@media(prefers-reduced-motion:reduce){.hg-bg{animation:none}}',
+      ].join('\n'),
+    }),
+  },
 ]
 
 export default heroDefs
