@@ -61,3 +61,7 @@ bun.lockb
 # ── Test coverage ─────────────────────────────────────────────
 coverage/
 .nyc_output/
+
+# memory/logs/ bevat verificatie-bewijs per fase, geen runtime-logs
+!memory/logs/
+!memory/logs/**
