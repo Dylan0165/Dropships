@@ -52,28 +52,81 @@ export interface BriefContentForSelection {
   footerTagline: string
 }
 
+export interface SelectionContext {
+  /** Niche-omschrijving, voor het afleiden van het icoon-/topbarthema. */
+  niche: string
+  /** Interesses uit de persona; scherpen het thema aan. */
+  interests?: string[]
+  /** Seed uit het DNA — houdt de keuzes deterministisch per store. */
+  seed: number
+}
+
+export interface SelectionResult {
+  topbar: ComponentSelection
+  nav: ComponentSelection
+  sections: ComponentSelection[]
+  footer: ComponentSelection
+  style: StyleVariant
+  source: 'llm' | 'derived'
+  /** Het afgeleide niche-thema (bepaalt iconen én topbar-pool). */
+  iconTheme: IconTheme
+  /** Alternatieven per as, voor de uniciteitscontrole in uniqueness.ts. */
+  alternatives: { hero: string[]; topbar: string[] }
+}
+
+/** Componenten die het niche-icoonthema nodig hebben om te renderen. */
+const NEEDS_ICON_THEME = /^(topbar\.|badges\.icon-grid|content\.values-grid|form\.newsletter-panel)/
+
+/** Alle component-id's in een categorie — de pool voor seeded keuzes. */
+function idsIn(category: string): string[] {
+  return allComponents().filter(d => d.category === category).map(d => d.id)
+}
+
+/** Deterministische keuze uit een pool. */
+function pick<T>(pool: readonly T[], seed: number, offset = 0): T {
+  return pool[Math.abs(seed + offset) % pool.length]
+}
+
 /** Bouwt de uiteindelijke selectie: LLM-keuze indien geldig, anders afgeleid. */
 export function buildSelection(
   dna: DesignDNA,
   layout: LayoutPlan,
   content: BriefContentForSelection,
   llm: ComponentSelectionInput | undefined,
-): { nav: ComponentSelection; sections: ComponentSelection[]; footer: ComponentSelection; style: StyleVariant; source: 'llm' | 'derived' } {
+  ctx: SelectionContext,
+): SelectionResult {
   const style = llm?.style ?? STYLE_BY_TONE[dna.tone]
+  const seed = Math.abs(Math.trunc(ctx.seed)) || 1
+  const iconTheme = iconThemeFor(ctx.niche, ctx.interests ?? [])
+
+  // Topbar-pool: de varianten die bij dít nichethema passen, niet de hele
+  // catalogus. Zo krijgt een sportwinkel geen wellness-toon in de balk.
+  const topbarPool = (TOPBAR_BY_THEME[iconTheme] ?? TOPBAR_BY_THEME.universal).filter(id => getComponent(id))
+  const heroPool = idsIn('hero')
 
   // Props-bron per component-categorie uit de brief-content
   const heroProps = { eyebrow: content.eyebrow, headline: content.headline, subheadline: content.subheadline, cta: content.cta, secondaryCta: 'Learn more' }
   const propsFor = (id: string): Record<string, unknown> => {
-    if (id.startsWith('hero.')) return heroProps
-    if (id.startsWith('products.')) return { title: 'Shop the collection' }
-    if (id === 'content.why-us-grid') return { title: 'Built different', items: content.usps }
-    if (id === 'content.story-split') return { title: content.storyTitle, body: content.storyBody }
-    if (id === 'testimonials.cards-grid') return { title: 'What customers say', items: content.reviews.map(r => ({ name: r.name, stars: r.stars, text: r.text })) }
-    if (id === 'testimonials.quote-large') return { quote: content.reviews[0]?.text, author: content.reviews[0]?.name }
-    if (id.startsWith('footer.')) return { tagline: content.footerTagline }
-    if (id === 'nav.announcement-bar') return { announcement: 'Free EU shipping · 30-day returns' }
-    return {}
+    const base: Record<string, unknown> = NEEDS_ICON_THEME.test(id) ? { iconTheme } : {}
+    if (id.startsWith('hero.')) return { ...base, ...heroProps }
+    if (id.startsWith('products.')) return { ...base, title: 'Shop the collection' }
+    if (id === 'content.why-us-grid') return { ...base, title: 'Built different', items: content.usps }
+    if (id === 'content.values-grid') return { ...base, items: content.usps.slice(0, 3).map(u => ({ title: u.title, desc: u.desc })) }
+    if (id === 'content.story-split') return { ...base, title: content.storyTitle, body: content.storyBody }
+    if (id === 'content.timeline-story') return { ...base, title: content.storyTitle }
+    if (id === 'content.big-statement') return { ...base, statement: content.storyTitle, attribution: content.brandName }
+    if (id === 'testimonials.cards-grid' || id === 'testimonials.avatar-row' || id === 'testimonials.timeline-list') {
+      return { ...base, title: 'What customers say', items: content.reviews.map(r => ({ name: r.name, stars: r.stars, text: r.text })) }
+    }
+    if (id === 'testimonials.quote-large' || id === 'testimonials.split-feature') {
+      return { ...base, quote: content.reviews[0]?.text, author: content.reviews[0]?.name }
+    }
+    if (id.startsWith('footer.')) return { ...base, tagline: content.footerTagline }
+    if (id === 'nav.announcement-bar') return { ...base, announcement: 'Free EU shipping · 30-day returns' }
+    return base
   }
+
+  const alternatives = { hero: heroPool, topbar: topbarPool }
 
   // ── LLM-selectie (gevalideerd tegen de registry) ────────────────────────────
   if (llm?.sections?.length) {
@@ -86,30 +139,43 @@ export function buildSelection(
     if (!hasProducts) sections.splice(1, 0, { id: PRODUCTS_BY_VARIANT[layout.product], props: propsFor('products.grid-3') })
     const nav = (llm.nav && getComponent(llm.nav)) ? llm.nav : 'nav.classic'
     const footer = (llm.footer && getComponent(llm.footer)) ? llm.footer : 'footer.simple'
+    // Een topbar-keuze van de LLM telt alleen als het écht een topbar is; kiest
+    // hij er geen, dan pakken we er een uit de niche-pool in plaats van niets —
+    // de balk is een van de sterkste per-niche verschillen.
+    const llmTopbar = llm.topbar && getComponent(llm.topbar)?.category === 'topbar' ? llm.topbar : pick(topbarPool, seed)
     return {
+      topbar: { id: llmTopbar, props: propsFor(llmTopbar) },
       nav: { id: nav, props: propsFor(nav) },
       sections,
       footer: { id: footer, props: propsFor(footer) },
-      style, source: 'llm',
+      style, source: 'llm', iconTheme, alternatives,
     }
   }
 
   // ── Afgeleide default uit toon + layout ─────────────────────────────────────
   const heroId = HERO_BY_HERO[layout.hero]
   const productsId = PRODUCTS_BY_VARIANT[layout.product]
-  // Sectie-volgorde vertaalt de layout.sections naar componenten
+  // Sectie-volgorde vertaalt de layout.sections naar componenten. De tweede
+  // batch componenten wordt seeded ingemengd, zodat twee stores met dezelfde
+  // toon niet steeds dezelfde vijf blokken krijgen.
   const map: Record<string, string> = {
-    usps: 'content.why-us-grid', products: productsId, reviews: 'testimonials.cards-grid',
-    story: 'content.story-split', 'cta-band': 'cta.stock-indicator',
+    usps: pick(['content.why-us-grid', 'content.values-grid', 'content.feature-alternating'], seed, 1),
+    products: productsId,
+    reviews: pick(['testimonials.cards-grid', 'testimonials.avatar-row', 'testimonials.timeline-list', 'testimonials.stat-proof'], seed, 2),
+    story: pick(['content.story-split', 'content.timeline-story', 'content.big-statement'], seed, 3),
+    'cta-band': pick(['cta.stock-indicator', 'cta.split-image', 'cta.gradient-banner', 'cta.guarantee-panel'], seed, 4),
   }
-  const bodyIds = ['badges.trust-row', ...layout.sections.map(s => map[s]).filter(Boolean)]
+  const trustId = pick(['badges.trust-row', 'badges.icon-grid', 'badges.shipping-map', 'badges.payment-icons'], seed, 5)
+  const bodyIds = [trustId, ...layout.sections.map(s => map[s]).filter(Boolean)]
   if (!bodyIds.includes(productsId)) bodyIds.splice(1, 0, productsId)
   // Toon-afhankelijke extra's voor variatie
-  if (dna.tone === 'playful' || dna.tone === 'urban') bodyIds.push('cta.countdown')
-  if (dna.tone === 'premium' || dna.tone === 'organic') bodyIds.push('content.faq-accordion')
+  if (dna.tone === 'playful' || dna.tone === 'urban') bodyIds.push(pick(['cta.countdown', 'cta.inline-strip', 'gallery.scroll-strip'], seed, 6))
+  if (dna.tone === 'premium' || dna.tone === 'organic') bodyIds.push(pick(['content.faq-accordion', 'content.tabs-info', 'gallery.detail-pair'], seed, 7))
+  if (dna.tone === 'tech' || dna.tone === 'minimal') bodyIds.push(pick(['content.spec-table', 'content.comparison-table', 'form.question-box'], seed, 8))
 
-  const navId = ({ minimal: 'nav.classic', premium: 'nav.centered-logo', urban: 'nav.transparent', tech: 'nav.classic', playful: 'nav.announcement-bar', organic: 'nav.centered-logo' } as Record<VisualTone, string>)[dna.tone]
-  const footerId = ({ minimal: 'footer.simple', premium: 'footer.multi-column', urban: 'footer.trust-badges', tech: 'footer.multi-column', playful: 'footer.newsletter', organic: 'footer.multi-column' } as Record<VisualTone, string>)[dna.tone]
+  const navId = ({ minimal: 'nav.classic', premium: 'nav.split-links', urban: 'nav.sticky-solid-on-scroll', tech: 'nav.icon-compact', playful: 'nav.announcement-bar', organic: 'nav.centered-logo' } as Record<VisualTone, string>)[dna.tone]
+  const footerId = ({ minimal: 'footer.simple', premium: 'footer.sitemap-columns', urban: 'footer.big-wordmark', tech: 'footer.dark-compact', playful: 'footer.social-strip', organic: 'footer.contact-block' } as Record<VisualTone, string>)[dna.tone]
+  const topbarId = pick(topbarPool, seed)
 
   // dedup terwijl volgorde behouden blijft
   const seen = new Set<string>()
@@ -117,9 +183,10 @@ export function buildSelection(
     .map(id => ({ id, props: propsFor(id) }))
 
   return {
+    topbar: { id: topbarId, props: propsFor(topbarId) },
     nav: { id: navId, props: propsFor(navId) },
     sections,
     footer: { id: footerId, props: propsFor(footerId) },
-    style, source: 'derived',
+    style, source: 'derived', iconTheme, alternatives,
   }
 }
