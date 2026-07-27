@@ -272,7 +272,7 @@ $('b').onclick=async()=>{err.classList.remove('on');
   // ═══ API ═══
 
   // Stap 1: wachtwoord. Geeft GEEN sessie — alleen een tussenstap-token.
-  app.post('/api/auth/login', attemptLimiter, async (req, res) => {
+  app.post('/api/auth/login', loginLimiter, async (req, res) => {
     const { username, password } = (req.body ?? {}) as { username?: string; password?: string }
     const u = String(username ?? '').toLowerCase().trim()
     // Bewust één generieke foutmelding: geen onderscheid tussen "bestaat niet"
@@ -290,7 +290,7 @@ $('b').onclick=async()=>{err.classList.remove('on');
   })
 
   // Stap 2: TOTP → pas hier komt de echte sessie-cookie.
-  app.post('/api/auth/verify-2fa', attemptLimiter, (req, res) => {
+  app.post('/api/auth/verify-2fa', totpLimiter, (req, res) => {
     const cookies = (req as express.Request & { cookies?: Record<string, string> }).cookies ?? {}
     const username = consumePendingLogin(cookies['dropships_pending'])
     res.clearCookie('dropships_pending', { path: '/' })
@@ -309,7 +309,7 @@ $('b').onclick=async()=>{err.classList.remove('on');
   })
 
   // Setup stap 1: secret genereren + QR (account bestaat hierna nog NIET)
-  app.post('/api/auth/setup/begin', attemptLimiter, async (req, res) => {
+  app.post('/api/auth/setup/begin', setupLimiter, async (req, res) => {
     const { username, password } = (req.body ?? {}) as { username?: string; password?: string }
     const u = String(username ?? '').toLowerCase().trim()
     const pwCheck = validatePassword(String(password ?? ''))
@@ -323,7 +323,7 @@ $('b').onclick=async()=>{err.classList.remove('on');
   })
 
   // Setup stap 2: eerste code bevestigen → account definitief aanmaken
-  app.post('/api/auth/setup/complete', attemptLimiter, async (req, res) => {
+  app.post('/api/auth/setup/complete', setupLimiter, async (req, res) => {
     const { username, password, token } = (req.body ?? {}) as
       { username?: string; password?: string; token?: string }
     const u = String(username ?? '').toLowerCase().trim()
@@ -334,7 +334,7 @@ $('b').onclick=async()=>{err.classList.remove('on');
   })
 
   // Wachtwoord-reset — uitsluitend met geldige TOTP-code
-  app.post('/api/auth/reset', attemptLimiter, async (req, res) => {
+  app.post('/api/auth/reset', resetLimiter, async (req, res) => {
     const { username, token, newPassword } = (req.body ?? {}) as
       { username?: string; token?: string; newPassword?: string }
     const u = String(username ?? '').toLowerCase().trim()
