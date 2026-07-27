@@ -123,7 +123,10 @@ const defs: ComponentDef[] = [
     tags: ['fashion', 'premium', 'beauty', 'editorial'],
     props: { left: 'links', center: 'midden', right: 'rechts' },
     render: (_ctx, p): RenderResult => ({
-      jsx: `<div style={{ ${BAR("background:'var(--c-bg)', color:'var(--c-muted)', borderBottom:'var(--bw) solid var(--c-border)', display:'grid', gridTemplateColumns:'1fr auto 1fr', alignItems:'center', textTransform:'uppercase', letterSpacing:'.22em', fontSize:'.64rem'")} }}>
+      // Bewust niet via BAR(): deze variant overschrijft fontSize én
+      // letterSpacing, en dubbele sleutels in één object-literal zijn een
+      // TypeScript-fout (geen "laatste wint" zoals in gewone CSS).
+      jsx: `<div className="tb-ed" style={{ padding:'.5rem clamp(1rem,4vw,2rem)', background:'var(--c-bg)', color:'var(--c-muted)', borderBottom:'var(--bw) solid var(--c-border)', display:'grid', gridTemplateColumns:'1fr auto 1fr', alignItems:'center', textTransform:'uppercase', letterSpacing:'.22em', fontSize:'.64rem' }}>
         <span>${txt(p.left, 'Complimentary EU shipping')}</span>
         <span style={{ textAlign:'center', color:'var(--c-text)' }}>${txt(p.center, 'New season')}</span>
         <span style={{ textAlign:'right' }}>${txt(p.right, '30-day returns')}</span>
