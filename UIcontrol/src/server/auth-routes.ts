@@ -51,19 +51,36 @@ export function attachUser(
 }
 
 // ── Rate limiting ─────────────────────────────────────────────────────────────
-// Max 5 pogingen per 15 min. Sleutel = IP + gebruikersnaam, zodat één account
-// bruteforcen niet de andere twee buitensluit.
-const attemptLimiter = rateLimit({
-  windowMs: 15 * 60_000,
-  limit: 5,
-  standardHeaders: true,
-  legacyHeaders: false,
-  keyGenerator: (req) => {
-    const body = (req.body ?? {}) as { username?: string }
-    return `${req.ip}|${String(body.username ?? 'anon').toLowerCase()}`
-  },
-  message: { error: 'Te veel pogingen. Wacht 15 minuten en probeer opnieuw.' },
-})
+// Gescheiden budgetten per doel. Eén gedeeld budget was fout: dan sluit een
+// normale setup-flow je daarna buiten bij het inloggen.
+// `skipSuccessfulRequests` zorgt dat alleen MISLUKTE pogingen meetellen — een
+// bruteforcer wordt geblokkeerd, een legitieme gebruiker nooit.
+function limiter(opts: { limit: number; byUsername: boolean; skipSuccess?: boolean }) {
+  return rateLimit({
+    windowMs: 15 * 60_000,
+    limit: opts.limit,
+    standardHeaders: true,
+    legacyHeaders: false,
+    skipSuccessfulRequests: opts.skipSuccess ?? true,
+    keyGenerator: (req) => {
+      if (!opts.byUsername) return req.ip ?? 'unknown'
+      const body = (req.body ?? {}) as { username?: string }
+      return `${req.ip}|${String(body.username ?? 'anon').toLowerCase()}`
+    },
+    message: { error: 'Te veel pogingen. Wacht 15 minuten en probeer opnieuw.' },
+  })
+}
+
+// Max 5 mislukte wachtwoord-pogingen per 15 min per account (vanaf één IP)
+const loginLimiter = limiter({ limit: 5, byUsername: true })
+// Tweede factor: de gebruikersnaam zit in de pending-cookie, niet in de body →
+// sleutel op IP. Het pending-token verloopt sowieso na 5 minuten.
+const totpLimiter = limiter({ limit: 5, byUsername: false })
+// Reset is even gevoelig als login: 5 mislukte pogingen per account.
+const resetLimiter = limiter({ limit: 5, byUsername: true })
+// Setup is een eenmalige flow met legitieme herhaling (typefout in wachtwoord,
+// QR opnieuw scannen) → ruimer, en ook geslaagde stappen tellen niet mee.
+const setupLimiter = limiter({ limit: 15, byUsername: true })
 
 // ── HTML-helpers ──────────────────────────────────────────────────────────────
 
