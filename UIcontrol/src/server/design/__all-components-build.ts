@@ -9,7 +9,7 @@ import { allComponents } from './components/registry.js'
 import { assemblePage } from './components/assemble.js'
 import { deriveDesignDNA, fallbackPersona } from './tokens.js'
 import { selectMotionProfile } from './anime-presets.js'
-import { buildLayoutSharedFiles, writeNextScaffold, buildCheckoutAndInfoPages } from '../store-platform/template-engine.js'
+import { buildLayoutSharedFiles, buildCheckoutAndInfoPages, buildTemplateVars } from '../store-platform/template-engine.js'
 import type { ComponentSelection } from './components/types.js'
 
 const OUTDIR = path.join(os.tmpdir(), 'dropship-allcomponents')
