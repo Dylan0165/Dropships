@@ -1430,7 +1430,9 @@ if (fs.existsSync(UI_INDEX)) {
   app.use((req, res, next) => {
     if (req.method !== 'GET' && req.method !== 'HEAD') return next()
     if (req.path.startsWith('/api/')) return next()          // API houdt voorrang
-    if (req.path.startsWith('/ws')) return next()            // WebSocket-upgrade
+    if (req.path === '/ws') return next()                    // WS-upgrade loopt via
+                                                             // server.on('upgrade'); dit
+                                                             // vangt alleen een kale GET /ws
     if (path.extname(req.path)) return next()                // ontbrekend asset → 404
     res.setHeader('Cache-Control', 'no-cache')
     res.sendFile(UI_INDEX)
