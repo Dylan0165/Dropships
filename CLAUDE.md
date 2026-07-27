@@ -224,6 +224,34 @@ Runner-label `dropships-vps`.
 - Op de VPS maakt de named tunnel + wildcard DNS élke store publiek zonder per-store DNS-werk;
   de Quick Tunnel (school) kon dat niet voor meerdere port-vhosts tegelijk.
 
+## Authenticatie — dashboard achter wachtwoord + TOTP 2FA (sinds 27 juli 2026)
+- **Drie vaste accounts**: `dylan`, `claumi`, `fernando`. Geen open registratie; elk
+  account wordt één keer aangemaakt via `/setup/<username>` en daarna nooit overschreven.
+- `server/auth.ts` = opslag + crypto: bcryptjs (12 rounds), TOTP via **otplib v13**
+  (functionele API `generateSecret`/`generateURI`/`verifySync` — NIET het v12
+  `authenticator`-object; `verifySync` geeft `{valid}` terug, geen boolean).
+  Klok-drift via `epochTolerance: 30` (seconden, = ±1 venster).
+- `server/auth-routes.ts` = routes + server-rendered login/setup/reset-pagina's.
+  Bewust losse HTML zonder build-stap, zodat de **hele React-bundel achter de gate** kan.
+- **SQLite-tabellen**: `auth_users`, `auth_sessions`, `auth_pending_setup`,
+  `auth_pending_login`. Nooit in .env of git.
+- Beveiligingskeuzes: sessie-tokens worden **gehasht** opgeslagen (sha256, DB-lek geeft
+  geen sessies); TOTP-secret blijft tijdens setup server-side (nooit via de client terug);
+  **replay-bescherming** (RFC 6238 §5.2 — dezelfde code niet 2x binnen z'n venster);
+  generieke foutmeldingen tegen user-enumeration + dummy-bcrypt tegen timing-lek.
+- **Gate**: `attachUser` → `registerAuthRoutes` → `requireAuth`, alle drie vóór de
+  API-routes en de static UI in index.ts. Nieuwe routes zijn dus automatisch beveiligd.
+  Uitzonderingen staan op één plek (`isPublicPath` in auth-routes.ts):
+  `/api/webhooks/stripe` (Stripe stuurt geen cookie) en `/api/health` (monitoring).
+- **Rate-limiting**: gescheiden budgetten (login 5 / TOTP 5 / reset 5 / setup 15 per
+  15 min) met `skipSuccessfulRequests` — alleen MISLUKTE pogingen tellen. Eén gedeeld
+  budget was fout: dan sluit je setup-flow je daarna buiten bij het inloggen.
+- **Reset kan alleen met een geldige TOTP-code** (geen e-mail-reset); een reset trekt
+  alle bestaande sessies in. Wachtwoord + telefoon kwijt → account handmatig uit
+  `auth_users` verwijderen op de VPS, daarna opnieuw `/setup/<naam>`.
+- Cookie: httpOnly + `SameSite=Strict` + `Secure`. Lokaal testen over http kan met
+  `AUTH_INSECURE_COOKIES=1` (nooit op productie).
+
 ## Bekende gotcha's
 - `.env` is gitignored én untracked (sinds juli 2026) — wijzigingen moeten direct op de server via `sed + pm2 restart`
 - **Env-loading:** de server laadt via `server/load-env.ts` (niet meer kaal `dotenv/config`)
