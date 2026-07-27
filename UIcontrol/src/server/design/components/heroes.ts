@@ -14,9 +14,13 @@ function heroText(ctx: RenderCtx, p: ComponentProps, opts: { center?: boolean; o
   const subcol = opts.onDark ? 'rgba(255,255,255,.86)' : 'var(--c-muted)'
   const align = opts.center ? 'center' : 'left'
   const h1size = `clamp(2.4rem, ${5 * st.titleScale}vw, ${4.6 * st.titleScale}rem)`
+  // Bij 'expressive' neemt Anime.js de kop over (woord-voor-woord); dan géén
+  // hi-class erbij, want die zou dezelfde opacity tegelijk animeren.
+  const titleAnim = ctx.anim === 'expressive' ? am(ctx.anim, opts.charTitle ? 'chars' : 'words') : ''
+  const titleClass = ctx.anim === 'expressive' ? '' : ' className="hi hi-2"'
   return `
     <span className="hi hi-1 eyebrow" style={{ marginBottom:'1.1rem', letterSpacing:${JSON.stringify(st.labelSpacing)}, color:${opts.onDark ? "'var(--c-accent)'" : "'var(--c-accent)'"} }}>${txt(p.eyebrow, 'New')}</span>
-    <h1 className="hi hi-2" style={{ fontSize:${JSON.stringify(h1size)}, lineHeight:1.05, margin:'0 0 1.3rem', textTransform:'var(--tt-head)', color:${JSON.stringify(col)}, maxWidth:${opts.center ? "'16ch'" : "'20ch'"}, textAlign:${JSON.stringify(align)} }}>${txt(p.headline, 'A better everyday')}</h1>
+    <h1${titleClass}${titleAnim} style={{ fontSize:${JSON.stringify(h1size)}, lineHeight:1.05, margin:'0 0 1.3rem', textTransform:'var(--tt-head)', color:${JSON.stringify(col)}, maxWidth:${opts.center ? "'16ch'" : "'20ch'"}, textAlign:${JSON.stringify(align)} }}>${txt(p.headline, 'A better everyday')}</h1>
     <p className="hi hi-3" style={{ fontSize:'1.08rem', lineHeight:1.7, color:${JSON.stringify(subcol)}, margin:'0 0 2.1rem', maxWidth:'44ch', textAlign:${JSON.stringify(align)} }}>${txt(p.subheadline, 'Thoughtfully sourced products, shipped fast across Europe.')}</p>
     <div className="hi hi-4" style={{ display:'flex', gap:'1rem', flexWrap:'wrap', justifyContent:${opts.center ? "'center'" : "'flex-start'"} }}>
       <a href="#products" className="btnp btn">${'{'}${txtRaw(p.cta, 'Shop now')}${'}'}</a>
