@@ -9,7 +9,9 @@
     "server": "tsx src/server/index.ts",
     "store-platform": "tsx src/server/store-platform.ts",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "verify:components": "tsx src/server/design/verify-all-components.ts",
+    "verify:variation": "tsx src/server/design/verify-store-variation.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
