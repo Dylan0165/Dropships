@@ -13,10 +13,13 @@ import { dnaCssVars, j } from './types.js'
 import { baseCss } from './base-css.js'
 import { getComponent } from './registry.js'
 import { BRAND_TOKEN } from './chrome.js'
+import { motionCss, motionRuntime, type MotionProfile } from '../anime-presets.js'
 
 export interface AssembleInput {
   dna: DesignDNA
   brandName: string
+  /** Optionele balk bóven de nav (eigen categorie, zie topbars.ts). */
+  topbar?: ComponentSelection
   nav: ComponentSelection
   sections: ComponentSelection[]   // in volgorde, tussen nav en footer
   footer: ComponentSelection
@@ -24,6 +27,8 @@ export interface AssembleInput {
   /** default stijl/animatie als de selectie ze niet specificeert */
   defaultStyle?: StyleVariant
   defaultAnim?: AnimationVariant
+  /** Bewegingskarakter voor de Anime.js-laag; weglaten = geen data-am-runtime. */
+  motion?: MotionProfile
 }
 
 export interface AssembleResult {
