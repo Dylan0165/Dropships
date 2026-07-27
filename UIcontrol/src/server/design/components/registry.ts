@@ -6,9 +6,18 @@ import type { ComponentDef, CatalogEntry, ComponentCategory } from './types.js'
 import heroDefs from './heroes.js'
 import productDefs from './products.js'
 import sectionDefs from './sections.js'
+import sectionExtraDefs from './sections-extended.js'
 import chromeDefs from './chrome.js'
+import topbarDefs from './topbars.js'
 
-const ALL: ComponentDef[] = [...heroDefs, ...productDefs, ...sectionDefs, ...chromeDefs]
+const ALL: ComponentDef[] = [
+  ...heroDefs, ...productDefs, ...sectionDefs, ...sectionExtraDefs, ...chromeDefs, ...topbarDefs,
+]
+
+// Dubbele id's zijn een programmeerfout, geen runtime-verrassing: twee defs met
+// hetzelfde id zouden elkaar stil overschrijven in de lookup-map.
+const dupes = ALL.map(d => d.id).filter((id, i, arr) => arr.indexOf(id) !== i)
+if (dupes.length) throw new Error(`[registry] dubbele component-id's: ${[...new Set(dupes)].join(', ')}`)
 
 const BY_ID = new Map(ALL.map(d => [d.id, d]))
 
