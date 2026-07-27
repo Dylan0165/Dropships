@@ -32,8 +32,9 @@ const SESSION_HOURS = 12
 const PENDING_SETUP_MINUTES = 10
 export const MIN_PASSWORD_LENGTH = 12
 
-// TOTP: standaard 30s-stap, 1 stap speling voor klok-drift
-authenticator.options = { window: 1 }
+// TOTP: 30s-stap met ±30s speling (= 1 venster) voor klok-drift op de telefoon.
+// otplib v13 rekent in SECONDEN via epochTolerance, niet in stappen.
+const TOTP_TOLERANCE_SECONDS = 30
 
 // ── Schema ────────────────────────────────────────────────────────────────────
 db.exec(`
