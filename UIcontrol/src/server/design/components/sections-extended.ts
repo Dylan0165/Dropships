@@ -88,7 +88,7 @@ const defs: ComponentDef[] = [
           {${arr(p.items, [{ value: 2400, suffix: '+', label: 'orders shipped' }, { value: 96, suffix: '%', label: 'would order again' }, { value: 4, suffix: '.8', label: 'average rating' }])}.map((s:any,i:number)=>(
             <div key={i}>
               <div style={{ fontFamily:'var(--f-head)', fontSize:'clamp(2rem,5vw,3.2rem)', fontWeight:800, color:'var(--c-accent)', lineHeight:1 }}>
-                <span${am(ctx.anim, 'count', { to: '' })} data-am-to={String(s.value)} data-am-suffix={String(s.suffix||'')}>{String(s.value)+String(s.suffix||'')}</span>
+                <span${am(ctx.anim, 'count')} data-am-to={String(s.value)} data-am-suffix={String(s.suffix||'')}>{String(s.value)+String(s.suffix||'')}</span>
               </div>
               <span style={{ display:'block', marginTop:'.5rem', color:'var(--c-muted)', fontSize:'.86rem' }}>{s.label}</span>
             </div>
