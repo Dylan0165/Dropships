@@ -35,6 +35,104 @@ const defs: ComponentDef[] = [
     tags: ['urban', 'lifestyle', 'fullbleed-hero'], props: {},
     render: (): RenderResult => ({ jsx: `<nav style={{ position:'absolute', top:0, left:0, right:0, zIndex:50, display:'flex', justifyContent:'space-between', alignItems:'center', padding:'1.4rem clamp(1.5rem,5vw,4rem)' }}><a href="/" style={{ fontFamily:'var(--f-head)', fontWeight:'var(--fw-head)', fontSize:'1.05rem', color:'#fff', textTransform:'var(--tt-head)' }}>${'{'}BRAND${'}'}</a><div style={{ display:'flex', gap:'clamp(1.25rem,3vw,2.5rem)' }}>{[['Shop','#products'],['About','/about/'],['Contact','/contact/']].map(([l,h])=><a key={l} href={h} className="navl" style={{ fontSize:'.82rem', color:'rgba(255,255,255,.85)' }}>{l}</a>)}</div></nav>` }),
   },
+  {
+    id: 'nav.mega-menu', category: 'nav', label: 'Mega-menu — brede uitklap met kolommen', styles: ['minimal', 'bold', 'editorial'], anims: ['none'],
+    tags: ['catalog', 'many-products', 'home', 'tech', 'organized'],
+    props: { columns: 'lijst {title, links:[{label,href}]} — max 3' },
+    render: (_ctx, p): RenderResult => ({
+      jsx: `<nav className="mm-nav" style={{ ${navBase}, display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+        ${BRAND}
+        <div style={{ display:'flex', gap:'clamp(1.25rem,3vw,2.5rem)', alignItems:'center' }}>
+          <div className="mm-wrap" style={{ position:'relative' }}>
+            <button type="button" className="navl mm-btn" aria-expanded="false" aria-haspopup="true" style={{ background:'none', border:'none', font:'inherit', fontSize:'.82rem', color:'var(--c-muted)', cursor:'pointer', padding:0 }}>Shop</button>
+            <div className="mm-panel" style={{ position:'absolute', top:'calc(100% + 1.1rem)', left:'50%', transform:'translateX(-50%)', minWidth:'min(620px,88vw)', background:'var(--c-surface)', border:'var(--bw) solid var(--c-border)', borderRadius:'var(--r-lg)', boxShadow:'var(--shadow)', padding:'1.5rem', display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:'1.5rem', zIndex:60 }}>
+              {${arr(p.columns, [
+                { title: 'Collection', links: [{ label: 'All products', href: '#products' }, { label: 'New in', href: '#products' }] },
+                { title: 'Learn', links: [{ label: 'Our story', href: '/about/' }, { label: 'FAQ', href: '/faq/' }] },
+                { title: 'Service', links: [{ label: 'Shipping & returns', href: '/returns/' }, { label: 'Contact', href: '/contact/' }] },
+              ])}.map((c:any,i:number)=>(
+                <div key={i}>
+                  <b style={{ display:'block', fontSize:'.72rem', letterSpacing:'.16em', textTransform:'uppercase', color:'var(--c-accent)', marginBottom:'.7rem' }}>{c.title}</b>
+                  <div style={{ display:'flex', flexDirection:'column', gap:'.5rem' }}>
+                    {(c.links||[]).map((l:any,k:number)=><a key={k} href={l.href||'#products'} className="navl" style={{ fontSize:'.85rem' }}>{l.label}</a>)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <a href="/about/" className="navl" style={{ fontSize:'.82rem', color:'var(--c-muted)' }}>About</a>
+          <a href="/contact/" className="navl" style={{ fontSize:'.82rem', color:'var(--c-muted)' }}>Contact</a>
+        </div>
+      </nav>`,
+      // Hover én focus-within: het menu moet ook met alleen het toetsenbord open
+      // te krijgen zijn, anders is de halve navigatie onbereikbaar.
+      css: [
+        '.mm-panel{opacity:0;visibility:hidden;transform:translateX(-50%) translateY(-6px);transition:opacity .22s,transform .22s,visibility .22s}',
+        '.mm-wrap:hover .mm-panel,.mm-wrap:focus-within .mm-panel{opacity:1;visibility:visible;transform:translateX(-50%) translateY(0)}',
+        '@media(max-width:720px){.mm-panel{grid-template-columns:1fr !important;min-width:min(320px,86vw) !important}}',
+      ].join('\n'),
+    }),
+  },
+  {
+    id: 'nav.sticky-solid-on-scroll', category: 'nav', label: 'Transparant bovenaan, wordt vast bij scrollen', styles: ['bold', 'editorial', 'minimal'], anims: ['none'],
+    tags: ['fullbleed-hero', 'urban', 'outdoor', 'lifestyle', 'cinematic'],
+    props: {},
+    render: (): RenderResult => ({
+      jsx: `<StickyNav />`,
+      css: [
+        '.sn{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;padding:1.3rem clamp(1.5rem,5vw,4rem);transition:background-color .35s,padding .35s,box-shadow .35s,color .35s}',
+        '.sn a{color:#fff}',
+        '.sn.solid{background:var(--c-bg);padding:.85rem clamp(1.5rem,5vw,4rem);box-shadow:var(--shadow)}',
+        '.sn.solid a{color:var(--c-text)}',
+      ].join('\n'),
+    }),
+  },
+  {
+    id: 'nav.sidebar-drawer', category: 'nav', label: 'Hamburger met uitschuivend zijpaneel', styles: ['minimal', 'bold', 'playful'], anims: ['none'],
+    tags: ['minimal', 'fashion', 'premium', 'focus'],
+    props: {},
+    render: (): RenderResult => ({
+      jsx: `<DrawerNav />`,
+      css: [
+        '.dn-panel{position:fixed;top:0;right:0;bottom:0;width:min(340px,84vw);background:var(--c-surface);border-left:var(--bw) solid var(--c-border);transform:translateX(100%);transition:transform .38s cubic-bezier(.22,1,.36,1);z-index:70;padding:5rem 2rem 2rem;display:flex;flex-direction:column;gap:1.2rem}',
+        '.dn-panel.open{transform:translateX(0)}',
+        '.dn-scrim{position:fixed;inset:0;background:rgba(0,0,0,.42);opacity:0;visibility:hidden;transition:opacity .3s,visibility .3s;z-index:69}',
+        '.dn-scrim.open{opacity:1;visibility:visible}',
+      ].join('\n'),
+    }),
+  },
+  {
+    id: 'nav.split-links', category: 'nav', label: 'Links | gecentreerd logo | links', styles: ['editorial', 'minimal', 'bold'], anims: ['none'],
+    tags: ['fashion', 'premium', 'beauty', 'symmetric'],
+    props: {},
+    render: (): RenderResult => ({
+      jsx: `<nav className="sl-nav" style={{ ${navBase}, display:'grid', gridTemplateColumns:'1fr auto 1fr', alignItems:'center', gap:'1rem' }}>
+        <div style={{ display:'flex', gap:'clamp(1rem,2.5vw,2rem)' }}>{[['Shop','#products'],['About','/about/']].map(([l,h])=><a key={l} href={h} className="navl" style={{ fontSize:'.8rem', color:'var(--c-muted)', letterSpacing:'.08em', textTransform:'uppercase' }}>{l}</a>)}</div>
+        <div style={{ textAlign:'center' }}>${BRAND}</div>
+        <div style={{ display:'flex', gap:'clamp(1rem,2.5vw,2rem)', justifyContent:'flex-end' }}>{[['FAQ','/faq/'],['Contact','/contact/']].map(([l,h])=><a key={l} href={h} className="navl" style={{ fontSize:'.8rem', color:'var(--c-muted)', letterSpacing:'.08em', textTransform:'uppercase' }}>{l}</a>)}</div>
+      </nav>`,
+      css: '@media(max-width:720px){.sl-nav{grid-template-columns:1fr !important;justify-items:center;gap:.7rem !important}}',
+    }),
+  },
+  {
+    id: 'nav.icon-compact', category: 'nav', label: 'Compact — logo met icoonknoppen rechts', styles: ['minimal', 'bold'], anims: ['none'],
+    tags: ['tech', 'kids', 'pets', 'compact', 'mobile'],
+    props: {},
+    render: (): RenderResult => ({
+      jsx: `<nav style={{ ${navBase}, display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+        ${BRAND}
+        <div style={{ display:'flex', gap:'1.4rem', alignItems:'center' }}>
+          <a href="#products" className="navl" style={{ fontSize:'.82rem', color:'var(--c-muted)' }}>Shop</a>
+          <a href="/faq/" className="navl" aria-label="Help" style={{ display:'inline-flex', color:'var(--c-muted)' }}>
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.2 2.4c-.6.2-.7.6-.7 1.1v.5"/><circle cx="12" cy="17" r=".6" fill="currentColor"/></svg>
+          </a>
+          <a href="/checkout/" className="navl" aria-label="Checkout" style={{ display:'inline-flex', color:'var(--c-text)' }}>
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 7h14l-1.2 11H6.2z"/><path d="M9 7V5a3 3 0 0 1 6 0v2"/></svg>
+          </a>
+        </div>
+      </nav>`,
+    }),
+  },
   // ── FOOTERS ───────────────────────────────────────────────────────────────────
   {
     id: 'footer.simple', category: 'footer', label: 'Simpel — merk + links + copyright', styles: ['minimal', 'editorial'], anims: ['none'],
