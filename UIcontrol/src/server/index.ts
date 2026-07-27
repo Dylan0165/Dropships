@@ -1412,22 +1412,16 @@ const UI_DIST = path.resolve(__dirname, '../../dist')
 const UI_INDEX = path.join(UI_DIST, 'index.html')
 
 if (fs.existsSync(UI_INDEX)) {
-  // Gehashte Vite-assets mogen lang gecachet worden; index.html nooit (anders
-  // blijft een oude bundle-verwijzing hangen na een deploy).
-  // Vite schrijft content-gehashte bestanden naar dist/assets/ — de hash is
-  // base64-achtig (bv. index-DH1kA9Is.js), dus matchen op de MAP is
-  // betrouwbaarder dan op het hash-formaat.
-  const ASSETS_PREFIX = path.join(UI_DIST, 'assets') + path.sep
-  app.use(express.static(UI_DIST, {
-    index: false,
-    setHeaders: (res, filePath) => {
-      if (filePath.startsWith(ASSETS_PREFIX)) {
-        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable')
-      } else {
-        res.setHeader('Cache-Control', 'no-cache')
-      }
-    },
+  // Twee mounts: Vite schrijft content-gehashte bestanden naar dist/assets/ —
+  // die mogen een jaar gecachet worden. De rest (incl. index.html) juist niet,
+  // anders blijft na een deploy een oude bundle-verwijzing hangen.
+  // Bewust express.static's eigen maxAge i.p.v. setHeaders: `send` zet z'n
+  // Cache-Control ná de setHeaders-callback, waardoor die genegeerd werd.
+  app.use('/assets', express.static(path.join(UI_DIST, 'assets'), {
+    immutable: true,
+    maxAge: '1y',
   }))
+  app.use(express.static(UI_DIST, { index: false, maxAge: 0 }))
 
   // SPA-fallback: alles wat GEEN /api/* is → index.html (client-side routing).
   // Bewust géén '*'-pattern: Express 5 / path-to-regexp v6 accepteert dat niet
