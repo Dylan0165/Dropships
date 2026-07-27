@@ -62,9 +62,12 @@ app.use(cookieParser())
 // zelf publiek) → requireAuth sluit ALLES daarna af. Omdat requireAuth hier vóór
 // alle /api/*-routes én vóór de static UI staat, is elke route automatisch
 // beveiligd; nieuwe routes hoeven niets extra's te doen. Uitzonderingen staan op
-// één plek in auth-routes.ts: /api/webhooks/stripe en /api/health.
+// één plek in auth-routes.ts: /api/webhooks/stripe, /api/health en /market.
 app.use(attachUser)
 registerAuthRoutes(app)
+// Het publieke kopers-dashboard (apex clynado.com → nginx → hier) staat bewust
+// vóór de gate. Het admin-dashboard hieronder blijft volledig afgeschermd.
+registerMarketplaceRoutes(app)
 app.use(requireAuth)
 
 const server = createServer(app)
