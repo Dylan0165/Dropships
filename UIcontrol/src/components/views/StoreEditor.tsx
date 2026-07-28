@@ -127,6 +127,7 @@ export default function StoreEditor({ storeId, subdomain, niche, onClose, onSave
   const tabs = [
     { id: 'content', label: 'Content' },
     { id: 'products', label: 'Producten' },
+    { id: 'manage', label: 'Beheer' },
     { id: 'design', label: 'Design' },
     { id: 'deploy', label: 'Deploy' },
   ] as const
