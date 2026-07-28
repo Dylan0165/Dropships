@@ -99,6 +99,10 @@ export interface StoreBuildOutput {
   brandName: string
   subdomain: string
   error?: string
+  /** 'llm' = de store-builder agent leverde de brief; 'fallback' = samengesteld. */
+  briefSource?: 'llm' | 'fallback'
+  /** De ECHTE reden waarom de LLM-brief niet lukte — nooit weggooien. */
+  briefError?: string
 }
 
 const STORES_WORKSPACE = process.env.STORES_WORKSPACE
