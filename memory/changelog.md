@@ -2,6 +2,22 @@
 
 Nieuwste bovenaan. Zie `ai-must-read/release-and-changelog.md` voor het formaat.
 
+## 2026-07-28 — Productie lag plat: meegecommitte SQLite-WAL
+**Tag:** zie `memory/logs/incident-2026-07-28-sqlite-corrupt.md`
+
+- `dropship.db-wal` (2,2 MB) en `-shm` stonden **in git** — `*.db` in
+  `.gitignore` dekt die extensies niet. Elke deploy zette met `git reset --hard`
+  een dev-WAL over de productie-WAL heen; SQLite weigerde met SQLITE_CORRUPT en
+  `uicontrol` stond op **1982 pm2-herstarts**. Poort 3001 werd nooit gebonden.
+- Zijbestanden untracked + `*.db-wal`/`*.db-shm`/`*.db-journal` genegeerd.
+- Workflow-stap `Guard database files` blokkeert een herhaling en ruimt
+  verweesde zijbestanden op.
+- De niches-seeding stond op moduleniveau en sloopte daarmee de hele boot; nu
+  in een try/catch. **Geverifieerd:** met een moedwillig verminkte database komt
+  de API op (`/api/health` 200) in plaats van te crashloopen.
+- Ook nieuw in `db.ts`: `openDatabase()` zet zijbestanden opzij bij
+  SQLITE_CORRUPT. Dat vangnet is *niet* aantoonbaar getriggerd — zie het log.
+
 ## 2026-07-28 — Store-beheer + beveiliging per winkel
 **Tag:** zie `memory/logs/fase-4-store-beheer.md`
 
