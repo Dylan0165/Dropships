@@ -109,6 +109,10 @@ const STEPS = ['Idee & doelgroep', 'Producten (CJ)', 'Site-structuur', 'Bevestig
 // Max aantal selecteerbare producten — afgestemd op de collectie-grootte (7-15).
 const MAX_SELECT = 15
 const MIN_ADVISED = 7
+// Onder dit aantal is de niche te smal gebleken voor de catalogus van de
+// leverancier. Dat is een geldige uitkomst, maar de gebruiker moet er bewust
+// voor kiezen — vóór de build van een paar minuten, niet erna.
+const SMALL_ASSORTMENT = 5
 
 // EU-warehouses = snelle verzending. Puur voor labels/sortering in de UI —
 // langzamere (CN) opties worden getoond, niet uitgesloten.
