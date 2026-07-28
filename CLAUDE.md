@@ -131,10 +131,37 @@ Runner-label `dropships-vps`.
     Renderer heeft: hero-orkestratie (gefaseerde opkomst hi-1..4 + hi-img), reveal-varianten per
     sectietype (up/fade + stagger, niet alles fade-up), subtiele hovers, `:focus-visible` ring,
     `prefers-reduced-motion` support. Plan + warnings staan in design-dna.json.
-  - Collectie-grootte varieert **6-15 producten per store** (`deriveProductCount` in layout.ts,
-    seeded; impulse 6-10 / considered 9-15). `fitProducts` vult thin sourcing aan tot min. 6
-    met unieke display-ids (supplier-velden gelijk → fulfillment blijft correct). `MAX_PRODUCTS_PER_STORE`
-    default nu 15; product-agent sourcet 8-15, wizard-shortlist idem.
+  - Collectie-grootte komt uit het **assortiment** (7-15 distincte producten, zie hieronder),
+    niet meer uit een seeded `deriveProductCount`. `fitProducts` begrenst alleen op 15 —
+    **geen duplicaat-opvulling meer** (die `--v1`-klonen zijn 28 juli 2026 verwijderd) en geen
+    truncatie naar een geseed doel-aantal: wat de gebruiker kiest, komt op de winkel.
+
+## Assortiment per niche — 7-15 VERSCHILLENDE producten (sinds 28 juli 2026)
+- **Probleem:** de wizard bedacht wel meerdere producttypes maar zocht alleen de eerste af;
+  `fitProducts` vulde de rest op met klonen van al gekozen producten → winkels met drie keer
+  hetzelfde item.
+- `suppliers/product-types.ts`: LLM levert **10-15 distincte producttypes** per niche
+  (`name`+`searchTerm` ENGELS — het label komt op de winkel; `role` NL voor de operator),
+  bewust gespreid over `tier` entry/mid/premium. `normalizeTypes` ontdubbelt op zoekterm.
+  `expandProductTypes` levert EXTRA types (verder van het centrum) als een ronde te weinig geeft.
+- `suppliers/assortment.ts`: `buildAssortment()` zoekt **elk** type af (alt-term als tweede kans),
+  scoort alle kandidaten in ÉÉN `scoreRelevance`-call en kiest per type de best scorende.
+  Te weinig → eerst extra types, dan een tweede prijsvariant per type (≥25% prijsverschil,
+  max 2 per type). **Nooit duplicaten of half-passende producten om een quotum te halen** —
+  wel een eerlijke `shortfall`-melding met het echte aantal.
+- `wizard.ts buildShortlist` draait dit pad; prijzen+onderbouwing in één LLM-call
+  (`priceAssortment`, terugval = 2.8× markup). Faalt de typegeneratie → `buildShortlistSingleTerm`
+  (het oude pad, inclusief MCP-discovery) met expliciete melding in de UI.
+- **Zoek-efficiëntie** (`cj-adapter.ts`): warehouse-passes van 7 EU naar **3 representatieve**
+  (DE/FR/PL, `CJ_SEARCH_WAREHOUSES`) + globale pass; `ProductSearchOptions.minResults` stopt de
+  resterende passes zodra er genoeg is; korte zoek-cache (`CJ_SEARCH_CACHE_MS`, 10 min);
+  spacing loopt automatisch op na een 429 (`CJ_REQUEST_SPACING_MS` alleen voor tests).
+  Gemeten: 48 → **12 calls** voor 12 producttypes.
+- `productType` loopt door de hele keten: shortlist → `WizardProduct` → `product_research`
+  → `RenderProduct` → `PRODUCTS` in page.tsx → **categorie-tabs** op de winkel.
+  `chooseProductComponent`/`fitsCollection` (selection.ts) toetsen de LLM-keuze aan de
+  collectie-grootte: ≥3 types + ≥8 producten → `products.category-tabs`, ≥9 → catalogus-weergave,
+  ≤5 → curated. Verificatie: `verify:assortment` (23), `verify:efficiency` (6), `verify:collection` (15).
 ## Component-bibliotheek — "combineren i.p.v. genereren" (sinds 26 juli 2026)
 - `server/design/components/`: **43 vooraf gebouwde componenten** over 10 categorieën
   (hero 8, products 6, testimonials 4, cta 4, content 6, badges 3, gallery 2, form 2, nav 4,
