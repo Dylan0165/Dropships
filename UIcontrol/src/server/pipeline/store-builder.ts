@@ -266,8 +266,8 @@ export function renderStore(input: StoreBuildInput, briefRaw: StoreBrief): Store
   const { componentMeta, uniqueMeta } = built
   fs.writeFileSync(path.join(appDir, 'page.tsx'), built.page, 'utf-8')
 
-  buildLayoutSharedFiles(buildDir, vars)
-  buildCheckoutAndInfoPages(buildDir, vars)
+  buildLayoutSharedFiles(buildDir, vars, dna)
+  buildCheckoutAndInfoPages(buildDir, vars, dna)
   ensureTailwindSupport(buildDir)
 
   // ── 7. Design-DNA + layout persisteren (debug/reproduceerbaarheid) ──────────

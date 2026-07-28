@@ -237,6 +237,32 @@ export async function stopStoreProcess(subdomain: string): Promise<{ stopped: bo
 
 export const APEX_CONF_NAME = '_apex'
 
+// ── Catch-all: onbekende subdomeinen geven 404 ────────────────────────────────
+// nginx wijst het EERSTE server-blok op een poort aan als default_server. De
+// include-dir wordt alfabetisch geladen, dus `_apex.conf` (underscore sorteert
+// vóór letters) werd stilzwijgend de default. Gevolg: na het verwijderen van een
+// store bleef `<sub>.clynado.com` gewoon werken en toonde het het kopers-
+// dashboard, alsof de winkel er nog was.
+//
+// `_00-default.conf` sorteert vóór `_apex.conf` (`_0` < `_a`) en claimt de
+// default expliciet met een 404. Onbekend = onbekend, of het subdomein nu nooit
+// bestaan heeft of net verwijderd is.
+const DEFAULT_CONF_NAME = '_00-default'
+
+function defaultConf(): string {
+  return `# managed by Dropships — catch-all voor onbekende subdomeinen
+# MOET als eerste geladen worden (naam sorteert vóór _apex.conf), anders wordt
+# een ander server-blok de default_server en valt een verwijderde store terug op
+# het kopers-dashboard in plaats van een 404 te geven.
+server {
+  listen 80 default_server;
+  server_name _;
+  add_header X-Content-Type-Options "nosniff" always;
+  return 404;
+}
+`
+}
+
 function apexConf(domain: string, port: number): string {
   return `# managed by Dropships — publiek kopers-dashboard (apex)
 server {

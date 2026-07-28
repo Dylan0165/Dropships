@@ -31,7 +31,8 @@ import {
 } from './store-platform/template-engine.js'
 import { deriveDesignDNA, fallbackPersona } from './design/tokens.js'
 import { selectLayout, recordLayout, deriveProductCount, fitProducts } from './design/layout.js'
-import { renderStorePage, type RenderProduct } from './design/render-page.js'
+import type { RenderProduct } from './design/render-page.js'
+import { buildStorePage } from './design/build-page.js'
 import {
   generateReviews, generateStory, generateCtaBand,
   buildNavLinks, buildFooterLinks, heroLabel, badgeFor,
@@ -88,7 +89,7 @@ export interface StoreData {
   subdomain?: string       // optional override; auto-generated from brand_name otherwise
   runId?: string           // optional pipeline run association
   storeId?: string         // pre-assigned store ID (filled in after uuid generation)
-  checkoutUrl?: string     // Mollie checkout URL — replaces {{CHECKOUT_URL}}
+  checkoutUrl?: string     // Stripe checkout URL — replaces {{CHECKOUT_URL}}
   imageUrls?: string[]     // Flux image URLs — replaces {{PRODUCT_IMAGE_1}} etc.
 }
 
@@ -210,7 +211,7 @@ async function writeNextScaffold(targetDir: string, data: StoreData): Promise<vo
     builtBy: 'store-platform/writeNextScaffold',
   }, null, 2), 'utf-8')
 
-  buildLayoutSharedFiles(targetDir, vars)
+  buildLayoutSharedFiles(targetDir, vars, dna)
   buildCheckoutAndInfoPages(targetDir, vars, dna)
   ensureTailwindSupport(targetDir)
 
