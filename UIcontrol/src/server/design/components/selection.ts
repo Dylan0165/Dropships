@@ -93,6 +93,39 @@ function pick<T>(pool: readonly T[], seed: number, offset = 0): T {
   return pool[Math.abs(seed + offset) % pool.length]
 }
 
+// ── Productweergave ↔ collectie-grootte ───────────────────────────────────────
+// Een "editorial lijst" met dertien producten wordt een eindeloze rij van
+// paginagrote blokken; een grid van vier kolommen met drie producten staat vol
+// gaten. De catalogus tagt componenten daarom met `few-products` /
+// `many-products`; hier wordt die tag ook echt gehandhaafd.
+
+const MANY = 9      // vanaf hier is het een catalogus
+const FEW = 5       // tot hier is het een curated selectie
+
+/** Past deze productweergave bij dit aantal producten? */
+export function fitsCollection(id: string, count: number): boolean {
+  const def = getComponent(id)
+  if (!def || def.category !== 'products') return true
+  const tags = def.tags ?? []
+  if (tags.includes('few-products') && count > 8) return false
+  if (tags.includes('many-products') && count < FEW) return false
+  return true
+}
+
+/**
+ * Kiest een productweergave die past bij de omvang ÉN de opbouw van de collectie.
+ * Meerdere producttypes + een volle collectie → categorie-tabs, zodat tien
+ * producten navigeerbaar zijn in plaats van één ongestructureerde lijst.
+ */
+export function chooseProductComponent(
+  fallback: string, count: number, types: string[], seed: number,
+): string {
+  if (types.length >= 3 && count >= 8) return 'products.category-tabs'
+  if (count >= MANY) return pick(['products.grid-4', 'products.masonry', 'products.list-compact', 'products.grid-3'], seed, 11)
+  if (count > 0 && count <= FEW) return pick(['products.editorial-list', 'products.featured-grid', 'products.spotlight-stack'], seed, 12)
+  return fitsCollection(fallback, count) ? fallback : 'products.grid-3'
+}
+
 /** Bouwt de uiteindelijke selectie: LLM-keuze indien geldig, anders afgeleid. */
 export function buildSelection(
   dna: DesignDNA,
