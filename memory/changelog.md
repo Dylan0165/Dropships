@@ -2,6 +2,25 @@
 
 Nieuwste bovenaan. Zie `ai-must-read/release-and-changelog.md` voor het formaat.
 
+## 2026-07-28 — Centrale checkout-gateway
+**Tag:** zie `memory/logs/fase-3-centrale-checkout.md`
+
+- **Kritieke bug gevonden en gefixt:** `/api/checkout/session` stond niet in
+  `isPublicPath()`, dus sinds de 2FA-gate kreeg élke betaalpoging vanuit een
+  store `401 Niet ingelogd`. Checkout was volledig kapot.
+- `server/checkout-gateway.ts`: alle stores praten met één endpoint, dat zichzelf
+  verdedigt met (1) een strikte origin-check op `*.clynado.com`, (2) een
+  live-store-check, (3) prijs-herberekening uit de opgeslagen catalogus.
+  Supplier-velden komen ook uit de catalogus — die bepalen wat er bij CJ besteld
+  wordt en mogen dus nooit van de client komen.
+- CORS kaatste eerder élke origin terug; nu alleen het eigen domein, met
+  `Vary: Origin`.
+- `CHECKOUT_API_URL` wees nog naar het hardgecodeerde schooladres
+  `192.168.121.133`; nu afgeleid van de publieke tunnel-URL.
+- **Geverifieerd:** 23/23 gateway-assertions (waaronder een prijsmanipulatie die
+  2× €0,01 vroeg en €99,90 opleverde) en 11/11 voor de volledige keten tot een
+  CJ-order via een ondertekende webhook. `fulfillment.ts` bleef ongewijzigd.
+
 ## 2026-07-28 — Publiek kopers-dashboard op de apex
 **Tag:** zie `memory/logs/fase-2-kopers-dashboard.md`
 
