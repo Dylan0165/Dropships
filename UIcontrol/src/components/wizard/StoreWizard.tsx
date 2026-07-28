@@ -749,6 +749,71 @@ export function StoreWizard({ onClose, onStarted }: Props) {
                         : null}
                   </div>
 
+                  {/* Te kleine collectie → NU kiezen, niet na drie minuten bouwen.
+                      Een smalle niche is een geldige uitkomst van de assortiment-
+                      fase; wat niet mag, is dat de gebruiker daar pas achter komt
+                      als de store-build al gefaald is. */}
+                  {isSmallAssortment && !acceptedSmall && (
+                    <div className="rounded-xl border border-amber-500/40 bg-amber-500/[0.07] p-3.5 space-y-2.5">
+                      <div className="flex items-start gap-2">
+                        <AlertTriangle size={15} className="text-amber-400 mt-0.5 flex-shrink-0" />
+                        <div className="space-y-1">
+                          <p className="text-[13px] text-amber-100 font-medium">
+                            Deze niche leverde maar {shortlist.length} relevante product{shortlist.length === 1 ? '' : 'en'} op.
+                          </p>
+                          <p className="text-[11px] text-amber-200/80 leading-relaxed">
+                            {assortment
+                              ? <>Er zijn {assortment.attempts.length} producttypes doorzocht; de rest van de kandidaten
+                                was echt niet relevant. Er worden bewust geen duplicaten of half-passende producten
+                                bijgezet om het aantal te halen.</>
+                              : <>De leverancier heeft weinig passends in deze niche.</>}
+                            {' '}Wat wil je doen?
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap gap-2 pl-6">
+                        <button
+                          onClick={() => setAcceptedSmall(true)}
+                          className="px-3 py-1.5 rounded-lg bg-amber-500/90 hover:bg-amber-400 text-black text-[11px] font-semibold transition-colors"
+                        >
+                          Doorgaan met een kleinere winkel ({shortlist.length})
+                        </button>
+                        <button
+                          onClick={() => loadShortlist({ broaden: true })}
+                          disabled={broadened}
+                          title={broadened ? 'Al één keer breder gezocht' : 'Zoekt bredere producttypes bij dezelfde doelgroep'}
+                          className="px-3 py-1.5 rounded-lg border border-amber-400/40 text-amber-100 hover:bg-amber-500/10 disabled:opacity-40 disabled:cursor-not-allowed text-[11px] font-medium transition-colors"
+                        >
+                          {broadened ? 'Al breder gezocht' : 'Niche breder maken'}
+                        </button>
+                        <button
+                          onClick={() => {
+                            shortlistRequestedRef.current = false
+                            setShortlist([]); setSelectedProducts(new Map()); setAssortment(null)
+                            setRejected([]); setBroadened(false); setChosenDirection(null)
+                            setDirections(null); setQuestions(null); setAnswers({})
+                            setStep(0)
+                          }}
+                          className="px-3 py-1.5 rounded-lg border border-white/[0.12] text-zinc-300 hover:bg-white/[0.06] text-[11px] font-medium transition-colors"
+                        >
+                          Andere niche proberen
+                        </button>
+                      </div>
+                      <p className="text-[10px] text-amber-200/50 pl-6">
+                        Doorgaan werkt: de winkel wordt gebouwd voor {shortlist.length} product{shortlist.length === 1 ? '' : 'en'},
+                        met een layout die daarop past. Je kunt er later producten bij zetten via het beheerscherm.
+                      </p>
+                    </div>
+                  )}
+                  {isSmallAssortment && acceptedSmall && (
+                    <p className="text-[11px] text-amber-300/80">
+                      Kleine winkel gekozen — {shortlist.length} product{shortlist.length === 1 ? '' : 'en'}.
+                      <button onClick={() => setAcceptedSmall(false)} className="ml-1.5 underline underline-offset-2 hover:text-white">
+                        toch nog even kijken
+                      </button>
+                    </p>
+                  )}
+
                   {/* Diversiteit in één oogopslag: is dit een winkel of tien keer
                       hetzelfde item? Dat was met alleen productnamen niet te zien. */}
                   <DiversityBar products={visibleShortlist} selected={selectedProducts} />
