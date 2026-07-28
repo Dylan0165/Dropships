@@ -14,7 +14,53 @@ if (!fs.existsSync(dbDir)) {
   fs.mkdirSync(dbDir, { recursive: true })
 }
 
-const db = new Database(dbPath)
+/**
+ * Opent de database en herstelt van een vreemd WAL-bestand.
+ *
+ * SQLite houdt in WAL-modus twee zijbestanden aan: `-wal` en `-shm`. Die horen
+ * bij precies één database-bestand. Komt er een `-wal` van elders naast te staan
+ * — bijvoorbeeld omdat hij per ongeluk in git zat en een deploy met
+ * `git reset --hard` hem overschreef — dan weigert SQLite met
+ * SQLITE_CORRUPT: "database disk image is malformed". De database zelf is dan
+ * meestal ongeschonden; alleen de WAL past er niet bij.
+ *
+ * Dat heeft de productie-app in een crashloop gehouden (1982 pm2-herstarts),
+ * omdat de fout bij het eerste query optreedt en niemand het proces overeind
+ * hield. Deze guard zet de zijbestanden opzij en probeert het één keer opnieuw.
+ * Verliezen we daarmee data? Alleen niet-gecheckpointe transacties uit een WAL
+ * die toch al niet bij deze database hoorde.
+ */
+function openDatabase(file: string): Database.Database {
+  const tryOpen = (): Database.Database => {
+    const handle = new Database(file)
+    // Een echte query forceert het lezen van de WAL; `new Database()` alleen
+    // merkt de mismatch niet op.
+    handle.prepare('SELECT count(*) FROM sqlite_master').get()
+    return handle
+  }
+  try {
+    return tryOpen()
+  } catch (err) {
+    const corrupt = err instanceof Error && /SQLITE_CORRUPT|malformed/i.test(String((err as { code?: string }).code ?? err.message))
+    if (!corrupt) throw err
+
+    const stamp = new Date().toISOString().replace(/[:.]/g, '-')
+    let moved = 0
+    for (const suffix of ['-wal', '-shm']) {
+      const side = file + suffix
+      if (!fs.existsSync(side)) continue
+      try { fs.renameSync(side, `${side}.corrupt-${stamp}`); moved++ } catch { /* niet fataal */ }
+    }
+    if (!moved) throw err
+
+    console.error(`[db] SQLITE_CORRUPT bij het openen — ${moved} zijbestand(en) opzijgezet als *.corrupt-${stamp}, opnieuw proberen`)
+    const handle = tryOpen()
+    console.error('[db] database opent nu wel; controleer de opzijgezette bestanden voordat je ze weggooit')
+    return handle
+  }
+}
+
+const db = openDatabase(dbPath)
 
 // Enable WAL mode for better concurrent reads
 db.pragma('journal_mode = WAL')
