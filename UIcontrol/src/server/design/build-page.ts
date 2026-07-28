@@ -116,6 +116,7 @@ export function buildStorePage(input: BuildPageInput): BuildPageResult {
     })
     for (const w of assembled.warnings) log(`[assemble] ⚠ ${w}`)
     log(`[assemble] ${assembled.usedComponents.length} componenten (${selection.source}, thema ${selection.iconTheme}, beweging ${activeMotion.id}): ${assembled.usedComponents.join(', ')}${assembled.cssConflicts.length ? ` — ${assembled.cssConflicts.length} CSS-conflict!` : ''}`)
+    log(`[assemble] collectie: ${products.length} producten over ${productTypes.length} producttype(s)${productTypes.length ? ` (${productTypes.join(', ')})` : ''}`)
 
     if (assembled.cssConflicts.length > 0) throw new Error('CSS-conflicten in assemblage')
     if (assembled.usedComponents.length < 3) throw new Error('te weinig componenten')
