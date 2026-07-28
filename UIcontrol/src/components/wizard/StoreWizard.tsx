@@ -987,50 +987,113 @@ function SummaryBlock({ title, children }: { title: string; children: React.Reac
   )
 }
 
-function ProductCard({ p, selected, onToggle, disabled = false }: { p: ShortlistProduct; selected: boolean; onToggle: () => void; disabled?: boolean }) {
+/** Kleur van de relevantie-score: onder de drempel (6) valt hij op als zwak. */
+function scoreTone(score: number): string {
+  if (score >= 8) return 'bg-emerald-500/15 text-emerald-300 border-emerald-500/40'
+  if (score >= 6) return 'bg-sky-500/15 text-sky-300 border-sky-500/40'
+  return 'bg-red-500/15 text-red-300 border-red-500/40'
+}
+
+/** Link naar de bron bij CJ; zonder directe URL een zoekopdracht op de titel. */
+function cjLink(p: ShortlistProduct): string | null {
+  if (p.productId.startsWith('mock-')) return null
+  if (p.url) return p.url
+  return `https://www.cjdropshipping.com/search?keyword=${encodeURIComponent(p.title.slice(0, 60))}`
+}
+
+function ProductCard({ p, selected, onToggle, disabled = false, onReplace }: {
+  p: ShortlistProduct; selected: boolean; onToggle: () => void; disabled?: boolean
+  onReplace?: () => void
+}) {
   const costEur = p.costPrice * 0.92
   const price = p.suggestedPriceEur ?? costEur * 2.8
   const margin = p.marginEur ?? price - costEur
   const isMock = p.productId.startsWith('mock-')
+  const link = cjLink(p)
+
   return (
-    <button
-      onClick={onToggle}
-      disabled={disabled}
-      title={disabled ? `Max ${MAX_SELECT} producten geselecteerd` : undefined}
+    <div
       className={clsx(
-        'text-left p-3 rounded-xl border transition-all',
+        'rounded-xl border transition-all overflow-hidden flex flex-col',
         selected
           ? 'border-emerald-500/60 bg-emerald-500/[0.05]'
           : disabled
-            ? 'border-white/[0.05] bg-white/[0.01] opacity-40 cursor-not-allowed'
+            ? 'border-white/[0.05] bg-white/[0.01] opacity-40'
             : 'border-white/[0.08] bg-white/[0.02] hover:border-white/[0.2]',
       )}
     >
-      <div className="flex gap-2.5">
-        {p.image && <img src={p.image} alt="" className="w-14 h-14 rounded-lg object-cover bg-zinc-800 flex-shrink-0" />}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-2">
-            <p className="text-xs text-white font-medium leading-snug line-clamp-2">{p.title}</p>
-            <span className={clsx(
-              'w-4 h-4 rounded-full border flex items-center justify-center flex-shrink-0',
-              selected ? 'bg-emerald-600 border-emerald-500' : 'border-zinc-600',
-            )}>
-              {selected && <Check size={10} className="text-white" />}
-            </span>
-          </div>
-          <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1.5 text-[10px] font-mono items-center">
-            {isMock
-              ? <span className="text-amber-500/80 not-italic">mock</span>
-              : <span className="text-emerald-500/70 not-italic" title={`CJ pid ${p.productId}`}>CJ ✓</span>}
-            <span className="text-zinc-400">verkoop €{price.toFixed(2)}</span>
-            <span className="text-emerald-400">marge €{margin.toFixed(2)}{p.marginPct != null && ` (${p.marginPct}%)`}</span>
-            <ShippingBadge warehouse={p.warehouse} days={p.shippingDays} />
-            {p.inventory != null && <span className="text-zinc-500">stock {p.inventory}</span>}
-            {p.rating != null && <span className="text-amber-400">★ {p.rating.toFixed(1)}</span>}
-          </div>
-          {p.reason && <p className="text-[10px] text-zinc-500 mt-1 line-clamp-2">{p.reason}</p>}
+      {/* Beeld — groot genoeg om het product écht te beoordelen */}
+      <button
+        onClick={onToggle}
+        disabled={disabled}
+        title={disabled ? `Max ${MAX_SELECT} producten geselecteerd` : 'Klik om te selecteren'}
+        className="relative w-full aspect-[4/3] bg-zinc-900 block disabled:cursor-not-allowed"
+      >
+        {p.image
+          ? <img src={p.image} alt="" className="w-full h-full object-cover" />
+          : <span className="absolute inset-0 grid place-items-center text-[10px] text-zinc-600">geen foto</span>}
+        <span className={clsx(
+          'absolute top-2 right-2 w-5 h-5 rounded-full border flex items-center justify-center backdrop-blur',
+          selected ? 'bg-emerald-600 border-emerald-500' : 'bg-black/50 border-zinc-500',
+        )}>
+          {selected && <Check size={11} className="text-white" />}
+        </span>
+        {p.relevanceScore != null && (
+          <span
+            title={p.relevanceReason ?? ''}
+            className={clsx('absolute top-2 left-2 px-1.5 py-0.5 rounded-md border text-[10px] font-semibold backdrop-blur', scoreTone(p.relevanceScore))}
+          >
+            {p.relevanceScore}/10
+          </span>
+        )}
+      </button>
+
+      <div className="p-2.5 flex flex-col gap-1.5 flex-1">
+        <button onClick={onToggle} disabled={disabled} className="text-left disabled:cursor-not-allowed">
+          <p className="text-xs text-white font-medium leading-snug line-clamp-2">{p.title}</p>
+        </button>
+
+        {/* Beoordelingsgegevens naast elkaar */}
+        <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-[10px] font-mono">
+          <span className="text-zinc-400">verkoop €{price.toFixed(2)}</span>
+          <span className="text-emerald-400">marge €{margin.toFixed(2)}{p.marginPct != null && ` (${p.marginPct}%)`}</span>
+          <ShippingBadge warehouse={p.warehouse} days={p.shippingDays} />
+          <span className={p.rating != null ? 'text-amber-400' : 'text-zinc-600'}>
+            {p.rating != null ? `★ ${p.rating.toFixed(1)}` : 'geen rating'}
+          </span>
+          {p.inventory != null && <span className="text-zinc-500">stock {p.inventory}</span>}
+          {isMock
+            ? <span className="text-amber-500/80">mock</span>
+            : <span className="text-emerald-500/70" title={`CJ pid ${p.productId}`}>CJ ✓</span>}
+        </div>
+
+        {p.relevanceReason && (
+          <p className="text-[10px] text-zinc-400 leading-snug line-clamp-2" title={p.relevanceReason}>
+            <span className="text-zinc-500">Relevantie:</span> {p.relevanceReason}
+          </p>
+        )}
+        {p.reason && <p className="text-[10px] text-zinc-500 leading-snug line-clamp-2">{p.reason}</p>}
+
+        <div className="flex items-center gap-2 mt-auto pt-1">
+          {link && (
+            <a
+              href={link} target="_blank" rel="noreferrer"
+              onClick={e => e.stopPropagation()}
+              className="text-[10px] text-zinc-500 hover:text-zinc-200 underline underline-offset-2"
+            >
+              Bekijk bij CJ
+            </a>
+          )}
+          {onReplace && (
+            <button
+              onClick={e => { e.stopPropagation(); onReplace() }}
+              className="text-[10px] text-zinc-500 hover:text-white underline underline-offset-2 ml-auto"
+            >
+              Vervang
+            </button>
+          )}
         </div>
       </div>
-    </button>
+    </div>
   )
 }
