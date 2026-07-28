@@ -98,8 +98,10 @@ werkelijke `/product/list`-calls. Twaalf producttypes, twee configuraties:
 ```
 
 Let op de omvang van de verandering: mét twaalf producttypes in plaats van één
-zoekterm kost een assortiment nu 12 calls, waar de OUDE code met één zoekterm al
-8 calls kostte. Twaalf keer zoveel productonderzoek voor anderhalf keer de calls.
+zoekterm kost een assortiment nu 12 calls. De oude code kostte in deze meting 4
+calls per zoekterm (en tot 8 als een pass weinig relevante treffers oplevert, want
+dan wordt `maxResults` niet gehaald en lopen alle passes door). Twaalf keer zoveel
+productonderzoek voor ongeveer twee keer de calls van één oude zoekterm.
 
 Waarom drie warehouses volstaan: de globale pass ziet álle voorraad. De
 landen-passes bestaan alleen om het warehouse (en dus de levertijd) te kunnen
