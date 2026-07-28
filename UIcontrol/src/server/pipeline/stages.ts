@@ -180,13 +180,16 @@ function wizardProductsOutput(ctx: StageContext): StageOutput {
     cost_price: p.costPriceUsd ? Math.round(p.costPriceUsd * 0.92 * 100) / 100 : undefined,
     compare_at_price: p.compareAtPriceEur,
     image: p.image ?? '',
+    product_type: p.productType,
     supplier: p.supplier ?? 'cj',
     supplierProductId: p.productId,
     supplierVariantId: p.variantId,
   }))
   const output = { products, source: 'wizard' }
   saveStageOutput(ctx.runId, 'product-research', output)
-  ctx.onLog(`Wizard-run: ${products.length} producten uit de wizard overgenomen (CJ)`)
+  const types = [...new Set(products.map(p => p.product_type).filter(Boolean))]
+  ctx.onLog(`Wizard-run: ${products.length} producten uit de wizard overgenomen (CJ)` +
+    (types.length ? ` — ${types.length} producttype(s): ${types.join(', ')}` : ''))
   return { ok: true, output }
 }
 
