@@ -14,7 +14,7 @@
 // scoring-call over alle kandidaten in plaats van één per type.
 
 import type { SupplierProduct } from './types.js'
-import { scoreRelevance, type RelevanceVerdict, type RelevanceContext } from './product-relevance.js'
+import { scoreRelevance, type RelevanceVerdict, type RelevanceContext, type RelevanceJudge } from './product-relevance.js'
 import {
   generateProductTypes, expandProductTypes,
   type ProductType, type PriceTier, type TypeJudge, type TypeContext,
