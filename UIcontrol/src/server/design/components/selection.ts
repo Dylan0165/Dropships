@@ -137,6 +137,10 @@ export function buildSelection(
   const style = llm?.style ?? STYLE_BY_TONE[dna.tone]
   const seed = Math.abs(Math.trunc(ctx.seed)) || 1
   const iconTheme = iconThemeFor(ctx.niche, ctx.interests ?? [])
+  const notes: string[] = []
+  const count = ctx.productCount ?? 0
+  const types = ctx.productTypes ?? []
+  const productsId = chooseProductComponent(PRODUCTS_BY_VARIANT[layout.product], count, types, seed)
 
   // Topbar-pool: de varianten die bij dít nichethema passen, niet de hele
   // catalogus. Zo krijgt een sportwinkel geen wellness-toon in de balk.
