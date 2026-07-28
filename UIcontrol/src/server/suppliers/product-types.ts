@@ -13,7 +13,11 @@ export type PriceTier = 'entry' | 'mid' | 'premium'
 export interface ProductType {
   /** Slug, uniek binnen één assortiment. */
   id: string
-  /** Wat het IS, in het Nederlands: "baardolie". */
+  /**
+   * Wat het IS, in het ENGELS: "beard oil". Bewust niet Nederlands: dit label
+   * belandt als categorie op de winkel zelf, en alle klant-facing tekst is
+   * Engels. De onderbouwing (`role`) is wél Nederlands — die leest de operator.
+   */
   name: string
   /** Engelse CJ-zoekterm, 1-3 woorden: "beard oil". */
   searchTerm: string
