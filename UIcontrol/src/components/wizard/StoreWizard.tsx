@@ -703,7 +703,7 @@ export function StoreWizard({ onClose, onStarted }: Props) {
                   <span className="font-semibold">CJ API-fout:</span> {cjError}
                   <span className="block text-red-300/70 mt-0.5">Controleer je CJ_API_KEY/CJ_EMAIL, rate-limits of netwerk. Er wordt bewust NIET teruggevallen op mock-data.</span>
                   <button
-                    onClick={loadShortlist}
+                    onClick={() => loadShortlist()}
                     disabled={loadingShortlist}
                     className="mt-2 px-3 py-1.5 bg-red-700/40 hover:bg-red-700/70 disabled:opacity-40 text-red-100 text-[11px] rounded-lg font-medium flex items-center gap-1.5 transition-colors"
                   >
