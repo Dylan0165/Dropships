@@ -424,6 +424,8 @@ export class CJAdapter implements SupplierAdapter {
     const strictWarehouses = options.warehouseCountries != null
     const pageSize = options.pageSize ?? 20
     const maxResults = options.maxResults ?? 30
+    // Genoeg-is-genoeg-grens: default = alles ophalen (oud gedrag).
+    const enough = Math.min(options.minResults ?? maxResults, maxResults)
     const seen = new Map<string, SupplierProduct>()
     const passErrors: string[] = []
     let rawSeen = 0
