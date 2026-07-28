@@ -59,6 +59,10 @@ export interface SelectionContext {
   interests?: string[]
   /** Seed uit het DNA — houdt de keuzes deterministisch per store. */
   seed: number
+  /** Hoeveel producten de winkel toont. Bepaalt welke weergave past. */
+  productCount?: number
+  /** Distincte producttypes ("beard oil", "beard brush") voor categorie-indeling. */
+  productTypes?: string[]
 }
 
 export interface SelectionResult {
