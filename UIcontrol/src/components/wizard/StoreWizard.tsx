@@ -1158,6 +1158,41 @@ function cjLink(p: ShortlistProduct): string | null {
   return `https://www.cjdropshipping.com/search?keyword=${encodeURIComponent(p.title.slice(0, 60))}`
 }
 
+/**
+ * Toont de spreiding over producttypes van de HUIDIGE selectie. Een winkel met
+ * tien producten van hetzelfde type is scheef; dat zie je aan losse productkaarten
+ * niet, aan deze balk wel.
+ */
+function DiversityBar({ products, selected }: {
+  products: ShortlistProduct[]; selected: Map<string, ShortlistProduct>
+}) {
+  const chosen = products.filter(p => selected.has(p.productId))
+  const withType = chosen.filter(p => p.productType)
+  if (withType.length === 0) return null
+
+  const counts = new Map<string, number>()
+  for (const p of withType) counts.set(p.productType!, (counts.get(p.productType!) ?? 0) + 1)
+  const types = [...counts.entries()].sort((a, b) => b[1] - a[1])
+  const skewed = types.length > 0 && types[0][1] > Math.max(2, Math.ceil(chosen.length / 2))
+
+  return (
+    <div className="flex items-center gap-2 flex-wrap text-[11px]">
+      <span className={clsx('font-semibold', types.length >= 5 ? 'text-emerald-400' : types.length >= 3 ? 'text-zinc-300' : 'text-amber-400')}>
+        {types.length} producttype{types.length === 1 ? '' : 's'}
+      </span>
+      <span className="text-zinc-600">over {chosen.length} geselecteerde producten</span>
+      <div className="flex gap-1 flex-wrap">
+        {types.map(([t, n]) => (
+          <span key={t} className="px-1.5 py-0.5 rounded border border-white/[0.08] text-zinc-400">
+            {t}{n > 1 && <span className="text-zinc-600"> ×{n}</span>}
+          </span>
+        ))}
+      </div>
+      {skewed && <span className="text-amber-400">— scheef verdeeld, veel van hetzelfde type</span>}
+    </div>
+  )
+}
+
 function ProductCard({ p, selected, onToggle, disabled = false, onReplace }: {
   p: ShortlistProduct; selected: boolean; onToggle: () => void; disabled?: boolean
   onReplace?: () => void
