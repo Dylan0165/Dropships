@@ -359,7 +359,17 @@ export class CJAdapter implements SupplierAdapter {
       console.log(`[cj] identieke zoekopdracht al onderweg — hergebruik resultaat ("${niche}")`)
       return existing
     }
+    // Korte cache: bij een assortiment van 12 producttypes overlappen zoektermen
+    // regelmatig ("beard oil" / "beard growth oil"), en een herladen wizard
+    // vraagt dezelfde lijst opnieuw. Dat hoeft de rate limit niet te kosten.
+    const cached = readSearchCache(key)
+    if (cached) {
+      searchStats.cacheHits++
+      console.log(`[cj] zoekopdracht "${niche}" uit cache (${cached.length} producten)`)
+      return cached
+    }
     const search = this.doSearchProducts(niche, options)
+      .then(res => { writeSearchCache(key, res); return res })
       .finally(() => this.inflightSearches.delete(key))
     this.inflightSearches.set(key, search)
     return search
