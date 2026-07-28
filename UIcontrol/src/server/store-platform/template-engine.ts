@@ -1,6 +1,7 @@
 import path from 'path'
 import fs from 'fs'
 import { ANIME_VERSION } from '../design/anime-presets.js'
+import { checkoutApiUrl as checkoutApiUrlFor } from '../checkout-gateway.js'
 
 const TEMPLATE_NAMES = ['noir', 'blanc', 'bolt', 'dusk', 'grid'] as const
 export type TemplateName = typeof TEMPLATE_NAMES[number]
