@@ -401,15 +401,36 @@ export function renderStore(input: StoreBuildInput, briefRaw: StoreBrief): Store
 
 export async function buildStore(input: StoreBuildInput): Promise<StoreBuildOutput> {
   const log = input.onLog ?? ((m: string) => console.log(`[store-builder] ${m}`))
-  log(`Generating brief for "${input.niche}"...`)
-  const brief = await generateBrief(input)
-  if (!brief) {
+  const collection = collectionContext(input.products)
+  log(`Generating brief for "${input.niche}" (${collection.product_count} product(en))...`)
+  const result = await generateBrief(input)
+
+  if (result.brief) {
+    log(`Brief OK — brand="${result.brief.brand_name}", rendering ${selectTemplate(input.niche)} template...`)
+    return { ...renderStore(input, result.brief), briefSource: 'llm' }
+  }
+
+  // ── De LLM-brief is niet gelukt ─────────────────────────────────────────────
+  // Eerst de echte reden, luid. Daarna doorbouwen met een samengestelde brief:
+  // een run laten sneuvelen op één LLM-call is duurder dan een iets soberdere
+  // winkel, en de gebruiker kan hem daarna gewoon bewerken.
+  const reden = result.error || 'onbekende fout'
+  log(`⚠ store-builder agent gaf na ${result.attempts ?? 3} poging(en) geen bruikbare brief — ${reden}`)
+  if (result.validationErrors?.length) {
+    log(`⚠ schema-fouten: ${result.validationErrors.slice(0, 5).join(' · ')}`)
+  }
+
+  if (!input.brand.name && input.products.length === 0) {
+    // Zonder merknaam én zonder producten valt er niets te bouwen.
     return {
       ok: false, buildDir: '', outDir: '', templateName: 'noir' as TemplateName,
       brief: {} as StoreBrief, brandName: '', subdomain: '',
-      error: 'brief generation failed',
+      error: `store-builder gaf geen bruikbare brief: ${reden}`,
+      briefSource: 'fallback', briefError: reden,
     }
   }
-  log(`Brief OK — brand="${brief.brand_name}", rendering ${selectTemplate(input.niche)} template...`)
-  return renderStore(input, brief)
+
+  log('→ terugval: brief samengesteld uit de brand-stage; design-DNA en componentkeuze komen uit code')
+  const rendered = renderStore(input, fallbackBrief(input))
+  return { ...rendered, briefSource: 'fallback', briefError: reden }
 }
