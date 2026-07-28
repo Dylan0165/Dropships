@@ -25,10 +25,11 @@
 
 ═══ 3. RETRY MET VERKORTE INVOER ═══
   ✓ drie pogingen gedaan — 3 calls naar het LLM-endpoint
-  component_catalog per poging: 1=ja · 2=ja · 3=ja
+  catalogus in de invoer per poging: 1=ja · 2=nee · 3=nee
+  invoergrootte per poging: 1=41k · 2=2k · 3=2k
   ✓ poging 1 heeft de volledige catalogus — component_catalog aanwezig
-  ✗ FAIL poging 2 en 3 niet meer — minder invoer = ruimte voor het antwoord
-  ✓ de prompt is aantoonbaar kleiner — 59k → 15k tekens
+  ✓ poging 2 en 3 niet meer — minder invoer = ruimte voor het antwoord
+  ✓ de prompt is aantoonbaar kleiner — 41k → 2k tekens
 
 ═══ 4. MODEL GEEFT ALLEEN REDENERING TERUG (max_tokens op) ═══
   ✓ ook hier geen crash — ok=true, briefSource=fallback
@@ -51,7 +52,7 @@
   ✓ geen design/components → seeded DNA neemt het over — beide afwezig
   ✓ verzint geen producten — geen productclaims in de copy
 
-═══ RESULTAAT: 26 geslaagd, 1 gefaald ═══
+═══ RESULTAAT: 27 geslaagd, 0 gefaald ═══
 
 build-dir van scenario 2 (vangnet, 2 producten):
   C:\Users\dylan\AppData\Local\Temp\dropship-smallassortment\stores\verify-small-prose-bristlework
