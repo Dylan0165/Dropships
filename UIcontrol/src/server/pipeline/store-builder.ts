@@ -77,6 +77,8 @@ export interface StoreBuildInput {
     price: number
     compareAtPrice?: number
     image?: string
+    /** Producttype uit het assortiment ("baardolie") — stuurt de categorie-indeling. */
+    productType?: string
     // Supplier koppeling — nodig voor automatische fulfillment na checkout
     supplier?: string
     supplierProductId?: string
