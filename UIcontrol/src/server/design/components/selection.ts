@@ -76,6 +76,8 @@ export interface SelectionResult {
   iconTheme: IconTheme
   /** Alternatieven per as, voor de uniciteitscontrole in uniqueness.ts. */
   alternatives: { hero: string[]; topbar: string[] }
+  /** Aanpassingen die de selectie zelf heeft gedaan — worden gelogd. */
+  notes: string[]
 }
 
 /** Componenten die het niche-icoonthema nodig hebben om te renderen. */
