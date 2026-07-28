@@ -220,7 +220,7 @@ export async function buildAssortment(opts: AssortmentOptions): Promise<Assortme
         const diff = Math.abs(l.p.costPrice - first.costPrice) / first.costPrice
         if (diff < 0.25) continue
       }
-      picks.push({ product: l.p, typeId: l.t.id, typeName: l.t.name, tier: l.t.tier, score: l.score, reason: l.reason })
+      picks.push({ product: l.p, typeId: l.t.id, typeName: l.t.name, typeRole: l.t.role, tier: l.t.tier, score: l.score, reason: l.reason })
       takenProducts.add(l.p.productId)
       perTypeCount.set(l.t.id, (perTypeCount.get(l.t.id) ?? 0) + 1)
       log(`[assortiment]   + tweede prijsvariant voor ${l.t.name}: ${l.p.title.slice(0, 50)}`)
