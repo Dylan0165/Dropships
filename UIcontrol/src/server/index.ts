@@ -602,8 +602,16 @@ app.get('/api/components', (_req, res) => {
 
 // ═══════ Niche Suggestions ═══════
 
-// Seed default niches if table is empty
-const nicheCount = (db.prepare('SELECT COUNT(*) as cnt FROM niches').get() as { cnt: number }).cnt
+// Seed default niches if table is empty.
+// Deze query draait op moduleniveau: gooit hij, dan komt de server niet op en
+// herstart pm2 hem eindeloos. Een lege of onbereikbare niches-tabel is hinderlijk
+// maar mag de hele API niet platleggen — vandaar de guard.
+let nicheCount = -1
+try {
+  nicheCount = (db.prepare('SELECT COUNT(*) as cnt FROM niches').get() as { cnt: number }).cnt
+} catch (err) {
+  console.error('[server] niches-tabel niet leesbaar — seeding overgeslagen, server start door:', err)
+}
 if (nicheCount === 0) {
   const now = new Date().toISOString()
   const defaults = [
