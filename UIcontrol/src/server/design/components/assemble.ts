@@ -23,7 +23,12 @@ export interface AssembleInput {
   nav: ComponentSelection
   sections: ComponentSelection[]   // in volgorde, tussen nav en footer
   footer: ComponentSelection
-  products: ReadonlyArray<{ id: string; title: string; image: string; price: number }>
+  /**
+   * De VOLLEDIGE collectie. Componenten die een deel tonen (spotlight, hero-strip)
+   * vullen zelf aan met de rest; er verdwijnt niets stilzwijgend van de pagina.
+   * `productType` groepeert de collectie in categorieën (zie ProductTabs).
+   */
+  products: ReadonlyArray<{ id: string; title: string; image: string; price: number; productType?: string }>
   /** default stijl/animatie als de selectie ze niet specificeert */
   defaultStyle?: StyleVariant
   defaultAnim?: AnimationVariant
