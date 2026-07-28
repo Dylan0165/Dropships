@@ -717,8 +717,8 @@ export function StoreWizard({ onClose, onStarted }: Props) {
                 <>
                   <div className="flex items-center justify-between flex-wrap gap-1">
                     <p className="text-xs text-zinc-400">
-                      AI-shortlist voor <span className="text-white">{chosenDirection?.persona.label}</span>
-                      {searchTermUsed && <> (CJ-zoekterm: <span className="text-zinc-300 font-mono">"{searchTermUsed}"</span>)</>} —
+                      Assortiment voor <span className="text-white">{chosenDirection?.persona.label}</span>
+                      {!assortment && searchTermUsed && <> (CJ-zoekterm: <span className="text-zinc-300 font-mono">"{searchTermUsed}"</span>)</>} —
                       geselecteerd: <span className={clsx('font-semibold', selectedProducts.size >= MIN_ADVISED ? 'text-emerald-400' : 'text-amber-400')}>{selectedProducts.size}</span> / {MAX_SELECT}
                     </p>
                     {maxHint
@@ -727,6 +727,21 @@ export function StoreWizard({ onClose, onStarted }: Props) {
                         ? <span className="text-[11px] text-zinc-600">Tip: kies er minstens {MIN_ADVISED} voor een volle collectie.</span>
                         : null}
                   </div>
+
+                  {/* Diversiteit in één oogopslag: is dit een winkel of tien keer
+                      hetzelfde item? Dat was met alleen productnamen niet te zien. */}
+                  <DiversityBar products={visibleShortlist} selected={selectedProducts} />
+
+                  {assortment?.shortfall && (
+                    <div className="px-3 py-2 rounded-lg text-[11px] bg-amber-900/25 border border-amber-700/40 text-amber-200">
+                      {assortment.shortfall}
+                    </div>
+                  )}
+                  {assortment?.typesFallback && (
+                    <div className="px-3 py-2 rounded-lg text-[11px] bg-amber-900/20 border border-amber-700/30 text-amber-300/90">
+                      Producttype-lijst kon niet gegenereerd worden ({assortment.typesFallback}) — er is op één zoekterm gezocht.
+                    </div>
+                  )}
                   {/* Verzend-filter: alleen weergave, sluit niets uit in de data */}
                   <label className="flex items-center gap-2 text-[11px] text-zinc-400 cursor-pointer w-fit">
                     <button
