@@ -2,6 +2,7 @@ import path from 'path'
 import fs from 'fs'
 import { ANIME_VERSION } from '../design/anime-presets.js'
 import { checkoutApiUrl as checkoutApiUrlFor } from '../checkout-gateway.js'
+import type { DesignDNA } from '../design/tokens.js'
 
 const TEMPLATE_NAMES = ['noir', 'blanc', 'bolt', 'dusk', 'grid'] as const
 export type TemplateName = typeof TEMPLATE_NAMES[number]
@@ -67,6 +68,7 @@ export function selectTemplate(niche: string): TemplateName {
 export function buildLayoutSharedFiles(
   targetDir: string,
   vars: TemplateVars,
+  dna?: DesignDNA,
 ): void {
   const appDir = path.join(targetDir, 'app')
   if (!fs.existsSync(appDir)) fs.mkdirSync(appDir, { recursive: true })
@@ -120,8 +122,9 @@ img { max-width: 100%; display: block; }
   fs.writeFileSync(path.join(targetDir, 'next.config.js'),
     `module.exports = { output: 'export', trailingSlash: true, images: { unoptimized: true } };\n`, 'utf-8')
 
-  // Checkout + bedankt + info pagina's (over/contact/faq/retour)
-  buildCheckoutAndInfoPages(targetDir, vars)
+  // Checkout + bedankt + info pagina's (over/contact/faq/retour) — mét het
+  // design-DNA, zodat sub-pagina's dezelfde look hebben als de homepage.
+  buildCheckoutAndInfoPages(targetDir, vars, dna)
 
   // tsconfig.json
   fs.writeFileSync(path.join(targetDir, 'tsconfig.json'), JSON.stringify({
@@ -191,7 +194,7 @@ export function ensureTailwindSupport(targetDir: string): boolean {
 // ─── Checkout + info pagina's ─────────────────────────────────────────────────
 // Gegenereerd voor elke store, template-onafhankelijk (neutrale styling met
 // de brand-kleuren). De checkout-pagina verzamelt het verzendadres — verplicht
-// voor automatische supplier fulfillment (CJ) — en stuurt daarna door naar Mollie.
+// voor automatische supplier fulfillment (CJ) — en stuurt daarna door naar Stripe.
 
 /**
  * De styling die sub-pagina's van de homepage erven.
@@ -459,7 +462,7 @@ export default function CheckoutPage() {
               {busy ? 'One moment…' : 'Pay €' + total.toFixed(2)}
             </button>
             <p style={{ fontSize: '0.7rem', color: '#aaa', marginTop: '0.75rem', textAlign: 'center' }}>
-              You'll be redirected to our secure payment page (Mollie).
+              You will be redirected to Stripe to complete your payment securely.
             </p>
           </form>
         </div>
@@ -472,24 +475,19 @@ export default function CheckoutPage() {
   // ── /thank-you ──
   const thankYouDir = path.join(appDir, 'thank-you')
   if (!fs.existsSync(thankYouDir)) fs.mkdirSync(thankYouDir, { recursive: true })
-  fs.writeFileSync(path.join(thankYouDir, 'page.tsx'), `export default function ThankYouPage() {
-  return (
-    <main style={{ minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fafafa', color: '#111', padding: '2rem' }}>
-      <div style={{ maxWidth: 480, textAlign: 'center' }}>
-        <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>&#10003;</div>
-        <h1 style={{ fontSize: '1.5rem', fontWeight: 700, margin: '0 0 0.75rem' }}>Thank you for your order!</h1>
-        <p style={{ color: '#666', lineHeight: 1.7, margin: '0 0 2rem' }}>
-          As soon as your payment is processed you'll receive a confirmation by email.
+  fs.writeFileSync(
+    path.join(thankYouDir, 'page.tsx'),
+    subPageShell(vars, dna, 'Thank you for your order', `        <p>
+          As soon as your payment is confirmed you will receive an email from us.
           Your order ships within 1-2 business days from our European warehouse.
         </p>
-        <a href="/" style={{ display: 'inline-block', background: '#111', color: '#fff', padding: '0.75rem 2rem', borderRadius: 8, textDecoration: 'none', fontWeight: 600, fontSize: '0.85rem' }}>
-          Back to {${jsStr(vars.BRAND_NAME)}}
-        </a>
-      </div>
-    </main>
-  );
-}
-`, 'utf-8')
+        <p style={{ marginTop: '2rem' }}>
+          <a href="/" style={{ display: 'inline-block', background: 'var(--c-primary)', color: 'var(--c-primary-text)', padding: '0.8rem 1.9rem', borderRadius: 'var(--r-md)', textDecoration: 'none', fontWeight: 700, fontSize: '0.85rem' }}>
+            Back to {${jsStr(vars.BRAND_NAME)}}
+          </a>
+        </p>`),
+    'utf-8',
+  )
 
   // ── Info pages: /about /contact /faq /returns (linked from nav + footer) ──
   const infoPages: Array<{ slug: string; title: string; body: string }> = [
