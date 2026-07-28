@@ -10,10 +10,7 @@ export function TopBar() {
     let cancelled = false
 
     function probe() {
-      const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-      const host = window.location.hostname
-      const port = import.meta.env.VITE_WS_PORT ?? '3001'
-      const ws = new WebSocket(`${proto}//${host}:${port}/ws`)
+      const ws = new WebSocket(dashboardWsUrl())
       ws.onopen  = () => !cancelled && setWsConnected(true)
       ws.onclose = () => {
         if (cancelled) return
