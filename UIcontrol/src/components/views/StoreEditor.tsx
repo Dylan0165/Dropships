@@ -1,10 +1,11 @@
 'use client'
 /**
  * StoreEditor — Slide-over CMS panel voor het aanpassen van een store.
- * Tabs: Content | Producten | Design | Deploy
+ * Tabs: Content | Producten | Beheer | Design | Deploy
  */
 import { useState, useEffect } from 'react'
 import { X, Save, RefreshCw, ExternalLink, AlertCircle, CheckCircle2 } from 'lucide-react'
+import StoreManagePanel from './StoreManagePanel'
 
 const STORE_HOST = (import.meta.env.VITE_STORE_SERVER_HOST as string) ?? '192.168.121.11'
 
@@ -185,7 +186,7 @@ export default function StoreEditor({ storeId, subdomain, niche, onClose, onSave
           )}
 
           {!loading && data && tab === 'manage' && (
-            <ManagePanel storeId={storeId} onChanged={() => {
+            <StoreManagePanel storeId={storeId} onChanged={() => {
               // Na een bulkactie of AI-bewerking is de merged data verouderd
               fetch(`/api/stores/${storeId}/cms-data`).then(r => r.json()).then((d: CmsResponse) => {
                 setData(d.merged)

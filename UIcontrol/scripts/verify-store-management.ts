@@ -34,6 +34,17 @@ const LOGIN_USER = process.env.TEST_USER ?? 'fernando'
 const LOGIN_PW = 'StoreBeheerTest99!'
 
 async function login(): Promise<boolean> {
+  // De setup-flow werkt maar één keer per account, en op een dev-machine zijn
+  // alle drie de accounts snel opgebruikt door eerdere tests. Daarom ruimt de
+  // test z'n eigen account eerst op. Dit raakt alleen de LOKALE testdatabase —
+  // op de VPS draai je dit script niet.
+  try {
+    db.prepare(`DELETE FROM auth_sessions WHERE username = ?`).run(LOGIN_USER)
+    db.prepare(`DELETE FROM auth_users WHERE username = ?`).run(LOGIN_USER)
+    db.prepare(`DELETE FROM auth_pending_setup WHERE username = ?`).run(LOGIN_USER)
+    db.prepare(`DELETE FROM auth_pending_login WHERE username = ?`).run(LOGIN_USER)
+  } catch { /* tabellen bestaan nog niet → setup maakt ze alsnog aan */ }
+
   const begin = await api('/api/auth/setup/begin', { method: 'POST', body: { username: LOGIN_USER, password: LOGIN_PW } })
   if (begin.status !== 200) return false
   const secret = String(begin.json?.secret ?? '')
