@@ -802,6 +802,46 @@ export function StoreWizard({ onClose, onStarted }: Props) {
                     ))}
                   </div>
 
+                  {/* Zoeklog per producttype — laat zien dat er ÉCHT over alle
+                      types gezocht is, en waar het misging als de lijst kort is. */}
+                  {assortment && assortment.attempts.length > 0 && (
+                    <div className="border border-white/[0.07] rounded-lg overflow-hidden">
+                      <button
+                        onClick={() => setShowTypes(v => !v)}
+                        className="w-full flex items-center justify-between px-3 py-2 text-[11px] text-zinc-400 hover:text-white transition-colors"
+                      >
+                        <span>
+                          {assortment.attempts.length} producttypes doorzocht · {assortment.searchCalls} zoekopdrachten ·{' '}
+                          {assortment.attempts.filter(a => a.chosen).length} raak
+                        </span>
+                        <span className="text-zinc-600">{showTypes ? 'verbergen' : 'bekijken'}</span>
+                      </button>
+                      {showTypes && (
+                        <div className="border-t border-white/[0.07] divide-y divide-white/[0.05]">
+                          {assortment.attempts.map(a => (
+                            <div key={a.typeId} className="flex items-start gap-2 px-3 py-1.5">
+                              <span className={clsx(
+                                'px-1.5 rounded border text-[10px] font-semibold flex-shrink-0 w-[52px] text-center',
+                                a.chosen ? 'text-emerald-300 border-emerald-700/50 bg-emerald-900/20' : 'text-zinc-500 border-white/10',
+                              )}>
+                                {a.chosen ? 'gekozen' : 'leeg'}
+                              </span>
+                              <div className="min-w-0 flex-1">
+                                <p className="text-[11px] text-zinc-300 truncate">
+                                  {a.name}
+                                  <span className="text-zinc-600 font-mono"> — {a.terms.map(t => `"${t}"`).join(' → ') || 'niet gezocht'}</span>
+                                </p>
+                                <p className="text-[10px] text-zinc-500 truncate">
+                                  {a.candidates} kandidaat(en){a.chosen ? ` → ${a.chosen.title}` : a.note ? ` · ${a.note}` : ''}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   {/* Afgewezen kandidaten — zonder dit is een korte lijst niet te
                       controleren, en dat was precies waarom er ooit stilzwijgend
                       werd aangevuld met producten die er niet hoorden. */}
