@@ -54,7 +54,18 @@ export function buildStorePage(input: BuildPageInput): BuildPageResult {
   const log = input.onLog ?? (() => { /* stil */ })
 
   try {
-    const selection = buildSelection(dna, layout, content, input.llmComponents, {
+    const selection = buildSelection(dna, layout, {
+      brandName,
+      eyebrow: content.heroLabel,
+      headline: content.heroHeadline,
+      subheadline: content.heroSubheadline,
+      cta: content.heroCta,
+      usps: content.usps,
+      storyTitle: content.story.title,
+      storyBody: content.story.body,
+      reviews: content.reviews,
+      footerTagline: content.footerTagline,
+    }, input.llmComponents, {
       niche: input.niche,
       interests: input.interests ?? [],
       seed: dna.seed,
