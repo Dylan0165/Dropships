@@ -467,7 +467,14 @@ export class CJAdapter implements SupplierAdapter {
       : [...euWarehouses, undefined]   // undefined = wereldwijde pass als sluitstuk
 
     for (const countryCode of passes) {
-      if (seen.size >= maxResults) break
+      // Genoeg gevonden → resterende passes overslaan. Bij één product per
+      // producttype is de eerste pass vrijwel altijd al voldoende.
+      if (seen.size >= enough) {
+        if (seen.size < maxResults) {
+          console.log(`[cj] "${niche}": ${seen.size} relevante producten na ${attempts} pass(es) — resterende passes overgeslagen`)
+        }
+        break
+      }
       try {
         await runPass(countryCode)
       } catch (err) {
