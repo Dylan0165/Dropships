@@ -73,7 +73,10 @@ export function buildStorePage(input: BuildPageInput): BuildPageResult {
       niche: input.niche,
       interests: input.interests ?? [],
       seed: dna.seed,
+      productCount: products.length,
+      productTypes,
     })
+    for (const n of selection.notes) log(`[assemble] ${n}`)
 
     const motion = selectMotionProfile(dna.tone, dna.seed)
 
