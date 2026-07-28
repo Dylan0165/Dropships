@@ -2,6 +2,35 @@
 
 Nieuwste bovenaan. Zie `ai-must-read/release-and-changelog.md` voor het formaat.
 
+## 2026-07-28 — Store-beheer + beveiliging per winkel
+**Tag:** zie `memory/logs/fase-4-store-beheer.md`
+
+- `server/store-admin.ts`: live winkels bewerken zonder de pipeline opnieuw te
+  draaien — handmatig, in bulk (prijzen) of via een AI-instructie. Alles als
+  override in `custom_data`; de originele pipeline-output blijft staan. Nieuwe
+  **Beheer**-tab in de StoreEditor.
+- Producten bijzetten uit CJ: gegevens komen van de leverancier, niet uit het
+  verzoek — dat is wat fulfillment straks bestelt.
+- **Verwijderen vereist nu de naam intypen** (HTTP 428 zonder). Ruimt ook de
+  design-combinatie en de deals op het kopers-dashboard op; de response bevat
+  wat er daadwerkelijk gebeurd is.
+- **Beveiliging per winkel:** debug-poort naar `listen 127.0.0.1:<poort>` — die
+  stond op `0.0.0.0` en was dus rechtstreeks van buiten bereikbaar, buiten de
+  tunnel om. Plus een CSP en vier beveiligingsheaders met `always`. De
+  poort-parser is meegegaan met de nieuwe listen-vorm.
+- **IPv6-gat in de rate-limiting gedicht** (`ipKeyGenerator`): een IPv6-gebruiker
+  kon de loginlimiet uitzitten door binnen z'n eigen /64 van adres te wisselen.
+  express-rate-limit waarschuwde daar bij elke start voor.
+- **Deploy-workflow gerepareerd** na een gemelde falende run: de health check
+  wachtte 6s op een server die ~14s nodig heeft, en eiste HTTP 200 op `/` terwijl
+  de auth-gate 302 geeft — die stap zou élke deploy hebben laten falen. Nu een
+  wachtlus tot 120s, acceptatie van de redirect, en `pm2 logs` bij falen.
+- **Geverifieerd:** 35/35 assertions, waaronder poort 4002 die na het verwijderen
+  van die winkel terugkomt bij de volgende deploy.
+- **Niet geverifieerd:** de AI-bewerking met een echte LLM-aanroep — de
+  DeepSeek-key in de lokale dev-`.env` is ongeldig (op de VPS staat de juiste).
+  De nabewerking die de LLM in toom houdt is wél getest.
+
 ## 2026-07-28 — Centrale checkout-gateway
 **Tag:** zie `memory/logs/fase-3-centrale-checkout.md`
 

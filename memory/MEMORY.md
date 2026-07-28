@@ -21,6 +21,7 @@ Projectgeheugen voor Dropships. **Begin bij [START-HERE](ai-must-read/START-HERE
 | [dropships-cj-integration.md](dropships-cj-integration.md) | CJ REST + MCP; waarom MCP nooit orders plaatst |
 | [dropships-stripe-payments.md](dropships-stripe-payments.md) | checkout → webhook → fulfillment |
 | [dropships-auth.md](dropships-auth.md) | 2FA-flow zoals gebouwd en getest — niet aanraken |
+| [dropships-store-management.md](dropships-store-management.md) | live winkels bewerken, prijzen, producten bijzetten, verwijderen, poorten, beveiliging |
 
 ## Overig
 
