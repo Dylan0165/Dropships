@@ -59,6 +59,15 @@ await new Promise<void>(r => server.listen(4977, () => r()))
 process.env.LLM_BASE_URL = 'http://127.0.0.1:4977'
 
 const { buildStore, collectionContext, fallbackBrief } = await import('../src/server/pipeline/store-builder.js')
+const { default: db } = await import('../src/server/db.js')
+
+// De agent logt elke uitvoering tegen een run-rij; zonder die rijen valt de
+// foreign key en vult de output zich met ruis die niets met deze test te maken heeft.
+const nu = new Date().toISOString()
+for (const id of ['verify-small-prose', 'verify-small-reasoning', 'verify-small-valid', 'verify-small-zes']) {
+  db.prepare('INSERT OR IGNORE INTO runs (run_id, niche, status, started_at, updated_at) VALUES (?,?,?,?,?)')
+    .run(id, 'verificatie', 'running', nu, nu)
+}
 
 let pass = 0, fail = 0
 const out: string[] = []

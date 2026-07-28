@@ -1,0 +1,57 @@
+═══ 1. DE BRIEF WEET NU HOE GROOT DE COLLECTIE IS ═══
+  2 producten  → This store has only 2 product(s). Design a focused single-product-style store: one strong hero, deep product storytelling, trust and FAQ sections. Do …
+  12 producten → This store has 12 products across 12 product type(s). Use a catalog-style layout.…
+  ✓ collectie-grootte staat in de prompt — product_count=2
+  ✓ kleine collectie krijgt eigen instructie — expliciet "only 2 product(s)"
+  ✓ geen catalogus-layout bij 2 producten — staat er letterlijk
+  ✓ grote collectie krijgt catalogus-instructie — catalog-style layout
+
+═══ 2. STORE-BUILDER AGENT FAALT (proza i.p.v. JSON), 2 PRODUCTEN ═══
+  [info] store-builder poging 1/3
+  [info] store-builder poging 2/3
+  [info] poging 2 met verkorte invoer (38k tekens minder)
+  [info] store-builder poging 3/3
+  [info] poging 3 met verkorte invoer (38k tekens minder)
+  ⚠ store-builder agent gaf na 3 poging(en) geen bruikbare brief — geen parseerbare JSON in het antwoord (7980 output-tokens, begint met: Hier is mijn voorstel vo
+  → terugval: brief samengesteld uit de brand-stage; design-DNA en componentkeuze komen uit code
+  ✓ de run gaat NIET onderuit — ok=true (was: ok=false, "brief generation failed")
+  ✓ brief komt uit het vangnet — briefSource=fallback
+  ✓ de ECHTE reden is bewaard — "geen parseerbare JSON in het antwoord (7980 output-tokens, begint met: Hier is mijn voorstel voor de winkel: i"
+  ✓ de reden is diagnosticeerbaar — noemt wat er terugkwam en hoeveel tokens
+  ✓ beide producten staan in de winkel — 2/2 producttitels
+  ✓ renderer blijft de componentcatalogus — renderer=component-catalog
+  ✓ een weergave die bij 2 producten past — gekozen: products.editorial-list[editorial]
+  duur: 10.1s (3 pogingen + backoff), daarna gewoon een winkel
+
+═══ 3. RETRY MET VERKORTE INVOER ═══
+  ✓ drie pogingen gedaan — 3 calls naar het LLM-endpoint
+  component_catalog per poging: 1=ja · 2=ja · 3=ja
+  ✓ poging 1 heeft de volledige catalogus — component_catalog aanwezig
+  ✗ FAIL poging 2 en 3 niet meer — minder invoer = ruimte voor het antwoord
+  ✓ de prompt is aantoonbaar kleiner — 59k → 15k tekens
+
+═══ 4. MODEL GEEFT ALLEEN REDENERING TERUG (max_tokens op) ═══
+  ✓ ook hier geen crash — ok=true, briefSource=fallback
+  ✓ de melding wijst naar de oorzaak — "model gaf alleen redenering terug, geen antwoord (7980 output-tokens) — waarschijnlijk max_tokens bereikt tijdens het denken"
+
+═══ 5. GOEDE BRIEF → GEEN VANGNET ═══
+  ✓ brief van de agent gebruikt — briefSource=llm
+  ✓ geen foutmelding — geen
+  ✓ merknaam uit de brief — Bristlework
+  ✓ beide producten zichtbaar — 2/2
+
+═══ 6. ZES PRODUCTEN (bovenkant van "klein") ═══
+  ✓ build slaagt — ok=true
+  ✓ alle 6 producten zichtbaar — 6/6 titels
+  ✓ renderer blijft de componentcatalogus — renderer=component-catalog
+
+═══ 7. DE SAMENGESTELDE BRIEF ZELF ═══
+  brand="Bristlework" · hero="Bristlework — a short, honest selection" · cta="View the product"
+  ✓ gebruikt de USP's uit de brand-stage — Tested first · European stock · Honest answers
+  ✓ geen design/components → seeded DNA neemt het over — beide afwezig
+  ✓ verzint geen producten — geen productclaims in de copy
+
+═══ RESULTAAT: 26 geslaagd, 1 gefaald ═══
+
+build-dir van scenario 2 (vangnet, 2 producten):
+  C:\Users\dylan\AppData\Local\Temp\dropship-smallassortment\stores\verify-small-prose-bristlework
