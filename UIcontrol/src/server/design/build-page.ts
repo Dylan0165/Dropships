@@ -30,11 +30,8 @@ export interface BuildPageInput {
   niche: string
   subdomain: string
   products: RenderProduct[]
-  content: BriefContentForSelection & {
-    heroLabel?: string
-    story: { title: string; body: string }
-    reviews: Array<{ name: string; stars: number; text: string }>
-  }
+  /** Exact wat de oude renderer ook krijgt — één contentvorm voor beide paden. */
+  content: RenderContent
   /** Persona-interesses sturen het icoon- en topbarthema. */
   interests?: string[]
   /** Componentkeuze uit de LLM-brief; ontbreekt bij een CMS-rebuild. */
