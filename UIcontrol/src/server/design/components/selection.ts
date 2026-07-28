@@ -205,13 +205,12 @@ export function buildSelection(
       nav: { id: nav, props: propsFor(nav) },
       sections,
       footer: { id: footer, props: propsFor(footer) },
-      style, source: 'llm', iconTheme, alternatives,
+      style, source: 'llm', iconTheme, alternatives, notes,
     }
   }
 
   // ── Afgeleide default uit toon + layout ─────────────────────────────────────
   const heroId = HERO_BY_HERO[layout.hero]
-  const productsId = PRODUCTS_BY_VARIANT[layout.product]
   // Sectie-volgorde vertaalt de layout.sections naar componenten. De tweede
   // batch componenten wordt seeded ingemengd, zodat twee stores met dezelfde
   // toon niet steeds dezelfde vijf blokken krijgen.
