@@ -208,8 +208,20 @@ export async function aiEditStore(storeId: string, instruction: string): Promise
   if (!store) return { ok: false, error: 'Store niet gevonden' }
   if (!instruction.trim()) return { ok: false, error: 'Geef een instructie op' }
 
+  // De agent-executielog heeft een foreign key naar `runs`. Een bewerking is
+  // geen pipeline-run, dus die rij bestaat niet — zonder deze regel mislukt het
+  // loggen stil en zijn de kosten van AI-bewerkingen onzichtbaar in de
+  // observability-weergave.
+  const editRunId = `store-edit-${storeId.slice(0, 8)}`
+  const now = new Date().toISOString()
+  try {
+    db.prepare(
+      `INSERT OR IGNORE INTO runs (run_id, niche, status, started_at, updated_at) VALUES (?,?,?,?,?)`,
+    ).run(editRunId, `bewerkingen: ${store.subdomain}`, 'completed', now, now)
+  } catch { /* loggen mag de bewerking nooit blokkeren */ }
+
   const result = await runAgent({
-    runId: `store-edit-${storeId.slice(0, 8)}`,
+    runId: editRunId,
     stage: 'store-edit',
     agentName: 'store-editor',
     skillName: 'store-editor',
