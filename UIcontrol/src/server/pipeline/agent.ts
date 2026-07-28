@@ -80,7 +80,7 @@ async function callLLM(
   userPrompt: string,
   timeoutMs: number,
   temperature: number,
-): Promise<{ content: string; inputTokens: number; outputTokens: number }> {
+): Promise<{ content: string; reasoningOnly: boolean; inputTokens: number; outputTokens: number }> {
   const { baseUrl, apiKey } = llmConfig()
   const headers: Record<string, string> = { 'Content-Type': 'application/json' }
   if (apiKey) headers['Authorization'] = `Bearer ${apiKey}`
