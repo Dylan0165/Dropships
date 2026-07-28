@@ -13,7 +13,8 @@
     "verify:components": "tsx src/server/design/verify-all-components.ts",
     "verify:variation": "tsx src/server/design/verify-store-variation.ts",
     "verify:checkout": "tsx scripts/verify-checkout-gateway.ts",
-    "verify:fulfillment": "tsx scripts/verify-checkout-fulfillment.ts"
+    "verify:fulfillment": "tsx scripts/verify-checkout-fulfillment.ts",
+    "verify:store-mgmt": "tsx scripts/verify-store-management.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",

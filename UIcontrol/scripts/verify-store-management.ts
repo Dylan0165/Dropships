@@ -67,7 +67,9 @@ async function main() {
   const up = applyPriceChange('sm-a', { percent: 10 })
   check('procentuele verhoging', up.ok && up.changes.length === 3,
     up.changes.map(c => `${c.title} ${c.from}→${c.to}`).join(', '))
-  check('afronding op twee decimalen', up.changes.every(c => Math.round(c.to * 100) === c.to * 100),
+  // Niet `c.to * 100 === Math.round(c.to * 100)` gebruiken: 36.66 * 100 is in
+  // drijvende komma 3665.999…, dus die check faalt op correcte prijzen.
+  check('afronding op twee decimalen', up.changes.every(c => /^\d+(\.\d{1,2})?$/.test(String(c.to))),
     up.changes.map(c => c.to).join(', '))
 
   const round = applyPriceChange('sm-a', { roundTo: 0.95 })
