@@ -175,8 +175,12 @@ Fill the `components` field:
   cheap impulse niche, `premium`/`considered` for a considered purchase).
 - Choose ids that VARY the store from a generic layout — two different stores
   should rarely share the same set.
-- **Match the products component to the actual collection.** Count the products
-  in `previous_agent_output.products` before choosing:
+- **Match the products component to the actual collection.** The input has a
+  `collection` block with `product_count`, `product_types` and a `guidance`
+  sentence — follow it. A narrow niche legitimately yields 2 products; design a
+  focused store for those 2 rather than a layout with ten empty slots. **Never
+  invent products that are not in the list.** Also check
+  `previous_agent_output.products` yourself:
   - 9 or more → a catalog view: `products.grid-4`, `products.masonry`,
     `products.list-compact`, or `products.category-tabs`.
   - 3 or more distinct `product_type` values AND 8+ products →
