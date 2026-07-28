@@ -258,6 +258,8 @@ export const STAGE_RUNNERS: Record<Stage, (ctx: StageContext) => Promise<StageOu
         price: (p.price as number) ?? 29.99,
         compareAtPrice: p.compare_at_price as number | undefined,
         image: (p.image as string) ?? '',
+        // Producttype uit de wizard (assortiment) of uit de product-agent
+        productType: (p.productType ?? p.product_type ?? p.category) as string | undefined,
         // Supplier koppeling (CJ pid/vid) — komt uit de wizard of product-research
         supplier: p.supplier as string | undefined,
         supplierProductId: (p.supplierProductId ?? p.supplier_product_id) as string | undefined,
