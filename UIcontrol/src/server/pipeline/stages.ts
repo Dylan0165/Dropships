@@ -22,6 +22,8 @@ const ProductResearchSchema = z.object({
   products: z.array(z.object({
     id: z.string().optional(),
     title: z.string(),
+    /** Engels categorie-label; groepeert de collectie op de winkel. */
+    product_type: z.string().optional(),
     description: z.string().optional(),
     price: z.number().positive(),
     cost_price: z.number().positive().optional(),
