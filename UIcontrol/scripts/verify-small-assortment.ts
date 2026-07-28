@@ -147,14 +147,20 @@ say(`  duur: ${duurA}s (3 pogingen + backoff), daarna gewoon een winkel`)
 say('')
 say('═══ 3. RETRY MET VERKORTE INVOER ═══')
 check('drie pogingen gedaan', requests.length === 3, `${requests.length} calls naar het LLM-endpoint`)
-const heeftCatalogus = requests.map(r => r.body.includes('component_catalog'))
-say(`  component_catalog per poging: ${heeftCatalogus.map((b, i) => `${i + 1}=${b ? 'ja' : 'nee'}`).join(' · ')}`)
+// Kijk naar de USER-boodschap, niet naar de hele body: het woord
+// "component_catalog" staat óók in de skill-tekst van de system-prompt.
+const userMsgs = requests.map(r => {
+  const parsed = JSON.parse(r.body) as { messages: Array<{ role: string; content: string }> }
+  return parsed.messages.find(m => m.role === 'user')?.content ?? ''
+})
+const heeftCatalogus = userMsgs.map(u => u.includes('"component_catalog"'))
+say(`  catalogus in de invoer per poging: ${heeftCatalogus.map((b, i) => `${i + 1}=${b ? 'ja' : 'nee'}`).join(' · ')}`)
+say(`  invoergrootte per poging: ${userMsgs.map((u, i) => `${i + 1}=${Math.round(u.length / 1000)}k`).join(' · ')}`)
 check('poging 1 heeft de volledige catalogus', heeftCatalogus[0] === true, 'component_catalog aanwezig')
 check('poging 2 en 3 niet meer', heeftCatalogus.slice(1).every(b => b === false),
   'minder invoer = ruimte voor het antwoord')
-const size1 = requests[0].body.length, size2 = requests[1].body.length
-check('de prompt is aantoonbaar kleiner', size2 < size1 * 0.6,
-  `${Math.round(size1 / 1000)}k → ${Math.round(size2 / 1000)}k tekens`)
+check('de prompt is aantoonbaar kleiner', userMsgs[1].length < userMsgs[0].length * 0.6,
+  `${Math.round(userMsgs[0].length / 1000)}k → ${Math.round(userMsgs[1].length / 1000)}k tekens`)
 
 // ═══ 4. ALLEEN REDENERING TERUG ═══
 say('')
