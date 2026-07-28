@@ -196,12 +196,15 @@ Geef je antwoord als één JSON object.`
       // On retry, prepend the previous validation error to the user prompt
       const promptForAttempt = attempt === 1
         ? userPrompt
-        : `${userPrompt}
+        : `${compactPrompt}
 
 VORIGE POGING WAS ONGELDIG. Fout: ${lastErr}
 Stuur nu uitsluitend valide JSON volgens schema.`
+      if (attempt > 1 && cfg.compactInput) {
+        log('info', `poging ${attempt} met verkorte invoer (${Math.round((userPrompt.length - compactPrompt.length) / 1000)}k tekens minder)`)
+      }
 
-      const { content, inputTokens, outputTokens } =
+      const { content, reasoningOnly, inputTokens, outputTokens } =
         await callLLM(cfg.model, systemPrompt, promptForAttempt, timeoutMs, cfg.temperature ?? 0.4)
 
       totalInTok += inputTokens
