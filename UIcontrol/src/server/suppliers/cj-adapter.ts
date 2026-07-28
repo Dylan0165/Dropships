@@ -98,6 +98,36 @@ export class CJApiError extends Error {
 let queueTail: Promise<unknown> = Promise.resolve()
 let lastRequestAt = 0
 
+// Adaptieve tussenruimte: na een 429 gaan we uit onszelf rustiger aan doen in
+// plaats van dezelfde muur opnieuw te raken. Herstelt vanzelf als het een tijd
+// goed gaat. De vaste backoff bij een concrete 429 blijft daarnaast bestaan —
+// die repareert één call, dit beschermt de rest van de reeks.
+const MAX_SPACING_MS = 4_000
+const SPACING_DECAY_AFTER_MS = 60_000
+let spacingMs = REQUEST_SPACING_MS
+let lastRateLimitAt = 0
+
+function widenSpacing(): void {
+  lastRateLimitAt = Date.now()
+  const next = Math.min(MAX_SPACING_MS, Math.round(spacingMs * 1.6))
+  if (next !== spacingMs) {
+    console.warn(`[cj] tussenruimte tussen calls verhoogd naar ${next}ms na een rate limit`)
+    spacingMs = next
+  }
+}
+
+function currentSpacing(): number {
+  if (spacingMs > REQUEST_SPACING_MS && Date.now() - lastRateLimitAt > SPACING_DECAY_AFTER_MS) {
+    spacingMs = Math.max(REQUEST_SPACING_MS, Math.round(spacingMs / 1.6))
+  }
+  return spacingMs
+}
+
+/** Zichtbaar in de status-endpoint; ook handig in tests. */
+export function currentRequestSpacingMs(): number {
+  return spacingMs
+}
+
 // ── Runtime-status (voor UI-feedback tijdens retries) ─────────────────────────
 
 export interface CjRetryStatus {
