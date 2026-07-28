@@ -796,9 +796,20 @@ export function StoreWizard({ onClose, onStarted }: Props) {
                 <p className="text-xs text-zinc-500">Geen producten gevonden in EU warehouses voor dit idee. Probeer hieronder handmatig te zoeken.</p>
               )}
 
-              {/* Handmatig zoeken */}
-              <div className="border-t border-white/[0.07] pt-4">
-                <label className="text-xs text-zinc-400 block mb-2">Zelf zoeken in CJ (EU warehouse)</label>
+              {/* Handmatig zoeken — dubbelt als "vervang dit ene product" */}
+              <div className={clsx('border-t pt-4', replacing ? 'border-amber-500/40' : 'border-white/[0.07]')}>
+                {replacing && (
+                  <div className="flex items-center justify-between gap-2 mb-2 px-2.5 py-1.5 rounded-lg bg-amber-500/[0.08] border border-amber-500/30">
+                    <span className="text-[11px] text-amber-200">
+                      Vervangen: <b>{shortlist.find(p => p.productId === replacing)?.title.slice(0, 48) ?? replacing}</b>
+                      <span className="text-amber-300/70"> — kies hieronder een alternatief</span>
+                    </span>
+                    <button onClick={() => setReplacing(null)} className="text-[11px] text-amber-300/80 hover:text-white">annuleren</button>
+                  </div>
+                )}
+                <label className="text-xs text-zinc-400 block mb-2">
+                  {replacing ? 'Zoek een vervanger in CJ' : 'Zelf zoeken in CJ (EU warehouse)'}
+                </label>
                 <div className="flex gap-2">
                   <input
                     value={manualQuery}
