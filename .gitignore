@@ -38,6 +38,15 @@ Trendscraper/.env
 *.db
 *.sqlite
 *.sqlite3
+# De zijbestanden MOETEN hier ook staan: `*.db` dekt `dropship.db-wal` niet.
+# Een meegecommitte WAL hoort niet bij de database die op de server staat.
+# SQLite ziet dan een vreemde WAL naast een bekende database en weigert met
+# SQLITE_CORRUPT ("database disk image is malformed"). Omdat de deploy
+# `git reset --hard` doet, werd de productie-WAL bij élke deploy overschreven
+# met die van een dev-machine — goed voor 1982 crashloop-herstarts.
+*.db-wal
+*.db-shm
+*.db-journal
 
 # ── Logs ──────────────────────────────────────────────────────
 *.log
