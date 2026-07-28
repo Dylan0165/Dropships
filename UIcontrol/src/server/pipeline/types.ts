@@ -56,6 +56,11 @@ export interface WizardProduct {
   priceEur: number
   compareAtPriceEur?: number
   reason?: string
+  /**
+   * Producttype uit het assortiment ("beard oil"). Engels, want het wordt op de
+   * winkel de categorie waarop de collectie te doorlopen is.
+   */
+  productType?: string
 }
 
 export interface WizardConfig {
