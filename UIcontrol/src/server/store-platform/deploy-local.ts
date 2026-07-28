@@ -79,21 +79,41 @@ function swapSymlink(currentLink: string, target: string, _ts: number): void {
 function nginxVhost(subdomain: string, port: number): string {
   const { domain, storesRoot } = cfg()
   const root = `${storesRoot}/${subdomain}/current/out`
+  // Beveiligingsheaders staan op ELKE store. `always` is nodig: zonder dat
+  // ontbreken ze op foutpagina's (404/50x), precies waar een aanvaller kijkt.
+  //
+  // CSP is bewust ruim genoeg voor wat een gegenereerde store echt doet: inline
+  // styles (de renderer zet alles inline), Google Fonts, productbeelden van
+  // willekeurige leverancier-CDN's, en één XHR-doel — de centrale checkout-
+  // gateway. Strakker kan pas als de renderer geen inline styles meer gebruikt.
+  const apiOrigin = (process.env.PUBLIC_BASE_URL || `https://api.${domain}`).replace(/\/+$/, '')
+  const security = `  add_header X-Content-Type-Options "nosniff" always;
+  add_header X-Frame-Options "SAMEORIGIN" always;
+  add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+  add_header Permissions-Policy "geolocation=(), microphone=(), camera=(), interest-cohort=()" always;
+  add_header Content-Security-Policy "default-src 'self'; img-src 'self' data: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; script-src 'self' 'unsafe-inline'; connect-src 'self' ${apiOrigin} https://api.stripe.com; frame-ancestors 'self'; base-uri 'self'; form-action 'self' https://checkout.stripe.com" always;`
+
   const routes = `  root ${root};
   index index.html;
   location / { try_files $uri $uri.html $uri/index.html =404; }
   gzip on;
   gzip_types text/css application/javascript image/svg+xml;
-  add_header X-Store "${subdomain}";`
+${security}
+  add_header X-Store "${subdomain}" always;`
+
   return `# managed by Dropships deploy-local — ${subdomain}
+# Publiek: via de Cloudflare-tunnel op poort 80. TLS eindigt bij Cloudflare.
 server {
   listen 80;
   server_name ${subdomain}.${domain};
 ${routes}
 }
 
+# Debug-poort: UITSLUITEND op de loopback. Zonder het expliciete 127.0.0.1
+# luistert nginx op 0.0.0.0 en is elke store rechtstreeks van buiten bereikbaar,
+# buiten de tunnel en buiten Cloudflare om.
 server {
-  listen ${port};
+  listen 127.0.0.1:${port};
   server_name _;
 ${routes}
 }
