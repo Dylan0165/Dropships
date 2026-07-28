@@ -212,6 +212,12 @@ JSON formaat:
   }
 }
 
+/** Categorie-label zoals het op de winkel komt: "beard oil" → "Beard oil". */
+export function typeLabel(name: string): string {
+  const t = name.trim()
+  return t ? t.charAt(0).toUpperCase() + t.slice(1) : t
+}
+
 /** Zonder LLM: de niche zelf is het enige type. Eerlijk, en zichtbaar mager. */
 export function fallbackTypes(niche: string): ProductType[] {
   return [{
