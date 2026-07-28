@@ -699,14 +699,51 @@ function queryTokens(query: string): string[] {
   return query.split(/\s+/).map(normToken).filter(t => t.length >= 3 && !QUERY_STOPWORDS.has(t))
 }
 
+/**
+ * Woorden die BIJNA ELK dropshipping-product beschrijven. Ze zeggen iets over
+ * de eigenschappen, niet over wát het product is.
+ *
+ * Dit is de kern van de bug waardoor een "Portable Leafless Cooling Fan" op een
+ * blender-store belandde: de niche was "portable blender bottles" en het filter
+ * liet alles door dat ÉÉN van die woorden bevatte. "portable" was genoeg. Een
+ * ventilator, een kruimeldief en een powerbank zijn allemaal "portable".
+ *
+ * Deze woorden mogen dus nooit in hun eentje een match rechtvaardigen.
+ */
+const GENERIC_MODIFIERS = new Set([
+  'portable', 'mini', 'micro', 'small', 'large', 'big', 'compact', 'travel', 'pocket',
+  'wireless', 'wired', 'cordless', 'rechargeable', 'usb', 'electric', 'electrical',
+  'smart', 'digital', 'automatic', 'manual', 'multifunctional', 'multifunction',
+  'professional', 'premium', 'luxury', 'deluxe', 'universal', 'adjustable', 'foldable',
+  'folding', 'waterproof', 'durable', 'lightweight', 'new', 'hot', 'best', 'quality',
+  'home', 'office', 'outdoor', 'indoor', 'kid', 'women', 'men', 'unisex',
+  'set', 'kit', 'accessory', 'accessorie', 'tool', 'device', 'gadget', 'product', 'item',
+])
+
+/**
+ * Zit dit product plausibel in de niche?
+ *
+ * Regel: er moet minstens één **betekenisdragend** woord uit de zoekterm
+ * voorkomen — een woord dat zegt wát het product is, niet hoe het is. Bestaat de
+ * zoekterm alleen uit algemene woorden, dan valt hij terug op de oude, losse
+ * regel; strenger zijn zou dan alles wegfilteren.
+ *
+ * Dit is een grove voorfilter. De echte beoordeling ("past dit qua uitstraling,
+ * prijsklasse en doelgroep?") doet de semantische laag in product-relevance.ts.
+ */
 export function isRelevantToQuery(query: string, p: SupplierProduct): boolean {
   const tokens = queryTokens(query)
   if (tokens.length === 0) return true   // geen bruikbare zoekwoorden → niet filteren
+
   const haystack = `${p.title} ${p.description ?? ''} ${p.category ?? ''}`
     .toLowerCase().split(/\s+/).map(normToken)
   const hay = new Set(haystack)
   // substring-match als extra kans (bv. "blender" in "blenderbottle")
-  return tokens.some(t => hay.has(t) || haystack.some(h => h.length >= 4 && h.includes(t)))
+  const matches = (t: string): boolean => hay.has(t) || haystack.some(h => h.length >= 4 && h.includes(t))
+
+  const meaningful = tokens.filter(t => !GENERIC_MODIFIERS.has(t))
+  if (meaningful.length === 0) return tokens.some(matches)
+  return meaningful.some(matches)
 }
 
 // ── Mapping helpers ────────────────────────────────────────────────────────────
