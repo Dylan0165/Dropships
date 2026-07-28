@@ -110,17 +110,59 @@ jobs:
 
       - name: Health check (API + UI)
         run: |
-          sleep 6
-          echo "— API:"
-          curl -fsS http://localhost:3001/api/health >/dev/null && echo "  /api/health OK"
-          # Bewijst dat de Vite-build ook echt geserveerd wordt (was 'Cannot GET /')
+          # De server draait onder tsx en compileert bij het opstarten de hele
+          # server-boom; dat kost tientallen seconden op een koude modulecache.
+          # Eén `sleep 6` was daarvoor te kort — vandaar een wachtlus in plaats
+          # van een vaste pauze.
+          echo "— API (wachten tot :3001 luistert, max 120s):"
+          for i in $(seq 1 40); do
+            if curl -fsS http://localhost:3001/api/health >/dev/null 2>&1; then
+              echo "  /api/health OK na ~$((i*3))s"
+              break
+            fi
+            if [ "$i" = "40" ]; then
+              echo "::error::/api/health reageerde niet binnen 120s"
+              echo "── pm2 list ──";               pm2 list || true
+              echo "── laatste 80 logregels ──";   pm2 logs uicontrol --lines 80 --nostream || true
+              echo "── luisterende poorten ──";    (ss -ltnp 2>/dev/null || netstat -ltnp 2>/dev/null) | head -20 || true
+              exit 1
+            fi
+            sleep 3
+          done
+
+          # Bewijst dat de Vite-build ook echt geserveerd wordt (was 'Cannot GET /').
+          # Niet-ingelogd geeft de gate een 302 naar /login — dat is een gezond
+          # antwoord en telt dus als geslaagd; alleen een 5xx of een ontbrekende
+          # bundel is fout.
           echo "— UI:"
           code=$(curl -s -o /tmp/ui-root.html -w '%{http_code}' http://localhost:3001/)
-          if [ "$code" != "200" ] || ! grep -qi '<div id="root"' /tmp/ui-root.html; then
-            echo "::error::UI-root gaf HTTP $code zonder React-mountpoint — is 'npm run build' gelukt en staat UIcontrol/dist er?"
-            head -c 200 /tmp/ui-root.html; exit 1
-          fi
-          echo "  / serveert de UI-build OK (HTTP $code)"
+          case "$code" in
+            302)
+              loc=$(curl -s -o /dev/null -w '%{redirect_url}' http://localhost:3001/)
+              echo "  / → 302 naar $loc (auth-gate actief) OK"
+              login=$(curl -s -o /tmp/ui-login.html -w '%{http_code}' http://localhost:3001/login)
+              if [ "$login" != "200" ]; then
+                echo "::error::/login gaf HTTP $login"; head -c 200 /tmp/ui-login.html; exit 1
+              fi
+              echo "  /login serveert de inlogpagina OK"
+              ;;
+            200)
+              if ! grep -qi '<div id="root"' /tmp/ui-root.html; then
+                echo "::error::UI-root gaf 200 zonder React-mountpoint — is 'npm run build' gelukt en staat UIcontrol/dist er?"
+                head -c 200 /tmp/ui-root.html; exit 1
+              fi
+              echo "  / serveert de UI-build OK (HTTP 200)"
+              ;;
+            *)
+              echo "::error::UI-root gaf onverwachte HTTP $code"
+              head -c 200 /tmp/ui-root.html; exit 1
+              ;;
+          esac
+
+          # De publieke etalage hoort zonder login te werken
+          echo "— Kopers-dashboard:"
+          m=$(curl -s -o /tmp/market.html -w '%{http_code}' http://localhost:3001/market)
+          if [ "$m" = "200" ]; then echo "  /market OK (HTTP 200)"; else echo "::warning::/market gaf HTTP $m"; fi
 
       # De Cloudflare NAMED tunnel draait als losse, altijd-aan systemd-service
       # (cloudflared.service) met een STABIELE URL — niet per deploy opnieuw
