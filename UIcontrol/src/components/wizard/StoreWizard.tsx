@@ -833,14 +833,16 @@ export function StoreWizard({ onClose, onStarted }: Props) {
                   </p>
                 )}
                 {manualResults.length > 0 && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-3">
+                  <div className="grid grid-cols-2 lg:grid-cols-3 gap-2.5 mt-3">
                     {visibleManualResults.map(p => (
                       <ProductCard
                         key={p.productId}
                         p={p}
-                        selected={selectedProducts.has(p.productId)}
-                        disabled={!selectedProducts.has(p.productId) && selectedProducts.size >= MAX_SELECT}
-                        onToggle={() => toggleProduct(p)}
+                        selected={!replacing && selectedProducts.has(p.productId)}
+                        // Bij vervangen mag de max-selectie niet blokkeren: er
+                        // gaat er immers één uit en één in.
+                        disabled={!replacing && !selectedProducts.has(p.productId) && selectedProducts.size >= MAX_SELECT}
+                        onToggle={() => (replacing ? replaceProduct(replacing, p) : toggleProduct(p))}
                       />
                     ))}
                   </div>
