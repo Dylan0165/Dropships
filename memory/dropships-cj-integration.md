@@ -45,6 +45,12 @@ Sinds 9 juli 2026 is EU **een label en een sorteervoorkeur, geen filter**.
 `searchProducts` doet EU-passes plus één globale pass en sorteert EU-eerst
 (`sortByShippingPreference`).
 
+Sinds 28 juli 2026 zijn dat **3 representatieve EU-warehouses** (DE/FR/PL,
+`CJ_SEARCH_WAREHOUSES`) in plaats van alle zeven. De globale pass ziet toch alle
+voorraad; de landen-passes bestaan alleen om het warehouse — en dus de levertijd —
+te kunnen taggen. Zeven landen taggen niet méér dan drie, ze kosten alleen vier
+extra calls per zoekterm. Met een assortiment van 12 producttypes tikt dat aan.
+
 `shippingDaysFor(warehouse)`:
 
 | Warehouse | Levertijd |
