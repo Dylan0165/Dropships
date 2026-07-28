@@ -10,7 +10,12 @@ import { getSupplier } from './suppliers/index.js'
 import type { SupplierProduct } from './suppliers/index.js'
 import { mcpProductDiscovery } from './suppliers/cj-mcp-search.js'
 import { isMcpConfigured, McpUnavailableError } from './suppliers/cj-mcp-client.js'
+import { getCjSearchStats } from './suppliers/cj-adapter.js'
 import { scoreRelevance, type RelevanceVerdict } from './suppliers/product-relevance.js'
+import { generateProductTypes, type TypeJudge } from './suppliers/product-types.js'
+import {
+  buildAssortment, ASSORTMENT_MIN, ASSORTMENT_MAX, type AssortmentPick,
+} from './suppliers/assortment.js'
 
 const LLM_BASE = process.env.LLM_BASE_URL ?? 'https://api.deepseek.com/v1'
 const USD_TO_EUR = 0.92
