@@ -53,6 +53,10 @@ export function buildStorePage(input: BuildPageInput): BuildPageResult {
   const { dna, layout, brandName, products, content, subdomain } = input
   const log = input.onLog ?? (() => { /* stil */ })
 
+  // Producttypes uit het assortiment: sturen zowel de categorie-indeling op de
+  // pagina als de keuze van de productweergave.
+  const productTypes = [...new Set(products.map(p => p.productType).filter((t): t is string => !!t))]
+
   try {
     const selection = buildSelection(dna, layout, {
       brandName,
