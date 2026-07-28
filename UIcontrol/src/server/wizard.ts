@@ -131,6 +131,28 @@ JSON formaat:
 
 // ── Stap 2: product shortlist ─────────────────────────────────────────────────
 
+export interface ShortlistResult {
+  candidates: number
+  shortlist: ShortlistedProduct[]
+  supplierIsMock: boolean
+  searchTermsTried: string[]
+  searchTermUsed: string | null
+  source: 'mcp' | 'rest' | 'mock'
+  /**
+   * Uitslag van de semantische poort. `verdicts` bevat ÓÓK de afgewezen
+   * producten met hun score en reden — zonder dat kan niemand nakijken waarom
+   * een lijst kort is, en dat is precies waarom er ooit stilzwijgend werd
+   * aangevuld met producten die er niet hoorden.
+   */
+  relevance: {
+    evaluated: number
+    rejected: number
+    verdicts: RelevanceVerdict[]
+    /** Gevuld als de beoordeling niet kon draaien; dan is er niets weggegooid. */
+    skipped?: string
+  }
+}
+
 export interface ShortlistedProduct extends SupplierProduct {
   reason: string
   suggestedPriceEur: number
@@ -220,7 +242,7 @@ export async function buildShortlist(
   niche: string,
   persona: WizardPersona,
   options: { maxResults?: number } = {},
-): Promise<{ candidates: number; shortlist: ShortlistedProduct[]; supplierIsMock: boolean; searchTermsTried: string[]; searchTermUsed: string | null; source: 'mcp' | 'rest' | 'mock' }> {
+): Promise<ShortlistResult> {
   const adapter = getSupplier('cj')
   const { candidates, searchTermsTried, searchTermUsed, source } =
     await discoverCandidates(niche, persona, options.maxResults ?? 30)
