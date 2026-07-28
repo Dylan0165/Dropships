@@ -256,7 +256,7 @@ export function StoreWizard({ onClose, onStarted }: Props) {
     setLoadingShortlist(true)
     setError(null)
     setCjError(null)
-    postJson<{ shortlist: ShortlistProduct[]; supplierIsMock: boolean; searchTermUsed?: string | null; source?: 'mcp' | 'rest' | 'mock'; relevance?: { evaluated: number; rejected: number; verdicts: RelevanceVerdict[]; skipped?: string } }>('/api/wizard/shortlist', {
+    postJson<{ shortlist: ShortlistProduct[]; supplierIsMock: boolean; searchTermUsed?: string | null; source?: 'mcp' | 'rest' | 'mock'; relevance?: { evaluated: number; rejected: number; verdicts: RelevanceVerdict[]; skipped?: string }; assortment?: AssortmentInfo }>('/api/wizard/shortlist', {
       niche: idea,
       persona: chosenDirection.persona,
     })
@@ -267,9 +267,12 @@ export function StoreWizard({ onClose, onStarted }: Props) {
         setProductSource(data.source ?? null)
         setRejected((data.relevance?.verdicts ?? []).filter(v => !v.accepted))
         setRelevanceSkipped(data.relevance?.skipped ?? null)
-        // Pre-selecteer de top 8 (of minder) — de store toont 6-15 producten
+        setAssortment(data.assortment ?? null)
+        // Het hele assortiment staat aan: de zoeker heeft al één product per
+        // producttype gekozen. Selectief zijn kan alsnog, maar de standaard is
+        // de complete winkel — niet een willekeurige kop van de lijst.
         const pre = new Map<string, ShortlistProduct>()
-        for (const p of (data.shortlist ?? []).slice(0, Math.min(8, MAX_SELECT))) pre.set(p.productId, p)
+        for (const p of (data.shortlist ?? []).slice(0, MAX_SELECT)) pre.set(p.productId, p)
         setSelectedProducts(pre)
       })
       // CJ-fout (auth/rate-limit/netwerk) → toon de reden, val NIET stil terug op mock
