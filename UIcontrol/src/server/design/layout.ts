@@ -106,36 +106,22 @@ export const PRODUCTS_MIN = 6
 export const PRODUCTS_MAX = 15
 
 /**
- * Bepaalt hoeveel producten een store toont — varieert per store tussen 6 en 15.
- * Impulsaankoop-niches krijgen een compactere collectie, overwogen aankopen een
- * bredere. Deterministisch geseed zodat twee stores een ander aantal krijgen.
+ * Begrenst de collectie tot wat een pagina aankan — en doet verder NIETS.
+ *
+ * Hier zat tot 28 juli 2026 een opvul-fallback: had een store minder dan zes
+ * producten, dan werden de bestaande producten gekloond met een `--v1`-suffix
+ * tot het er zes waren. Dat gaf winkels die vol leken maar drie keer hetzelfde
+ * item toonden — en het verhulde het echte probleem, namelijk dat er maar één
+ * producttype doorzocht werd. De collectie komt nu uit het assortiment
+ * (suppliers/assortment.ts): 7-15 VERSCHILLENDE producten, of eerlijk minder.
+ *
+ * Er wordt ook niet meer teruggeschaald naar een geseed doel-aantal: producten
+ * die de gebruiker in de wizard heeft gekozen mogen niet stilzwijgend van de
+ * pagina verdwijnen. De variatie in collectie-grootte komt van de niche zelf.
  */
-export function deriveProductCount(seed: number, nicheType?: string): number {
-  const rng = rngFrom(seed ^ 0x50f7)
-  let lo = PRODUCTS_MIN, hi = PRODUCTS_MAX
-  if (nicheType === 'impulse') { lo = 6; hi = 10 }
-  else if (nicheType === 'considered') { lo = 9; hi = 15 }
-  return lo + Math.floor(rng() * (hi - lo + 1))
-}
-
-/**
- * Past een productlijst aan tot een doel-aantal:
- * - genoeg producten → toont er `target` (max 15)
- * - te weinig (< 6) → vult aan tot minimaal 6 door te cyclen (unieke display-id,
- *   supplier-velden blijven gelijk zodat fulfillment naar het juiste CJ-product wijst)
- * Zo heeft elke store een volle, maar variabel grote collectie.
- */
-export function fitProducts<T extends { id: string }>(products: T[], target: number, _seed = 0): T[] {
-  if (products.length === 0) return []
-  const desired = products.length >= PRODUCTS_MIN
-    ? Math.min(target, products.length)
-    : PRODUCTS_MIN
-  const out: T[] = []
-  for (let i = 0; i < desired; i++) {
-    const src = products[i % products.length]
-    out.push(i < products.length ? src : { ...src, id: `${src.id}--v${Math.floor(i / products.length) + 1}` })
-  }
-  return out
+export function fitProducts<T extends { id: string }>(products: T[]): T[] {
+  if (products.length <= PRODUCTS_MAX) return [...products]
+  return products.slice(0, PRODUCTS_MAX)
 }
 
 // ── Toon → passende hero/product varianten ────────────────────────────────────
