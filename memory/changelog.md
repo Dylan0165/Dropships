@@ -2,6 +2,25 @@
 
 Nieuwste bovenaan. Zie `ai-must-read/release-and-changelog.md` voor het formaat.
 
+## 2026-07-28 — WebSocket zat buiten de 2FA-gate
+**Tag:** volgt hieronder
+
+- `/ws` loopt via `server.on('upgrade')` op de HTTP-server en gaat dus buiten
+  Express om — `requireAuth` kwam er nooit langs. Iedereen die het adres kende
+  kon zonder in te loggen meelezen met live pipeline- en build-updates.
+- `sessionUserFromCookieHeader()` in `auth-routes.ts` hergebruikt
+  `getSessionUser()`; alleen het uitlezen van de rauwe Cookie-header is extra.
+  De sessielogica blijft daarmee op één plek.
+- Ook een **origin-controle**: WebSockets kennen geen CORS, dus de browser
+  stuurt de cookie ook mee bij een handshake vanaf een vreemde site.
+  `SameSite=Strict` dekt dat af, maar niet als die vlag ooit versoepeld wordt.
+- Afwijzen met een echt `401`/`403` vóór `socket.destroy()` — een kale destroy
+  geeft alleen een vage netwerkfout en is niet met curl te controleren.
+- **Geverifieerd (10/10):** zonder cookie, met een verzonnen token, met een
+  irrelevante cookie en ná uitloggen → `HTTP 401`; met sessie → `HTTP 101` plus
+  ping/pong; vreemde origin → `403`. Het echte dashboard in een headless browser
+  verbindt nog gewoon en toont Live groen.
+
 ## 2026-07-28 — WebSocket verbond met een hardgecodeerde poort 3001
 **Tag:** volgt hieronder
 
