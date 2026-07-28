@@ -89,6 +89,31 @@ Uitzonderingen staan op **één plek**: `isPublicPath()` in `auth-routes.ts`.
 
 Voeg je een route toe die publiek moet zijn, dan hoort die hier — nergens anders.
 
+## De WebSocket valt NIET onder de middleware
+
+`/ws` loopt via `server.on('upgrade')` op de HTTP-server en gaat dus volledig
+buiten Express om: geen cookie-parser, geen middleware, **niet langs
+`requireAuth`**. Dat is precies zo lang een gat geweest: iedereen die het adres
+kende kon zonder in te loggen meelezen met live pipeline- en build-updates.
+
+De upgrade-handler in `index.ts` doet daarom zelf drie dingen:
+
+1. **Pad** — vergelijkt de pathname, zodat `/ws?runId=…` niet stil geweigerd wordt.
+2. **Origin** — WebSockets kennen geen CORS: de browser stuurt de cookie ook mee
+   bij een handshake vanaf een vreemde site. `SameSite=Strict` dekt dat af, maar
+   de expliciete controle vangt het ook af als die vlag ooit versoepeld wordt.
+3. **Sessie** — via `sessionUserFromCookieHeader()` in `auth-routes.ts`, dat
+   `getSessionUser()` hergebruikt. Alleen het uitlezen van de rauwe
+   `Cookie`-header is extra; de sessielogica blijft op één plek.
+
+Afwijzen gebeurt met een echt HTTP-antwoord (`401`/`403`) vóór `socket.destroy()`.
+Een kale destroy geeft de browser alleen een vage netwerkfout en is niet met
+curl te controleren.
+
+> **Denk hieraan bij elk nieuw kanaal dat niet via Express loopt** — SSE op de
+> rauwe server, een tweede WS-endpoint, een raw TCP-listener. De gate beschermt
+> alleen wat door de middleware-keten komt.
+
 ## Lokaal testen
 
 `AUTH_INSECURE_COOKIES=1` zet de `Secure`-vlag uit zodat inloggen over plain http
