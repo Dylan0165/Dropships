@@ -59,6 +59,29 @@ interface ShortlistProduct {
   /** Semantische relevantie 1-10 uit de tweede filterlaag (product-relevance.ts). */
   relevanceScore?: number
   relevanceReason?: string
+  /** Producttype uit het assortiment ("beard oil") — Engels, komt op de winkel. */
+  productType?: string
+  productTier?: 'entry' | 'mid' | 'premium'
+  typeRole?: string
+}
+
+/** Wat één producttype opleverde — maakt een korte lijst navolgbaar. */
+interface TypeAttempt {
+  typeId: string
+  name: string
+  terms: string[]
+  candidates: number
+  chosen?: { productId: string; title: string; score?: number }
+  note?: string
+}
+
+interface AssortmentInfo {
+  types: Array<{ id: string; name: string; searchTerm: string; tier: string; role: string }>
+  attempts: TypeAttempt[]
+  distinctTypes: number
+  searchCalls: number
+  shortfall?: string
+  typesFallback?: string
 }
 
 /** Afgewezen kandidaat — wél tonen, zodat een korte lijst navolgbaar is. */
