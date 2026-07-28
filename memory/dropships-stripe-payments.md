@@ -104,9 +104,25 @@ LAN-adressen. Via de named tunnel is dat `https://api.clynado.com/api/webhooks/s
 
 Het endpoint moet handmatig in het Stripe-dashboard geconfigureerd worden.
 
-## Auth-uitzondering
+## Auth-uitzonderingen
 
-`/api/webhooks/stripe` staat in `isPublicPath()` (`auth-routes.ts`) — Stripe
-stuurt geen sessiecookie mee. Geverifieerd: zonder login geeft het endpoint 400
-(bereikt de handler), niet 401 (geblokkeerd door de gate). Zie
-`dropships-auth.md`.
+Twee betaal-gerelateerde routes staan in `isPublicPath()` (`auth-routes.ts`):
+
+- `/api/webhooks/stripe` — Stripe stuurt geen sessiecookie mee. Geverifieerd:
+  zonder login geeft het endpoint 400 (bereikt de handler), niet 401.
+- `/api/checkout/session` — wordt aangeroepen vanuit een store-domein. Beveiligd
+  met de origin-check hierboven in plaats van een sessie.
+
+> **Les die dit kostte:** toen de 2FA-gate erbij kwam, was
+> `/api/checkout/session` vergeten. Checkout was daardoor volledig kapot —
+> elke betaalpoging kreeg `401 Niet ingelogd`. Het viel niet op omdat er geen
+> test op stond. Sindsdien is er `npm run verify:checkout`.
+
+## Regressietests
+
+```bash
+npm run verify:checkout      # origin, winkelstatus, prijs, CORS (23 assertions)
+npm run verify:fulfillment   # tot en met ondertekende webhook + CJ-order (11)
+```
+
+Zie `UIcontrol/scripts/README.md` voor de env die de server nodig heeft.
