@@ -175,6 +175,18 @@ Fill the `components` field:
   cheap impulse niche, `premium`/`considered` for a considered purchase).
 - Choose ids that VARY the store from a generic layout — two different stores
   should rarely share the same set.
+- **Match the products component to the actual collection.** Count the products
+  in `previous_agent_output.products` before choosing:
+  - 9 or more → a catalog view: `products.grid-4`, `products.masonry`,
+    `products.list-compact`, or `products.category-tabs`.
+  - 3 or more distinct `product_type` values AND 8+ products →
+    `products.category-tabs` is the right answer: it lets a visitor browse per
+    category instead of scrolling one undifferentiated list.
+  - 5 or fewer → a curated view: `products.editorial-list`,
+    `products.featured-grid`, `products.spotlight-stack`.
+  A `few-products` component with twelve products becomes an endless wall; a
+  `many-products` component with three leaves holes. The pipeline corrects an
+  obvious mismatch, but it corrects toward a generic choice — yours is better.
 - Only use ids and styles that exist in the catalog. Only use `props` keys listed
   for that component; leave text props empty to accept sensible English defaults,
   or supply concrete English copy.
