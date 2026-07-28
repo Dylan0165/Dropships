@@ -153,6 +153,9 @@ export function StoreWizard({ onClose, onStarted }: Props) {
   const [showRejected, setShowRejected] = useState(false)
   const [assortment, setAssortment] = useState<AssortmentInfo | null>(null)
   const [showTypes, setShowTypes] = useState(false)
+  // Bewuste keuze bij een te kleine collectie: pas als dit true is mag je door.
+  const [acceptedSmall, setAcceptedSmall] = useState(false)
+  const [broadened, setBroadened] = useState(false)
   const [sortKey, setSortKey] = useState<SortKey>('relevance')
   const [replacing, setReplacing] = useState<string | null>(null)
   const [supplierIsMock, setSupplierIsMock] = useState(false)
