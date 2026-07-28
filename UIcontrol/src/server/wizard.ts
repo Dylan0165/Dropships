@@ -352,12 +352,12 @@ function toShortlisted(
 export async function buildShortlist(
   niche: string,
   persona: WizardPersona,
-  options: { maxResults?: number; min?: number; max?: number } = {},
+  options: { maxResults?: number; min?: number; max?: number; broaden?: boolean } = {},
 ): Promise<ShortlistResult> {
   const adapter = getSupplier('cj')
   const judge: TypeJudge = (system, user) => chatJson(system, user, { maxTokens: 3072, temperature: 0.3 })
 
-  const gen = await generateProductTypes(niche, persona, judge)
+  const gen = await generateProductTypes(niche, persona, judge, { broaden: options.broaden })
   // Eén type = de generatie is mislukt → oude gedrag, inclusief MCP.
   if (gen.types.length <= 1) {
     console.warn(`[wizard] geen producttype-lijst (${gen.fallback ?? 'onbekend'}) — terug naar één-zoekterm-discovery`)
