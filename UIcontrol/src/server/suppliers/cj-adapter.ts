@@ -26,7 +26,9 @@ import {
 
 const CJ_BASE = process.env.CJ_BASE_URL ?? 'https://developers.cjdropshipping.com/api2.0/v1'
 const AUTH_MIN_INTERVAL_MS = 5 * 60_000     // CJ: getAccessToken max 1× per 5 min
-const REQUEST_SPACING_MS = 1_100            // CJ: ~1 request per seconde
+// CJ: ~1 request per seconde. Alleen verlagen in tests (dan gaat er geen echt
+// verkeer naar CJ) — op productie is dit de bodem waar de rate limit op staat.
+const REQUEST_SPACING_MS = parseInt(process.env.CJ_REQUEST_SPACING_MS ?? '1100', 10)
 const MARKUP_FACTOR = 2.8                   // default verkoopprijs-indicatie
 
 // ── Zoek-passes per zoekterm ──────────────────────────────────────────────────
