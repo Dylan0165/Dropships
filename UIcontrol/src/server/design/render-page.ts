@@ -19,6 +19,12 @@ export interface RenderProduct {
   badge?: string
   description?: string
   bullets?: string[]
+  /**
+   * Producttype uit het assortiment ("baardolie", "trimmer"). Maakt van tien
+   * losse producten een navigeerbare collectie: de categorie-tabs en de
+   * sectie-indeling groeperen hierop.
+   */
+  productType?: string
   supplier?: string
   supplierProductId?: string
   supplierVariantId?: string
