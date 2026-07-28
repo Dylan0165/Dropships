@@ -2,11 +2,52 @@
 // Draait tegen de database (poort-allocatie, prijzen, overrides) en tegen een
 // draaiende server voor de verwijder-flow met bevestiging.
 import fs from 'node:fs'
+import { generateSync } from 'otplib'
 import db, { allocatePort, releasePort } from '../src/server/db.js'
 import { mergedStore, saveOverrides, applyPriceChange } from '../src/server/store-admin.js'
 import { recordCombination, combinationHash, combinationTaken } from '../src/server/design/uniqueness.js'
 
 const B = process.env.TEST_BASE ?? 'http://127.0.0.1:3313'
+
+// Store-beheer zit achter de 2FA-gate — dat is het punt. De test logt dus echt
+// in met een wegwerp-account en houdt de sessiecookie vast.
+const jar = new Map<string, string>()
+async function api(path: string, opts: { method?: string; body?: unknown } = {}) {
+  const r = await fetch(B + path, {
+    method: opts.method ?? 'GET',
+    redirect: 'manual',
+    headers: { 'Content-Type': 'application/json', ...(jar.size ? { Cookie: [...jar].map(([k, v]) => `${k}=${v}`).join('; ') } : {}) },
+    ...(opts.body !== undefined ? { body: JSON.stringify(opts.body) } : {}),
+  })
+  for (const c of r.headers.getSetCookie?.() ?? []) {
+    const [pair] = c.split(';'); const i = pair.indexOf('=')
+    const n = pair.slice(0, i).trim(), v = pair.slice(i + 1).trim()
+    if (v === '') jar.delete(n); else jar.set(n, v)
+  }
+  const t = await r.text()
+  let j: Record<string, unknown> | null = null
+  try { j = JSON.parse(t) } catch { /* html */ }
+  return { status: r.status, json: j }
+}
+
+const LOGIN_USER = process.env.TEST_USER ?? 'fernando'
+const LOGIN_PW = 'StoreBeheerTest99!'
+
+async function login(): Promise<boolean> {
+  const begin = await api('/api/auth/setup/begin', { method: 'POST', body: { username: LOGIN_USER, password: LOGIN_PW } })
+  if (begin.status !== 200) return false
+  const secret = String(begin.json?.secret ?? '')
+  const used: string[] = []
+  const fresh = async () => {
+    let c = generateSync({ secret })
+    for (let i = 0; i < 35 && used.includes(c); i++) { await new Promise(r => setTimeout(r, 1000)); c = generateSync({ secret }) }
+    used.push(c); return c
+  }
+  await api('/api/auth/setup/complete', { method: 'POST', body: { username: LOGIN_USER, password: LOGIN_PW, token: await fresh() } })
+  await api('/api/auth/login', { method: 'POST', body: { username: LOGIN_USER, password: LOGIN_PW } })
+  const two = await api('/api/auth/verify-2fa', { method: 'POST', body: { token: await fresh() } })
+  return two.status === 200
+}
 let pass = 0, fail = 0
 const out: string[] = []
 const say = (s: string) => { console.log(s); out.push(s) }
