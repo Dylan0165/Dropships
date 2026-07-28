@@ -7,13 +7,11 @@ import type { TemplateName } from '../store-platform/template-engine.js'
 import { deriveDesignDNA, fallbackPersona, type PersonaLike } from '../design/tokens.js'
 import { DesignPlanSchema, applyDesignPlan } from '../design/design-plan.js'
 import { selectLayout, recordLayout, deriveProductCount, fitProducts } from '../design/layout.js'
-import { renderStorePage, type RenderProduct } from '../design/render-page.js'
-import { assemblePage } from '../design/components/assemble.js'
-import { buildSelection, ComponentSelectionSchema } from '../design/components/selection.js'
+import type { RenderProduct } from '../design/render-page.js'
+import { buildStorePage } from '../design/build-page.js'
+import { ComponentSelectionSchema } from '../design/components/selection.js'
 import { catalogForPrompt } from '../design/components/registry.js'
 import { sanitizeCopyDeep } from '../design/sanitize.js'
-import { selectMotionProfile, motionCharacterIds } from '../design/anime-presets.js'
-import { ensureUniqueCombination, paletteKey } from '../design/uniqueness.js'
 import {
   generateReviews, generateStory, generateCtaBand,
   buildNavLinks, buildFooterLinks, heroLabel, badgeFor,

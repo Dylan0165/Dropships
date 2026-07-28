@@ -187,12 +187,34 @@ async function writeNextScaffold(targetDir: string, data: StoreData): Promise<vo
     runId:        data.runId ?? '',
   })
 
-  fs.writeFileSync(path.join(targetDir, 'app', 'page.tsx'), renderStorePage(dna, layout, content, products), 'utf-8')
+  // DEZELFDE assemblage als de pipeline (design/build-page.ts). Dit riep eerder
+  // rechtstreeks `renderStorePage` aan — de oude, vrije renderer — waardoor een
+  // store die via het beheerscherm herbouwd werd stilzwijgend z'n componenten,
+  // topbar en bewegingslaag verloor.
+  const built = buildStorePage({
+    dna, layout,
+    brandName: data.brand_name,
+    niche: data.niche,
+    subdomain: data.subdomain ?? data.brand_name,
+    products, content,
+    interests: persona.interests ?? [],
+    onLog: (m) => console.log(`[store-platform] ${m}`),
+  })
+  fs.writeFileSync(path.join(targetDir, 'app', 'page.tsx'), built.page, 'utf-8')
+
+  // Meta wegschrijven zoals de pipeline dat doet, zodat je van élke store kunt
+  // nakijken welke renderer hem gemaakt heeft.
+  fs.writeFileSync(path.join(targetDir, 'design-dna.json'), JSON.stringify({
+    tone: dna.tone, palette: dna.palette, typography: dna.typography, shape: dna.shape,
+    layout, seed: dna.seed, components: built.componentMeta, uniqueness: built.uniqueMeta,
+    builtBy: 'store-platform/writeNextScaffold',
+  }, null, 2), 'utf-8')
+
   buildLayoutSharedFiles(targetDir, vars)
-  buildCheckoutAndInfoPages(targetDir, vars)
+  buildCheckoutAndInfoPages(targetDir, vars, dna)
   ensureTailwindSupport(targetDir)
 
-  console.log(`[store-platform] Store gegenereerd (tone=${dna.tone}, hero=${layout.hero}) voor ${data.brand_name}`)
+  console.log(`[store-platform] Store gegenereerd (tone=${dna.tone}, hero=${layout.hero}, renderer=${built.usedCatalog ? 'component-catalog' : 'FALLBACK'}) voor ${data.brand_name}`)
 }
 
 function defaultUspsEn(): Array<{ title: string; desc: string }> {
