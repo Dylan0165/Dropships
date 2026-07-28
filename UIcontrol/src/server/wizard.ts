@@ -296,23 +296,37 @@ JSON formaat:
     { maxTokens: 3072, temperature: 0.4 },
   )
 
-  const byId = new Map(candidates.map(p => [p.productId, p]))
+  // Alleen producten die de relevantie-poort haalden mogen gekozen worden; een
+  // id dat de LLM erbij verzint of uit de afgewezen groep haalt valt af.
+  const byId = new Map(relevant.map(p => [p.productId, p]))
   const shortlist: ShortlistedProduct[] = []
   for (const pick of selection.shortlist ?? []) {
     const product = byId.get(pick.id)
     if (!product) continue
     const costEur = Math.round(product.costPrice * USD_TO_EUR * 100) / 100
     const price = pick.suggestedPriceEur > costEur ? pick.suggestedPriceEur : (product.suggestedPrice ?? costEur * 2.8)
+    const verdict = verdictById.get(product.productId)
     shortlist.push({
       ...product,
       reason: pick.reason ?? '',
       suggestedPriceEur: Math.round(price * 100) / 100,
       marginEur: Math.round((price - costEur) * 100) / 100,
       marginPct: Math.round(((price - costEur) / price) * 100),
+      relevanceScore: verdict?.score,
+      relevanceReason: verdict?.reason,
     })
   }
 
-  return { candidates: candidates.length, shortlist, supplierIsMock: adapter.isMock, searchTermsTried, searchTermUsed, source }
+  return {
+    candidates: candidates.length, shortlist, supplierIsMock: adapter.isMock,
+    searchTermsTried, searchTermUsed, source,
+    relevance: {
+      evaluated: candidates.length,
+      rejected: relevance.verdicts.filter(v => !v.accepted).length,
+      verdicts: relevance.verdicts,
+      skipped: relevance.skipped,
+    },
+  }
 }
 
 // ── Stap 3: site-structuur voorstel ──────────────────────────────────────────
