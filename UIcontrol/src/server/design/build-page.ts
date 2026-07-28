@@ -128,6 +128,8 @@ export function buildStorePage(input: BuildPageInput): BuildPageResult {
         renderer: 'component-catalog', source: selection.source, iconTheme: selection.iconTheme,
         topbar: selection.topbar.id, motion: { id: activeMotion.id, label: activeMotion.label },
         used: assembled.usedComponents, cssConflicts: assembled.cssConflicts,
+        collection: { products: products.length, types: productTypes },
+        notes: selection.notes,
       },
       uniqueMeta: { hash: unique.hash, combination: unique.combination, attempts: unique.attempts, rotated: unique.rotated },
     }
