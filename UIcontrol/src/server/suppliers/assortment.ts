@@ -182,7 +182,7 @@ export async function buildAssortment(opts: AssortmentOptions): Promise<Assortme
         continue
       }
       const v = byId.get(best.productId)
-      picks.push({ product: best, typeId: t.id, typeName: t.name, tier: t.tier, score: v?.score, reason: v?.reason })
+      picks.push({ product: best, typeId: t.id, typeName: t.name, typeRole: t.role, tier: t.tier, score: v?.score, reason: v?.reason })
       takenProducts.add(best.productId)
       perTypeCount.set(t.id, 1)
       if (attempt) attempt.chosen = { productId: best.productId, title: best.title, score: v?.score }
