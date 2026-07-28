@@ -313,7 +313,11 @@ export async function removeDeployedStore(subdomain: string, onLog?: (msg: strin
 function readConfPort(confPath: string): number | null {
   try {
     const txt = fs.readFileSync(confPath, 'utf-8')
-    for (const m of txt.matchAll(/listen\s+(\d{2,5})\s*;/g)) {
+    // Matcht zowel `listen 4001;` (oude confs) als `listen 127.0.0.1:4001;`
+    // (huidige vorm, loopback-only). Zonder het optionele adres-deel zou de
+    // poort-scan na de loopback-wijziging niets meer vinden en zou allocatePort
+    // poorten opnieuw uitdelen die al in gebruik zijn.
+    for (const m of txt.matchAll(/listen\s+(?:[\d.]+:|\[[^\]]+\]:)?(\d{2,5})\s*;/g)) {
       const p = parseInt(m[1], 10)
       if (p !== 80 && p > 1024) return p
     }
