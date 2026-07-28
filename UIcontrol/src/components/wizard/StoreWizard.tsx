@@ -55,7 +55,22 @@ interface ShortlistProduct {
   suggestedPriceEur?: number
   marginEur?: number
   marginPct?: number
+  url?: string
+  /** Semantische relevantie 1-10 uit de tweede filterlaag (product-relevance.ts). */
+  relevanceScore?: number
+  relevanceReason?: string
 }
+
+/** Afgewezen kandidaat — wél tonen, zodat een korte lijst navolgbaar is. */
+interface RelevanceVerdict {
+  productId: string
+  title: string
+  score: number
+  reason: string
+  accepted: boolean
+}
+
+type SortKey = 'relevance' | 'margin' | 'price'
 
 interface SitePage { id: string; title: string; purpose?: string; optional?: boolean }
 
@@ -106,6 +121,11 @@ export function StoreWizard({ onClose, onStarted }: Props) {
 
   // Stap 2 — producten
   const [shortlist, setShortlist] = useState<ShortlistProduct[]>([])
+  const [rejected, setRejected] = useState<RelevanceVerdict[]>([])
+  const [relevanceSkipped, setRelevanceSkipped] = useState<string | null>(null)
+  const [showRejected, setShowRejected] = useState(false)
+  const [sortKey, setSortKey] = useState<SortKey>('relevance')
+  const [replacing, setReplacing] = useState<string | null>(null)
   const [supplierIsMock, setSupplierIsMock] = useState(false)
   const [searchTermUsed, setSearchTermUsed] = useState<string | null>(null)
   const [productSource, setProductSource] = useState<'mcp' | 'rest' | 'mock' | null>(null)
@@ -211,7 +231,7 @@ export function StoreWizard({ onClose, onStarted }: Props) {
     setLoadingShortlist(true)
     setError(null)
     setCjError(null)
-    postJson<{ shortlist: ShortlistProduct[]; supplierIsMock: boolean; searchTermUsed?: string | null; source?: 'mcp' | 'rest' | 'mock' }>('/api/wizard/shortlist', {
+    postJson<{ shortlist: ShortlistProduct[]; supplierIsMock: boolean; searchTermUsed?: string | null; source?: 'mcp' | 'rest' | 'mock'; relevance?: { evaluated: number; rejected: number; verdicts: RelevanceVerdict[]; skipped?: string } }>('/api/wizard/shortlist', {
       niche: idea,
       persona: chosenDirection.persona,
     })
@@ -220,6 +240,8 @@ export function StoreWizard({ onClose, onStarted }: Props) {
         setSupplierIsMock(data.supplierIsMock)
         setSearchTermUsed(data.searchTermUsed ?? null)
         setProductSource(data.source ?? null)
+        setRejected((data.relevance?.verdicts ?? []).filter(v => !v.accepted))
+        setRelevanceSkipped(data.relevance?.skipped ?? null)
         // Pre-selecteer de top 8 (of minder) — de store toont 6-15 producten
         const pre = new Map<string, ShortlistProduct>()
         for (const p of (data.shortlist ?? []).slice(0, Math.min(8, MAX_SELECT))) pre.set(p.productId, p)
@@ -315,10 +337,42 @@ export function StoreWizard({ onClose, onStarted }: Props) {
 
   // Weergave-lijsten: EU-only toggle filtert alleen wat je ZIET; de selectie
   // en de zoekresultaten zelf blijven intact.
-  const visibleShortlist = useMemo(
-    () => euOnly ? shortlist.filter(p => isEuWh(p.warehouse)) : shortlist,
-    [shortlist, euOnly],
-  )
+  const visibleShortlist = useMemo(() => {
+    const base = euOnly ? shortlist.filter(p => isEuWh(p.warehouse)) : shortlist
+    const priceOf = (p: ShortlistProduct) => p.suggestedPriceEur ?? p.costPrice * 0.92 * 2.8
+    const marginOf = (p: ShortlistProduct) => p.marginEur ?? priceOf(p) - p.costPrice * 0.92
+    return [...base].sort((a, b) => {
+      if (sortKey === 'margin') return marginOf(b) - marginOf(a)
+      if (sortKey === 'price') return priceOf(a) - priceOf(b)
+      // Zonder score sorteren die producten naar achteren, niet naar voren:
+      // "onbekend" is geen aanbeveling.
+      return (b.relevanceScore ?? -1) - (a.relevanceScore ?? -1)
+    })
+  }, [shortlist, euOnly, sortKey])
+
+  /**
+   * Vervangt één product door een alternatief, op dezelfde plek in de lijst.
+   * Zonder dit moest je de hele selectie opnieuw laten draaien om één misser
+   * eruit te halen — inclusief een nieuwe ronde CJ-calls.
+   */
+  const replaceProduct = (oldId: string, alt: ShortlistProduct) => {
+    setShortlist(prev => {
+      const i = prev.findIndex(p => p.productId === oldId)
+      if (i < 0) return prev
+      const next = [...prev]
+      next[i] = { ...alt, suggestedPriceEur: alt.suggestedPriceEur ?? Math.max(9.95, Math.floor(alt.costPrice * 0.92 * 2.8) + 0.95) }
+      return next
+    })
+    setSelectedProducts(prev => {
+      if (!prev.has(oldId)) return prev
+      const next = new Map(prev)
+      next.delete(oldId)
+      next.set(alt.productId, alt)
+      return next
+    })
+    setReplacing(null)
+    setManualResults([])
+  }
   const visibleManualResults = useMemo(
     () => euOnly ? manualResults.filter(p => isEuWh(p.warehouse)) : manualResults,
     [manualResults, euOnly],
