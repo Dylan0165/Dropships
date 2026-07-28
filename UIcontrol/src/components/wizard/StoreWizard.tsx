@@ -720,7 +720,26 @@ export function StoreWizard({ onClose, onStarted }: Props) {
                   {euOnly && visibleShortlist.length === 0 && (
                     <p className="text-[11px] text-amber-400">Geen EU-voorraad voor deze zoekopdracht — zet het filter uit om ook 15-30d opties uit China te zien.</p>
                   )}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  {/* Sorteren — je wilt de lijst kunnen kantelen naar wat je nú beoordeelt */}
+                  <div className="flex items-center gap-1.5 text-[11px]">
+                    <span className="text-zinc-500">Sorteer:</span>
+                    {([['relevance', 'relevantie'], ['margin', 'marge'], ['price', 'prijs']] as Array<[SortKey, string]>).map(([k, label]) => (
+                      <button
+                        key={k}
+                        onClick={() => setSortKey(k)}
+                        className={clsx(
+                          'px-2 py-0.5 rounded-md border transition-colors',
+                          sortKey === k
+                            ? 'bg-white/[0.09] border-white/25 text-white'
+                            : 'border-white/[0.08] text-zinc-500 hover:text-zinc-300',
+                        )}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="grid grid-cols-2 lg:grid-cols-3 gap-2.5">
                     {visibleShortlist.map(p => (
                       <ProductCard
                         key={p.productId}
@@ -728,9 +747,48 @@ export function StoreWizard({ onClose, onStarted }: Props) {
                         selected={selectedProducts.has(p.productId)}
                         disabled={!selectedProducts.has(p.productId) && selectedProducts.size >= MAX_SELECT}
                         onToggle={() => toggleProduct(p)}
+                        onReplace={() => {
+                          setReplacing(p.productId)
+                          setManualQuery(p.title.split(/\s+/).slice(0, 3).join(' '))
+                          setManualResults([])
+                        }}
                       />
                     ))}
                   </div>
+
+                  {/* Afgewezen kandidaten — zonder dit is een korte lijst niet te
+                      controleren, en dat was precies waarom er ooit stilzwijgend
+                      werd aangevuld met producten die er niet hoorden. */}
+                  {(rejected.length > 0 || relevanceSkipped) && (
+                    <div className="border border-white/[0.07] rounded-lg overflow-hidden">
+                      <button
+                        onClick={() => setShowRejected(v => !v)}
+                        className="w-full flex items-center justify-between px-3 py-2 text-[11px] text-zinc-400 hover:text-white transition-colors"
+                      >
+                        <span>
+                          {relevanceSkipped
+                            ? `Relevantie-controle overgeslagen (${relevanceSkipped}) — alle kandidaten getoond`
+                            : `${rejected.length} kandidaat/kandidaten weggefilterd op relevantie`}
+                        </span>
+                        {!relevanceSkipped && <span className="text-zinc-600">{showRejected ? 'verbergen' : 'bekijken'}</span>}
+                      </button>
+                      {showRejected && !relevanceSkipped && (
+                        <div className="border-t border-white/[0.07] divide-y divide-white/[0.05]">
+                          {rejected.map(v => (
+                            <div key={v.productId} className="flex items-start gap-2 px-3 py-1.5">
+                              <span className={clsx('px-1.5 rounded border text-[10px] font-semibold flex-shrink-0', scoreTone(v.score))}>
+                                {v.score}/10
+                              </span>
+                              <div className="min-w-0">
+                                <p className="text-[11px] text-zinc-300 truncate">{v.title}</p>
+                                <p className="text-[10px] text-zinc-500">{v.reason}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </>
               )}
 
