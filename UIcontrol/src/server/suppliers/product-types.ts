@@ -137,8 +137,10 @@ die samen een logisch, aantrekkelijk aanbod vormen.
 
 Harde regels:
 - Elk type is een ANDER product, geen synoniem of variant van een ander type in de lijst.
-  Fout: "baardolie" + "baard olie" + "olie voor baard". Goed: olie, balsem, trimmer, kam,
-  borstel, groeiserum, shampoo, schaar, opbergtas, cadeauset.
+  Fout: "beard oil" + "oil for beards" + "beard care oil". Goed: oil, balm, trimmer, comb,
+  brush, growth serum, shampoo, scissors, storage bag, gift set.
+- "name" is ENGELS en enkelvoudig ("beard oil") — het verschijnt als categorie op de winkel,
+  en alle klant-facing tekst is Engels. "role" is Nederlands, die leest de operator.
 - Spreid bewust over prijsklassen: enkele instap (entry), de meeste midden (mid),
   2-3 premium. Zo krijgt de winkel prijsspreiding in plaats van tien keer hetzelfde bedrag.
 - Alles moet passen bij dezelfde doelgroep en dezelfde winkel.
