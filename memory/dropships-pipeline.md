@@ -85,8 +85,13 @@ GET  /api/obs/costs?run_id=         kostenaggregatie
   skill-prompts zeggen dat expliciet. Ruwe Nederlandse wizard-input mag nooit
   ongefilterd in de site-copy belanden — die gaat altijd eerst door de
   content-agent.
-- De collectiegrootte varieert per store (6-15 producten, seeded). `fitProducts`
-  vult te dunne sourcing aan tot minimaal 6 met unieke display-id's; de
-  supplier-velden blijven gelijk zodat fulfillment correct blijft.
+- De collectiegrootte komt uit het assortiment: 7-15 **verschillende** producten
+  over evenzoveel producttypes (`suppliers/assortment.ts`). `fitProducts`
+  begrenst alleen op 15. De oude opvulling met klonen (`--v1`-suffix) is op
+  28 juli 2026 verwijderd — die verhulde dat er maar één producttype doorzocht
+  werd. Levert een niche te weinig op, dan zegt de wizard dat met het echte
+  aantal in plaats van de lijst vol te maken.
+- `productType` (Engels) reist mee van de wizard tot in `PRODUCTS` op de pagina
+  en wordt daar de categorie-indeling (`products.category-tabs`).
 - Stage 7 valt terug op de oude renderer als de component-assemblage faalt. Een
   store crasht dus nooit door een slechte LLM-keuze.
