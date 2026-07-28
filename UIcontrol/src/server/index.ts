@@ -1,7 +1,7 @@
 import './load-env.js'
 import express from 'express'
 import cookieParser from 'cookie-parser'
-import { attachUser, registerAuthRoutes, requireAuth } from './auth-routes.js'
+import { attachUser, registerAuthRoutes, requireAuth, sessionUserFromCookieHeader } from './auth-routes.js'
 import { registerMarketplaceRoutes, listDeals, upsertDeal, deleteDeal, listPublicStores } from './marketplace.js'
 import { registerCheckoutRoutes } from './checkout-gateway.js'
 import { releaseCombination } from './design/uniqueness.js'
@@ -86,7 +86,7 @@ const clients = new Set<WebSocket>()
 // en dus `requireAuth` — komt hier NOOIT langs. De sessiecontrole moet daarom
 // expliciet herhaald worden, anders is /ws een open venster op alle live
 // pipeline- en build-updates voor wie het adres kent.
-function denyUpgrade(socket: import('net').Socket, code: number, reason: string): void {
+function denyUpgrade(socket: import('stream').Duplex, code: number, reason: string): void {
   // Een echt HTTP-antwoord in plaats van een kale destroy: de browser meldt dan
   // een duidelijke statuscode i.p.v. een vage netwerkfout, en het is zichtbaar
   // in een curl-test.
