@@ -246,8 +246,16 @@ export async function aiEditStore(storeId: string, instruction: string): Promise
   if (!result.ok || !result.parsed) {
     return { ok: false, error: result.error ?? 'De AI gaf geen bruikbaar antwoord' }
   }
+  return applyAiEdit(storeId, store, result.parsed)
+}
 
-  const { value: edit } = sanitizeCopyDeep(result.parsed)
+/**
+ * De nabewerking van een AI-antwoord: filteren, vergelijken en opslaan. Los van
+ * de LLM-aanroep gehouden zodat dit deel testbaar is zonder een echte API-call —
+ * en dit is nu juist het deel dat de LLM in toom houdt.
+ */
+export function applyAiEdit(storeId: string, store: MergedStore, raw: AiEdit): AiEditResult {
+  const { value: edit } = sanitizeCopyDeep(raw)
 
   // Alleen bekende producten; onbekende id's zijn hallucinatie en gaan eruit.
   const known = new Map(store.products.map(p => [p.id, p]))
@@ -290,6 +298,12 @@ export async function aiEditStore(storeId: string, instruction: string): Promise
     applied: { brandName: brandChanged, slogan: sloganChanged, products: patch.length },
     diff,
   }
+}
+
+/** Valideert een ruw LLM-antwoord tegen het schema (voor tests/hergebruik). */
+export function parseAiEdit(raw: unknown): { ok: true; edit: AiEdit } | { ok: false; error: string } {
+  const r = AiEditSchema.safeParse(raw)
+  return r.success ? { ok: true, edit: r.data } : { ok: false, error: r.error.issues.map(i => i.message).join('; ') }
 }
 
 // ── Producten toevoegen vanuit CJ ─────────────────────────────────────────────
