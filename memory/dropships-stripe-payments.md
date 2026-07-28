@@ -3,20 +3,53 @@
 Stripe verving Mollie op 26 juli 2026. `mollie.ts` staat er nog als legacy (de
 webhook is nog gemount) tot Stripe live is getest; daarna kan het weg.
 
-## Flow
+## Flow — één centrale gateway
+
+Elke store heeft een eigen adresformulier maar **géén eigen betaallogica**. Alle
+stores POST'en naar hetzelfde endpoint op `api.clynado.com`:
 
 ```
-store /checkout/  ──POST /api/checkout/session──►  createCheckoutSession()
-                                                          │
-                                                  Stripe Checkout Session
-                                                          │
-                                              klant betaalt bij Stripe
-                                                          │
-                          POST /api/webhooks/stripe  ◄────┘
-                                    │ handtekening geverifieerd
-                                    ▼
-                       fulfillment.ts → getSupplier('cj').placeOrder()
+<sub>.clynado.com/checkout/
+        │  POST https://api.clynado.com/api/checkout/session
+        ▼
+checkout-gateway.ts   ① origin-check  ② winkel live?  ③ prijs herberekenen
+        │
+        ▼  createCheckoutSession()
+   Stripe Checkout Session
+        │
+   klant betaalt bij Stripe
+        │
+POST /api/webhooks/stripe  ◄─── het ENIGE fulfillment-triggerpunt
+        │ handtekening geverifieerd
+        ▼
+fulfillment.ts → getSupplier('cj').placeOrder()
 ```
+
+## De drie verdedigingslagen (`server/checkout-gateway.ts`)
+
+Dit endpoint is publiek — het wordt aangeroepen door een browser op een ánder
+domein, die geen sessiecookie heeft. Het is daarmee het enige publieke endpoint
+dat geld raakt, dus het verdedigt zichzelf zelf:
+
+| | Wat | Waarom |
+|---|---|---|
+| ① | **Origin** — alleen `https://<sub>.clynado.com`, de apex en `www` | vervangt de sessie; `Vary: Origin` erbij zodat een cache de toestemming niet doorlekt |
+| ② | **Winkel** — moet bestaan en `status = 'live'` zijn | een verwijderde winkel kan geen betalingen meer starten |
+| ③ | **Prijs** — herberekend uit `store_data.products` | de client zegt wát hij koopt, niet wat het kost |
+
+Ook de **supplier-velden** komen uit de catalogus, nooit uit de request:
+`fulfillment.ts` bestelt daarop bij CJ, dus dat mag de client onder geen beding
+bepalen. Klantvelden gaan door een allowlist en worden afgekapt. Aantallen zijn
+begrensd op 20 per item, het totaal op €5000.
+
+De subdomein-check kijkt naar het achtervoegsel **én** de lengte, zodat
+`https://clynado.com.evil.com` niet doorglipt.
+
+## De URL in de gegenereerde store
+
+`checkoutApiUrl()` leidt het adres af uit de publieke tunnel-URL. Er is **geen
+hardgecodeerd IP meer** — dat was de bron van de stale-IP-bug toen de
+schoolomgeving van adres wisselde.
 
 **`fulfillment.ts` is ongewijzigd gebleven.** Alleen de trigger komt nu van
 Stripe in plaats van Mollie. Dat was de expliciete opzet van de migratie: het
