@@ -125,12 +125,21 @@ export async function generateProductTypes(
   niche: string,
   persona: TypeContext,
   judge: TypeJudge,
-  opts: { onLog?: (m: string) => void } = {},
+  opts: { onLog?: (m: string) => void; broaden?: boolean } = {},
 ): Promise<{ types: ProductType[]; fallback?: string }> {
   const log = opts.onLog ?? ((m: string) => console.log(m))
+  // "Breder maken" is een keuze van de gebruiker: de vorige ronde was te smal
+  // voor de catalogus van de leverancier. Niet de doelgroep loslaten — alleen
+  // een stap uitzoomen op wat er verkocht wordt.
+  const broadenBlock = opts.broaden
+    ? `\nLET OP: een eerdere ronde met deze niche leverde te weinig producten op bij de leverancier.
+Zoom één stap uit: kies types uit de bredere productcategorie eromheen en uit aanpalende
+gebruiksmomenten, niet alleen de allersmalste kern. Blijf bij dezelfde doelgroep en hetzelfde
+probleem — een winkel voor iemand anders is geen oplossing.\n`
+    : ''
   try {
     const raw = await judge(SYSTEM, `Niche: "${niche}"
-${personaBlock(persona)}
+${personaBlock(persona)}${broadenBlock}
 
 Stel het assortiment samen voor deze winkel: ${TYPES_MIN} tot ${TYPES_MAX} VERSCHILLENDE producttypes
 die samen een logisch, aantrekkelijk aanbod vormen.
