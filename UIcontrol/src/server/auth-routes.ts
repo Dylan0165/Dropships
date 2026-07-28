@@ -4,7 +4,7 @@
 // sessie-gate, en krijgt een niet-ingelogde bezoeker het dashboard nooit te zien.
 
 import express from 'express'
-import rateLimit from 'express-rate-limit'
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit'
 import QRCode from 'qrcode'
 import {
   ALLOWED_USERS, MIN_PASSWORD_LENGTH, SESSION_COOKIE,

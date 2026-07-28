@@ -80,16 +80,36 @@ export function StoresView() {
   // Store volledig verwijderen: nginx vhost + files op de store server, poort vrij, DB-rij weg
   const deleteStore = async (store: StoreInfoEx) => {
     const name = store.subdomein ?? store.storeId
-    if (!confirm(`Store "${name}" definitief verwijderen?\n\nDit verwijdert de site van de store server (nginx + bestanden) en uit het dashboard. Dit kan niet ongedaan worden gemaakt.`)) return
+    // Naam laten intypen in plaats van een ja/nee-vraag. Een live winkel
+    // offline halen mag geen misklik kunnen zijn; de server eist dezelfde
+    // bevestiging, dus dit is niet alleen een UI-drempel.
+    const typed = prompt(
+      `Store "${name}" definitief verwijderen?\n\n` +
+      'Dit haalt de site offline (nginx + bestanden), geeft de poort vrij, haalt hem van het kopers-dashboard ' +
+      'en wist de rij uit de database. Dit kan niet ongedaan worden gemaakt.\n\n' +
+      `Typ de naam "${name}" om te bevestigen:`,
+    )
+    if (typed === null) return
+    if (typed.trim() !== name) {
+      setSyncResult(`Naam kwam niet overeen — "${name}" verwacht. Er is niets verwijderd.`)
+      setTimeout(() => setSyncResult(null), 6000)
+      return
+    }
     setDeletingId(store.storeId)
     try {
-      const res = await fetch(`/api/stores/${store.storeId}`, { method: 'DELETE' })
-      const data = await res.json() as { deleted?: boolean; error?: string }
+      const res = await fetch(`/api/stores/${store.storeId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ confirm: name }),
+      })
+      const data = await res.json() as { deleted?: boolean; error?: string; steps?: string[] }
       if (!res.ok || data.error) {
         setSyncResult(`Verwijderen mislukt: ${data.error ?? res.statusText}`)
         setTimeout(() => setSyncResult(null), 8000)
       } else {
         setStores(s => s.filter(x => x.storeId !== store.storeId))
+        setSyncResult(`"${name}" verwijderd — ${(data.steps ?? []).join(', ')}`)
+        setTimeout(() => setSyncResult(null), 9000)
       }
     } catch (err) {
       setSyncResult(`Verwijderen mislukt: ${err instanceof Error ? err.message : 'netwerk fout'}`)
