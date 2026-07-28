@@ -190,8 +190,9 @@ export function renderStore(input: StoreBuildInput, briefRaw: StoreBrief): Store
 
   const year = new Date().getFullYear()
 
-  // ── 3. Producten — collectie-grootte varieert 6-15 per store ────────────────
-  const targetCount = deriveProductCount(dna.seed, input.siteStructure?.nicheType)
+  // ── 3. Producten — het volledige assortiment, geen opvulling, geen truncatie ─
+  // De collectie-grootte komt uit het assortiment zelf (7-15 distincte producten
+  // uit suppliers/assortment.ts); alleen boven de 15 wordt er begrensd.
   const baseProducts: RenderProduct[] = input.products.map((p, i) => ({
     id:             p.id ?? `product-${i + 1}`,
     title:          p.title,
@@ -201,14 +202,20 @@ export function renderStore(input: StoreBuildInput, briefRaw: StoreBrief): Store
     badge:          p.badge,
     description:    p.description ?? '',
     bullets:        p.bullets ?? [],
+    productType:    p.productType,
     supplier:           p.supplier,
     supplierProductId:  p.supplierProductId,
     supplierVariantId:  p.supplierVariantId,
   }))
-  const products: RenderProduct[] = fitProducts(baseProducts, targetCount, dna.seed).map((p, i) => ({
+  const products: RenderProduct[] = fitProducts(baseProducts).map((p, i) => ({
     ...p,
     badge: p.badge ?? badgeFor(dna.tone, i, dna.seed),
   }))
+  if (baseProducts.length > products.length) {
+    input.onLog?.(`[producten] ${baseProducts.length} aangeleverd, ${products.length} getoond (maximum per pagina)`)
+  }
+  const productTypes = [...new Set(products.map(p => p.productType).filter((t): t is string => !!t))]
+  input.onLog?.(`[producten] ${products.length} producten over ${productTypes.length || 1} producttype(s)${productTypes.length ? `: ${productTypes.join(', ')}` : ''}`)
 
   // ── 4. Engelse content ──────────────────────────────────────────────────────
   const content = {
