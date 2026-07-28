@@ -3,6 +3,7 @@ import express from 'express'
 import cookieParser from 'cookie-parser'
 import { attachUser, registerAuthRoutes, requireAuth } from './auth-routes.js'
 import { registerMarketplaceRoutes, listDeals, upsertDeal, deleteDeal, listPublicStores } from './marketplace.js'
+import { registerCheckoutRoutes } from './checkout-gateway.js'
 import { createServer } from 'http'
 import { WebSocketServer, WebSocket } from 'ws'
 import { v4 as uuid } from 'uuid'
@@ -13,7 +14,7 @@ import type { AgentId, WsEvent } from '../types/index.js'
 import * as store from './store.js'
 import * as deepseek from './deepseek.js'
 import * as trendscraper from './trendscraper.js'
-import { createCheckoutSession, handleStripeWebhook } from './stripe.js'
+import { handleStripeWebhook } from './stripe.js'
 // Mollie blijft LEGACY geïmporteerd tot Stripe live-getest is (webhook nog actief)
 import { handleWebhook, getCheckoutOrders } from './mollie.js'
 import { launchCampaign, activateCampaign } from './meta-ads.js'
@@ -69,6 +70,9 @@ registerAuthRoutes(app)
 // Het publieke kopers-dashboard (apex clynado.com → nginx → hier) staat bewust
 // vóór de gate. Het admin-dashboard hieronder blijft volledig afgeschermd.
 registerMarketplaceRoutes(app)
+// De centrale checkout-gateway is publiek maar verdedigt zichzelf met een
+// origin-check, een live-store-check en een prijs-herberekening.
+registerCheckoutRoutes(app)
 app.use(requireAuth)
 
 const server = createServer(app)
@@ -905,58 +909,10 @@ app.post('/api/cost-estimate', (req, res) => {
   res.json(deepseek.estimateCost(model, inputTokens, outputTokens))
 })
 
-// ═══════ Mollie Checkout ═══════
-
-// CORS for checkout endpoint — stores call this from a different origin
-function setCheckoutCors(req: express.Request, res: express.Response): void {
-  const origin = req.headers.origin
-  if (origin) res.setHeader('Access-Control-Allow-Origin', origin)
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
-  res.setHeader('Access-Control-Max-Age', '86400')
-}
-
-app.options('/api/checkout/session', (req, res) => {
-  setCheckoutCors(req, res)
-  res.sendStatus(204)
-})
-
-app.post('/api/checkout/session', async (req, res) => {
-  setCheckoutCors(req, res)
-  try {
-    const { storeId, subdomain, runId, amountEur, description, items, customer, redirectUrl } = req.body as {
-      storeId: string; subdomain: string; runId?: string
-      amountEur: number; description: string; items?: unknown[]
-      customer?: Record<string, string>
-      redirectUrl?: string
-    }
-    if (!storeId || !subdomain || !amountEur) {
-      res.status(400).json({ error: 'storeId, subdomain en amountEur zijn verplicht' })
-      return
-    }
-    const origin = `${req.protocol}://${req.get('host')}`
-    // Stripe Checkout Session. De success/cancel-URL wijzen terug naar de store.
-    // De webhook-config (publiek bereikbaar adres) staat op het Stripe-dashboard
-    // → PUBLIC_BASE_URL/api/webhooks/stripe (zelfde tunnel/domein als de VPS).
-    const success = redirectUrl ?? `${origin}/thank-you/?store=${subdomain}`
-    const cancel = `${origin}/checkout/?store=${subdomain}`
-    const checkoutUrl = await createCheckoutSession({
-      storeId,
-      subdomain,
-      runId,
-      amountEur: Number(amountEur),
-      description: description ?? `Order ${subdomain}`,
-      successUrl: success,
-      cancelUrl: cancel,
-      items,
-      customer,
-    })
-    res.json({ checkoutUrl })
-  } catch (err) {
-    console.error('[server] /api/checkout/session failed:', err)
-    res.status(500).json({ error: err instanceof Error ? err.message : 'Checkout aanmaken mislukt' })
-  }
-})
+// ═══════ Checkout ═══════
+// De sessie-creatie zelf staat in checkout-gateway.ts en wordt HIERBOVEN al
+// gemount, vóór requireAuth — een browser op een store-domein heeft geen
+// sessiecookie. De origin-check daar vervangt de sessie.
 
 // ═══════ Publieke URL (Cloudflare Tunnel) ═══════
 // De cloudflared-manager (PM2, zelfde machine) registreert hier de actuele

@@ -19,10 +19,14 @@ import {
 //
 //  • /api/webhooks/stripe — Stripe kan geen cookie meesturen
 //  • /api/health          — monitoring moet altijd werken
+//  • /api/checkout/session — wordt door een browser op een STORE-domein
+//                           aangeroepen, die geen sessiecookie heeft. Beveiligd
+//                           met een origin-check i.p.v. een sessie; zie
+//                           checkout-gateway.ts.
 //  • /market, /api/market — het publieke kopers-dashboard op de apex
 //                           (clynado.com). Bewust openbaar: dit is de etalage.
 //                           Het ADMIN-dashboard blijft volledig achter de gate.
-const PUBLIC_API = new Set(['/api/webhooks/stripe', '/api/health'])
+const PUBLIC_API = new Set(['/api/webhooks/stripe', '/api/health', '/api/checkout/session'])
 const PUBLIC_PAGES = ['/login', '/setup', '/reset', '/market']
 
 function isPublicPath(p: string): boolean {

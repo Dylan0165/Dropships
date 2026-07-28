@@ -497,9 +497,10 @@ export function buildTemplateVars(opts: {
   subdomain: string
   runId: string
 }): TemplateVars {
-  const checkoutApiUrl = process.env.UICONTROL_PUBLIC_URL
-    ? `${process.env.UICONTROL_PUBLIC_URL.replace(/\/+$/, '')}/api/checkout/session`
-    : `http://192.168.121.133:3001/api/checkout/session`
+  // Alle stores praten met ÉÉN centraal checkout-endpoint (checkout-gateway.ts).
+  // Het adres komt uit de publieke tunnel-URL — geen hardgecodeerd IP meer; dat
+  // was de bron van de stale-IP-bug toen de schoolomgeving van adres wisselde.
+  const checkoutApiUrl = checkoutApiUrlFor()
   // Waarden zijn RAW (geen esc hier). Escaping gebeurt op het gebruikspunt,
   // context-bewust: jsStr() voor gegenereerde TSX-code, esc() voor HTML.
   // Fallback-USPs zijn Engels — alle klant-facing content is Engelstalig.
