@@ -293,6 +293,10 @@ export const STAGE_RUNNERS: Record<Stage, (ctx: StageContext) => Promise<StageOu
       return { ok: false, error: build.error ?? 'store-build failed' }
     }
 
+    if (build.briefSource === 'fallback') {
+      ctx.onLog(`⚠ store-build draaide op een samengestelde brief — de store-builder agent gaf geen bruikbare output (${build.briefError ?? 'onbekend'}). De winkel staat er, maar soberder; je kunt hem bewerken via het beheerscherm.`)
+    }
+
     const output = {
       build_dir: build.buildDir,
       out_dir: build.outDir,
@@ -300,9 +304,12 @@ export const STAGE_RUNNERS: Record<Stage, (ctx: StageContext) => Promise<StageOu
       brand_name: build.brandName,
       subdomain: buildSubdomain(build.brandName, ctx.runId),
       brief: build.brief,
+      brief_source: build.briefSource ?? 'llm',
+      ...(build.briefError ? { brief_error: build.briefError } : {}),
+      product_count: products.length,
     }
     saveStageOutput(ctx.runId, 'store-build', output)
-    return { ok: true, output }
+    return { ok: true, output, meta: { briefSource: build.briefSource ?? 'llm' } }
   },
 
   'build-validate': async (ctx) => {
