@@ -174,6 +174,7 @@ const MAX_ATTEMPTS = 6            // 1 poging + 5 retries
 const BACKOFF_BASE_MS = parseInt(process.env.CJ_BACKOFF_BASE_MS ?? '3000', 10)
 
 async function rateLimitBackoff(path: string, attempt: number): Promise<void> {
+  widenSpacing()
   const backoff = BACKOFF_BASE_MS * 2 ** (attempt - 1)
   cjStatus.retry = { path, attempt, maxAttempts: MAX_ATTEMPTS - 1, resumeAt: Date.now() + backoff }
   console.warn(`[cj] rate limit (429) op ${path} — retry ${attempt}/${MAX_ATTEMPTS - 1} over ${backoff / 1000}s`)
