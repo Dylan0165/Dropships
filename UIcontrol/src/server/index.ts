@@ -82,14 +82,55 @@ const wss = new WebSocketServer({ noServer: true })
 const clients = new Set<WebSocket>()
 
 // ── WebSocket upgrade ──
+// LET OP: dit draait op de HTTP-server, niet in Express. De middleware-keten —
+// en dus `requireAuth` — komt hier NOOIT langs. De sessiecontrole moet daarom
+// expliciet herhaald worden, anders is /ws een open venster op alle live
+// pipeline- en build-updates voor wie het adres kent.
+function denyUpgrade(socket: import('net').Socket, code: number, reason: string): void {
+  // Een echt HTTP-antwoord in plaats van een kale destroy: de browser meldt dan
+  // een duidelijke statuscode i.p.v. een vage netwerkfout, en het is zichtbaar
+  // in een curl-test.
+  socket.write(
+    `HTTP/1.1 ${code} ${reason}\r\n` +
+    'Connection: close\r\n' +
+    'Content-Length: 0\r\n' +
+    '\r\n',
+  )
+  socket.destroy()
+}
+
 server.on('upgrade', (req, socket, head) => {
-  if (req.url === '/ws') {
-    wss.handleUpgrade(req, socket, head, (ws) => {
-      wss.emit('connection', ws, req)
-    })
-  } else {
-    socket.destroy()
+  // Pad los van een eventuele querystring vergelijken, zodat `/ws?runId=…` niet
+  // stilzwijgend geweigerd wordt.
+  let pathname = req.url ?? ''
+  try { pathname = new URL(req.url ?? '', `http://${req.headers.host ?? 'localhost'}`).pathname } catch { /* val terug op de rauwe url */ }
+  if (pathname !== '/ws') { socket.destroy(); return }
+
+  // WebSockets kennen geen CORS: de browser stuurt de cookie ook mee bij een
+  // handshake vanaf een vreemde site. SameSite=Strict dekt dat af, maar een
+  // expliciete origin-controle is één regel en vangt het ook af als die vlag
+  // ooit versoepeld wordt (bv. AUTH_INSECURE_COOKIES lokaal).
+  const origin = req.headers.origin
+  if (origin) {
+    let sameSite = false
+    try { sameSite = new URL(origin).host === req.headers.host } catch { sameSite = false }
+    if (!sameSite) {
+      console.warn(`[ws] upgrade geweigerd — vreemde origin ${origin} (host ${req.headers.host})`)
+      denyUpgrade(socket, 403, 'Forbidden')
+      return
+    }
   }
+
+  const user = sessionUserFromCookieHeader(req.headers.cookie)
+  if (!user) {
+    console.warn(`[ws] upgrade geweigerd — geen geldige sessie (${req.socket.remoteAddress ?? 'onbekend'})`)
+    denyUpgrade(socket, 401, 'Unauthorized')
+    return
+  }
+
+  wss.handleUpgrade(req, socket, head, (ws) => {
+    wss.emit('connection', ws, req)
+  })
 })
 
 const WS_TIMEOUT_MS = 60_000
