@@ -26,7 +26,10 @@ export const ASSORTMENT_MAX = 15
 export interface AssortmentPick {
   product: SupplierProduct
   typeId: string
+  /** Engels type-label ("beard oil") — komt als categorie op de winkel. */
   typeName: string
+  /** Nederlandse onderbouwing van het type, voor de operator. */
+  typeRole: string
   tier: PriceTier
   /** Semantische score uit product-relevance.ts (leeg als die stap oversloeg). */
   score?: number
