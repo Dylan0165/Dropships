@@ -12,6 +12,7 @@ import { z } from 'zod'
 import { runAgent } from './pipeline/agent.js'
 import { sanitizeCopyDeep } from './design/sanitize.js'
 import { getSupplier } from './suppliers/index.js'
+import type { SupplierProduct } from './suppliers/types.js'
 
 export interface EditableProduct {
   id: string
@@ -250,7 +251,9 @@ export async function aiEditStore(storeId: string, instruction: string): Promise
       if (next === undefined) continue
       const before = current[f]
       if (String(before ?? '') === String(next)) continue
-      fields[f] = next
+      // `f` is een union van drie sleutels met verschillende typen; de
+      // indexsignatuur van EditableProduct vangt dat op.
+      ;(fields as Record<string, unknown>)[f] = next
       diff.push({ id: p.id, field: f, from: String(before ?? '—'), to: String(next) })
     }
     if (Object.keys(fields).length > 1) patch.push(fields)
@@ -353,7 +356,7 @@ export async function suggestProductsForStore(storeId: string, query?: string): 
   if (!store) return { ok: false, error: 'Store niet gevonden', query: '', results: [] }
   const q = (query ?? store.niche).trim()
   try {
-    const results = await getSupplier('cj').searchProducts(q, { limit: 12 })
+    const results = await getSupplier('cj').searchProducts(q, { maxResults: 12 })
     return { ok: true, query: q, results }
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : 'zoeken mislukt', query: q, results: [] }
