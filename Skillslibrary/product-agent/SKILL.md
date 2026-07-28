@@ -37,6 +37,7 @@ pricing, margin, and shipping time.
     {
       "id": "string (slugified product name)",
       "title": "string (specific product name)",
+      "product_type": "string (English, 1-3 words: what KIND of product this is)",
       "description": "string (1-2 sentences)",
       "price": 0,
       "cost_price": 0,
