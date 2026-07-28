@@ -106,9 +106,9 @@ interface Props {
 
 const STEPS = ['Idee & doelgroep', 'Producten (CJ)', 'Site-structuur', 'Bevestigen'] as const
 
-// Max aantal selecteerbare producten — afgestemd op de collectie-grootte (6-15).
+// Max aantal selecteerbare producten — afgestemd op de collectie-grootte (7-15).
 const MAX_SELECT = 15
-const MIN_ADVISED = 6
+const MIN_ADVISED = 7
 
 // EU-warehouses = snelle verzending. Puur voor labels/sortering in de UI —
 // langzamere (CN) opties worden getoond, niet uitgesloten.
