@@ -1,6 +1,7 @@
 import clsx from 'clsx'
 import { Wifi, WifiOff } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { dashboardWsUrl } from '@/lib/ws'
 
 export function TopBar() {
   const [wsConnected, setWsConnected] = useState(false)

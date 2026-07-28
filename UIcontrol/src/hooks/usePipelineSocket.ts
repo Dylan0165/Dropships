@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
+import { dashboardWsUrl } from '@/lib/ws'
 
 const STAGES = [
   'trend-discovery',
