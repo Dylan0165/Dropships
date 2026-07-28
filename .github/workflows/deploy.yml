@@ -78,6 +78,21 @@ jobs:
           pm2 restart uicontrol --update-env || pm2 start npm --name uicontrol -- run server
           pm2 restart store-platform --update-env || pm2 start npm --name store-platform -- run store-platform
           pm2 save
+          # `pm2 restart` geeft 0 zodra het proces GESTART is, ook als het daarna
+          # meteen crasht. Zonder deze controle lijkt de deploy geslaagd en faalt
+          # pas de health check, zonder te vertellen waarom.
+          sleep 3
+          status=$(pm2 jlist | node -e "
+            let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{
+              const p=JSON.parse(d).find(x=>x.name==='uicontrol');
+              console.log(p ? p.pm2_env.status : 'ONTBREEKT');
+            })")
+          echo "uicontrol status: $status"
+          if [ "$status" != "online" ]; then
+            echo "::error::uicontrol is niet online (status: $status)"
+            pm2 logs uicontrol --lines 60 --nostream || true
+            exit 1
+          fi
 
       # Exact de commando's uit de smalle sudoers-regel (/etc/sudoers.d/dropships-nginx):
       #   dropships ALL=(root) NOPASSWD: /usr/sbin/nginx -t, /usr/bin/systemctl reload nginx
