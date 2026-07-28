@@ -6,7 +6,7 @@ import { buildLayoutSharedFiles, buildTemplateVars, buildCheckoutAndInfoPages, e
 import type { TemplateName } from '../store-platform/template-engine.js'
 import { deriveDesignDNA, fallbackPersona, type PersonaLike } from '../design/tokens.js'
 import { DesignPlanSchema, applyDesignPlan } from '../design/design-plan.js'
-import { selectLayout, recordLayout, deriveProductCount, fitProducts } from '../design/layout.js'
+import { selectLayout, recordLayout, fitProducts } from '../design/layout.js'
 import type { RenderProduct } from '../design/render-page.js'
 import { buildStorePage } from '../design/build-page.js'
 import { ComponentSelectionSchema } from '../design/components/selection.js'
