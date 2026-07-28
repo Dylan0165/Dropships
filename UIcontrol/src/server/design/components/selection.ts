@@ -152,7 +152,12 @@ export function buildSelection(
   const propsFor = (id: string): Record<string, unknown> => {
     const base: Record<string, unknown> = NEEDS_ICON_THEME.test(id) ? { iconTheme } : {}
     if (id.startsWith('hero.')) return { ...base, ...heroProps }
-    if (id.startsWith('products.')) return { ...base, title: 'Shop the collection' }
+    if (id.startsWith('products.')) {
+      // Tabs krijgen de ECHTE producttypes mee; de component leidt ze ook zelf
+      // uit de producten af, dit is de expliciete route.
+      const tabs = types.length >= 2 ? ['All', ...types] : undefined
+      return { ...base, title: 'Shop the collection', ...(tabs ? { tabs } : {}) }
+    }
     if (id === 'content.why-us-grid') return { ...base, title: 'Built different', items: content.usps }
     if (id === 'content.values-grid') return { ...base, items: content.usps.slice(0, 3).map(u => ({ title: u.title, desc: u.desc })) }
     if (id === 'content.story-split') return { ...base, title: content.storyTitle, body: content.storyBody }
