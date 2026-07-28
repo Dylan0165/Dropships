@@ -1191,10 +1191,12 @@ app.post('/api/wizard/directions', async (req, res) => {
 })
 
 app.post('/api/wizard/shortlist', async (req, res) => {
-  const { niche, persona } = req.body as { niche?: string; persona?: WizardPersona }
+  // `broaden` = de gebruiker kreeg een te kleine collectie en kiest ervoor de
+  // niche één stap breder te laten zoeken (zelfde doelgroep, ruimere types).
+  const { niche, persona, broaden } = req.body as { niche?: string; persona?: WizardPersona; broaden?: boolean }
   if (!niche?.trim() || !persona) { res.status(400).json({ error: 'niche en persona zijn verplicht' }); return }
   try {
-    res.json(await buildShortlist(niche.trim(), persona))
+    res.json(await buildShortlist(niche.trim(), persona, { broaden: !!broaden }))
   } catch (err) {
     res.status(502).json({ error: err instanceof Error ? err.message : 'Shortlist bouwen mislukt' })
   }
