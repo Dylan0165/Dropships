@@ -197,7 +197,8 @@ passen en bij dezelfde doelgroep horen. Denk aan aanpalende gebruiksmomenten, ac
 onderhoud, opbergen, cadeau-varianten.
 
 Geen enkel type mag hetzelfde zijn als hierboven, ook niet als synoniem.
-searchTerm is ENGELS, 1-3 woorden, concreet productzelfstandignaamwoord.
+name én searchTerm zijn ENGELS, 1-3 woorden, concreet productzelfstandignaamwoord.
+role is Nederlands.
 
 JSON formaat:
 {"types":[{"name":"...","searchTerm":"...","altTerm":"...","tier":"entry|mid|premium","role":"..."}]}`)
