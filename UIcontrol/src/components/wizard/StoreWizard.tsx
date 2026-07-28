@@ -384,18 +384,29 @@ export function StoreWizard({ onClose, onStarted }: Props) {
    * eruit te halen — inclusief een nieuwe ronde CJ-calls.
    */
   const replaceProduct = (oldId: string, alt: ShortlistProduct) => {
+    // Het producttype hoort bij de PLEK in het assortiment, niet bij het product:
+    // vervang je de baardborstel, dan blijft dat de borstel-plek. Zonder dit
+    // verliest de winkel bij elke handmatige vervanging een categorie.
+    const old = shortlist.find(p => p.productId === oldId)
+    const merged: ShortlistProduct = {
+      ...alt,
+      productType: alt.productType ?? old?.productType,
+      productTier: alt.productTier ?? old?.productTier,
+      typeRole: alt.typeRole ?? old?.typeRole,
+      suggestedPriceEur: alt.suggestedPriceEur ?? Math.max(9.95, Math.floor(alt.costPrice * 0.92 * 2.8) + 0.95),
+    }
     setShortlist(prev => {
       const i = prev.findIndex(p => p.productId === oldId)
       if (i < 0) return prev
       const next = [...prev]
-      next[i] = { ...alt, suggestedPriceEur: alt.suggestedPriceEur ?? Math.max(9.95, Math.floor(alt.costPrice * 0.92 * 2.8) + 0.95) }
+      next[i] = merged
       return next
     })
     setSelectedProducts(prev => {
       if (!prev.has(oldId)) return prev
       const next = new Map(prev)
       next.delete(oldId)
-      next.set(alt.productId, alt)
+      next.set(merged.productId, merged)
       return next
     })
     setReplacing(null)
