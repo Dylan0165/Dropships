@@ -257,15 +257,18 @@ export function StoreWizard({ onClose, onStarted }: Props) {
 
   const shortlistRequestedRef = useRef(false)
 
-  const loadShortlist = useCallback(() => {
+  const loadShortlist = useCallback((opts: { broaden?: boolean } = {}) => {
     if (!chosenDirection) return
     shortlistRequestedRef.current = true
     setLoadingShortlist(true)
     setError(null)
     setCjError(null)
+    setAcceptedSmall(false)
+    if (opts.broaden) setBroadened(true)
     postJson<{ shortlist: ShortlistProduct[]; supplierIsMock: boolean; searchTermUsed?: string | null; source?: 'mcp' | 'rest' | 'mock'; relevance?: { evaluated: number; rejected: number; verdicts: RelevanceVerdict[]; skipped?: string }; assortment?: AssortmentInfo }>('/api/wizard/shortlist', {
       niche: idea,
       persona: chosenDirection.persona,
+      broaden: !!opts.broaden,
     })
       .then(data => {
         setShortlist(data.shortlist ?? [])
