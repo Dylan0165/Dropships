@@ -364,8 +364,26 @@ export async function removeDeployedStore(subdomain: string, onLog?: (msg: strin
   const { storesRoot, nginxConfDir } = cfg()
   log(`Store ${sub} lokaal verwijderen...`)
   try {
-    fs.rmSync(path.join(nginxConfDir, `${sub}.conf`), { force: true })
+    const confPath = path.join(nginxConfDir, `${sub}.conf`)
+    const hadConf = fs.existsSync(confPath)
+    fs.rmSync(confPath, { force: true })
     fs.rmSync(path.join(storesRoot, sub), { recursive: true, force: true })
+
+    // Controleren i.p.v. aannemen: blijft de conf staan (rechten, race), dan
+    // blijft het subdomein bereikbaar en dat is precies wat we niet willen.
+    if (fs.existsSync(confPath)) {
+      return { ok: false, error: `vhost ${confPath} kon niet verwijderd worden — subdomein blijft anders bereikbaar` }
+    }
+    log(hadConf ? `vhost ${sub}.conf verwijderd` : `geen vhost voor ${sub} gevonden (was al weg)`)
+
+    // De catch-all moet er zijn, anders wordt het volgende server-blok de
+    // default en valt dit subdomein terug op een andere site in plaats van 404.
+    const defaultPath = path.join(nginxConfDir, `${DEFAULT_CONF_NAME}.conf`)
+    if (!fs.existsSync(defaultPath)) {
+      fs.writeFileSync(defaultPath, defaultConf(), 'utf-8')
+      log('catch-all vhost ontbrak — aangemaakt zodat onbekende subdomeinen 404 geven')
+    }
+
     const reload = await reloadNginx(log)
     if (!reload.ok) return { ok: false, error: `nginx reload na verwijderen mislukt: ${reload.output.slice(-200)}` }
     log(`Store ${sub} verwijderd ✓`)
