@@ -6,7 +6,7 @@
     /product/list    : 48 calls (HTTP geteld: 48)
     per zoekterm     : 4.0
     producten        : 360
-    wachttijd op productie: 52.8s (36ms in deze test, spacing 0)
+    wachttijd op productie: 52.8s (35ms in deze test, spacing 0)
 
   NA — representatieve warehouses, genoeg-is-genoeg
     warehouse-passes : DE,FR,PL (default) + globale pass
@@ -14,7 +14,7 @@
     /product/list    : 12 calls (HTTP geteld: 12)
     per zoekterm     : 1.0
     producten        : 48
-    wachttijd op productie: 13.2s (4ms in deze test, spacing 0)
+    wachttijd op productie: 13.2s (3ms in deze test, spacing 0)
 
 ═══ RESULTAAT ═══
   ✓ minder calls dan voorheen — 48 → 12 calls (75% minder)

@@ -74,3 +74,12 @@ coverage/
 # memory/logs/ bevat verificatie-bewijs per fase, geen runtime-logs
 !memory/logs/
 !memory/logs/**
+
+# ── Losse output van de verify:*-scripts ──────────────────────
+# Die schrijven naar $LOGFILE, of naar de projectmap als die niet gezet is.
+# Het bewijs hoort in memory/logs/, niet als kladbestand in de repo.
+UIcontrol/assortment.txt
+UIcontrol/collection-render.txt
+UIcontrol/search-efficiency.txt
+UIcontrol/relevance.txt
+UIcontrol/subdomain-cleanup.txt

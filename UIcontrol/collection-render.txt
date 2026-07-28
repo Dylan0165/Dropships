@@ -1,9 +1,9 @@
 ═══ 1. VOLLE COLLECTIE — 12 PRODUCTEN, 12 PRODUCTTYPES ═══
   renderer: component-catalog · bron: derived
-  componenten: topbar.editorial-rule[editorial], nav.split-links[editorial], hero.editorial[editorial], badges.shipping-map[editorial], products.category-tabs[minimal], content.values-grid[editorial], testimonials.stat-proof[bold], content.tabs-info[minimal], footer.sitemap-columns[minimal]
+  componenten: topbar.editorial-rule[editorial], nav.split-links[editorial], hero.editorial[editorial], badges.shipping-map[editorial], content.story-split[editorial], products.category-tabs[minimal], content.values-grid[editorial], testimonials.stat-proof[bold], content.tabs-info[minimal], footer.sitemap-columns[minimal]
   collectie-meta: {"products":12,"types":["beard oil","beard balm","beard trimmer","beard comb","beard brush","beard shampoo","beard scissors","beard growth serum","beard gift set","beard storage bag","beard roller","shaving razor"]}
   [producten] 12 producten over 12 producttype(s): beard oil, beard balm, beard trimmer, beard comb, beard brush, beard shampoo, beard scissors, beard growth serum, beard gift set, beard storage bag, beard roller, shaving razor
-  [assemble] 9 componenten (derived, thema beauty, beweging calm-glide): topbar.editorial-rule[editorial], nav.split-links[editorial], hero.editorial[editorial], badges.shipping-map[editorial], products.category-tabs[minimal], content.values-grid[editorial], testimonials.stat-proof[bold], content.tabs-info[minimal], footer.sitemap-columns[minimal]
+  [assemble] 10 componenten (derived, thema beauty, beweging calm-glide): topbar.editorial-rule[editorial], nav.split-links[editorial], hero.editorial[editorial], badges.shipping-map[editorial], content.story-split[editorial], products.category-tabs[minimal], content.values-grid[editorial], testimonials.stat-proof[bold], content.tabs-info[minimal], footer.sitemap-columns[minimal]
   [assemble] collectie: 12 producten over 12 producttype(s) (beard oil, beard balm, beard trimmer, beard comb, beard brush, beard shampoo, beard scissors, beard growth serum, beard gift set, beard storage bag, beard roller, shaving razor)
   ✓ renderer blijft de componentcatalogus — renderer=component-catalog (terugval zou "render-page (fallback)" zijn)
   ✓ ALLE 12 producten staan in de pagina — 12/12 producttitels gevonden in app/page.tsx
