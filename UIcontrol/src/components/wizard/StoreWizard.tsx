@@ -1241,6 +1241,22 @@ function ProductCard({ p, selected, onToggle, disabled = false, onReplace }: {
       </button>
 
       <div className="p-2.5 flex flex-col gap-1.5 flex-1">
+        {/* Producttype eerst: zo zie je in één blik of de winkel divers is */}
+        {p.productType && (
+          <div className="flex items-center gap-1.5">
+            <span
+              title={p.typeRole ?? ''}
+              className="px-1.5 py-0.5 rounded border border-blue-500/30 bg-blue-500/[0.08] text-blue-300 text-[10px] font-medium truncate max-w-full"
+            >
+              {p.productType}
+            </span>
+            {p.productTier && (
+              <span className={clsx('text-[10px]', p.productTier === 'premium' ? 'text-amber-400/80' : p.productTier === 'entry' ? 'text-zinc-500' : 'text-zinc-400')}>
+                {p.productTier === 'premium' ? 'premium' : p.productTier === 'entry' ? 'instap' : 'midden'}
+              </span>
+            )}
+          </div>
+        )}
         <button onClick={onToggle} disabled={disabled} className="text-left disabled:cursor-not-allowed">
           <p className="text-xs text-white font-medium leading-snug line-clamp-2">{p.title}</p>
         </button>
