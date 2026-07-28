@@ -113,8 +113,14 @@ async function callLLM(
       usage?: { prompt_tokens: number; completion_tokens: number }
     }
     const msg = json.choices[0]?.message
+    // deepseek-reasoner splitst zijn antwoord in `reasoning_content` (het denken)
+    // en `content` (het antwoord). Is `content` leeg maar `reasoning_content`
+    // niet, dan is het tokenbudget in het denken opgegaan en komt er nooit JSON
+    // meer. Dat als "geen JSON" rapporteren stuurt iedereen het verkeerde bos in.
+    const reasoningOnly = !msg?.content && !!msg?.reasoning_content
     return {
       content: msg?.content || msg?.reasoning_content || '',
+      reasoningOnly,
       inputTokens: json.usage?.prompt_tokens ?? 0,
       outputTokens: json.usage?.completion_tokens ?? 0,
     }
