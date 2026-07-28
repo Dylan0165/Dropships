@@ -2,6 +2,24 @@
 
 Nieuwste bovenaan. Zie `ai-must-read/release-and-changelog.md` voor het formaat.
 
+## 2026-07-28 — WebSocket verbond met een hardgecodeerde poort 3001
+**Tag:** volgt hieronder
+
+- De frontend bouwde de WS-URL als `${hostname}:${VITE_WS_PORT ?? 3001}/ws`.
+  Die env-variabele was **nergens gedefinieerd**, dus het werd altijd `:3001`.
+  In productie loopt alles via de tunnel op 443 en is 3001 van buiten dicht →
+  `wss://api.clynado.com:3001/ws failed`, eindeloos herhaald.
+- Nieuwe helper `src/lib/ws.ts`: `dashboardWsUrl()` gebruikt
+  `window.location.host` zonder poort. Werkt in alle drie de omgevingen —
+  Vite proxyt `/ws` al naar 3001, Express deelt de poort met de UI-build, en de
+  tunnel routeert intern door. **Geen env-variabele nodig**; een default-poort
+  in configuratie was juist de oorzaak.
+- Logica stond gedupliceerd in `usePipelineSocket` en `TopBar`; nu één plek.
+- **Geverifieerd:** WS opent en pingt in dev via :5173 én direct op :3001;
+  de gebouwde bundel bevat 0× `:3001`, 0× `VITE_WS_PORT`, 0× `location.hostname`;
+  het echte dashboard in een headless browser opent 2 sockets naar
+  `ws://localhost:3001/ws`, ontvangt een heartbeat-frame en toont Live groen.
+
 ## 2026-07-28 — Productie lag plat: meegecommitte SQLite-WAL
 **Tag:** zie `memory/logs/incident-2026-07-28-sqlite-corrupt.md`
 
