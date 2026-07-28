@@ -59,6 +59,8 @@ export interface StoreBuildInput {
     slogan?: string
     tone?: string
     colors?: { primary?: string; secondary?: string; accent?: string }
+    /** USP's uit brand-creation — vangnet voor de brief als de LLM uitvalt. */
+    usps?: Array<{ title: string; desc: string }>
   }
   /** Doelgroepprofiel uit de wizard — bepaalt het design-DNA */
   persona?: PersonaLike
