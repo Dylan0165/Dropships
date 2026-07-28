@@ -129,11 +129,17 @@ function DrawerNav(){
   </>);
 }
 function ProductTabs({tabs}:{tabs:string[]}){
-  const list=tabs&&tabs.length?tabs:['All'];
+  // Echte categorieën als de producten een producttype hebben (assortiment uit
+  // suppliers/assortment.ts). Een winkel met twaalf producten is dan te
+  // doorlopen per soort in plaats van als één lange lijst. Zonder types valt hij
+  // terug op de meegegeven labels met een vaste, herhaalbare verdeling.
+  const types:string[]=Array.from(new Set(PRODUCTS.map((p:any)=>p.productType).filter(Boolean)));
+  const byType=types.length>=2;
+  const list=byType?['All',...types]:(tabs&&tabs.length?tabs:['All']);
   const[t,setT]=useState(0);
-  // Deterministische verdeling: elk product hoort bij precies één tab, zodat
-  // "All" alles toont en de andere tabs een vaste, herhaalbare deelverzameling.
-  const shown=t===0?PRODUCTS:PRODUCTS.filter((_:any,i:number)=>i%(list.length-1||1)===(t-1));
+  const shown=t===0?PRODUCTS
+    :byType?PRODUCTS.filter((p:any)=>p.productType===list[t])
+    :PRODUCTS.filter((_:any,i:number)=>i%(list.length-1||1)===(t-1));
   return(<div>
     <div role="tablist" style={{display:'flex',gap:'.5rem',justifyContent:'center',flexWrap:'wrap',marginBottom:'2rem'}}>
       {list.map((label,i)=>(
