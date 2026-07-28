@@ -142,14 +142,15 @@ async function writeNextScaffold(targetDir: string, data: StoreData): Promise<vo
   recordLayout(layout, dna.tone, data.subdomain ?? data.brand_name)
 
   const year = new Date().getFullYear()
-  // Collectie-grootte varieert 6-15 per store (zelfde logica als de pipeline)
-  const targetCount = deriveProductCount(dna.seed)
+  // Alle aangeleverde producten gaan de pagina op (alleen boven 15 begrensd) —
+  // geen duplicaten om een aantal te halen, geen stille truncatie.
   const baseProducts: RenderProduct[] = data.products.map(p => ({
     id: p.id, title: p.title, image: p.image ?? '', price: p.price,
-    compareAtPrice: p.compareAtPrice, badge: p.badge,
+    compareAtPrice: p.compareAtPrice, badge: p.badge, description: p.description,
+    productType: p.productType,
     supplier: p.supplier, supplierProductId: p.supplierProductId, supplierVariantId: p.supplierVariantId,
   }))
-  const products: RenderProduct[] = fitProducts(baseProducts, targetCount, dna.seed).map((p, i) => ({
+  const products: RenderProduct[] = fitProducts(baseProducts).map((p, i) => ({
     ...p,
     badge: p.badge ?? badgeFor(dna.tone, i, dna.seed),
   }))
