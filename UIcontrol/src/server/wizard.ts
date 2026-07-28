@@ -179,6 +179,12 @@ export interface ShortlistedProduct extends SupplierProduct {
   relevanceScore?: number
   /** Waarom die score — zichtbaar in de wizard. */
   relevanceReason?: string
+  /** Producttype uit het assortiment ("beard oil") — Engels, komt op de winkel. */
+  productType?: string
+  /** Prijsklasse van het type: instap / midden / premium. */
+  productTier?: 'entry' | 'mid' | 'premium'
+  /** Waarom dit type in het assortiment hoort (Nederlands, voor de operator). */
+  typeRole?: string
 }
 
 /**
