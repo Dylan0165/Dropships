@@ -145,7 +145,7 @@ function ProductTabs({tabs}:{tabs:string[]}){
       {list.map((label,i)=>(
         <button key={label} type="button" role="tab" aria-selected={t===i} onClick={()=>setT(i)}
           style={{padding:'.5rem 1.1rem',borderRadius:'var(--r-pill)',border:'var(--bw) solid var(--c-border)',cursor:'pointer',fontFamily:'inherit',fontSize:'.82rem',fontWeight:600,
-            background:t===i?'var(--c-primary)':'transparent',color:t===i?'var(--c-primary-text)':'var(--c-muted)'}}>{label}</button>
+            background:t===i?'var(--c-primary)':'transparent',color:t===i?'var(--c-primary-text)':'var(--c-muted)'}}>{label.charAt(0).toUpperCase()+label.slice(1)}</button>
       ))}
     </div>
     <div className="grid3" style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(240px,1fr))',gap:'1.5rem'}}>
