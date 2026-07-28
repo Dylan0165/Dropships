@@ -43,7 +43,7 @@ interface StoreEditorProps {
 const LAYOUT_NAMES = ['NOIR — Dark editorial', 'BLANC — White luxury', 'BOLT — Brand color bold', 'DUSK — Warm organic', 'GRID — Tech dark']
 
 export default function StoreEditor({ storeId, subdomain, niche, onClose, onSaved }: StoreEditorProps) {
-  const [tab, setTab] = useState<'content' | 'products' | 'design' | 'deploy'>('content')
+  const [tab, setTab] = useState<'content' | 'products' | 'manage' | 'design' | 'deploy'>('content')
   const [data, setData] = useState<StoreData | null>(null)
   const [overrides, setOverrides] = useState<Partial<StoreData & { layout?: number }>>({})
   const [loading, setLoading] = useState(true)
