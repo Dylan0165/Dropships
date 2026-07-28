@@ -159,7 +159,11 @@ export async function buildAssortment(opts: AssortmentOptions): Promise<Assortme
     }
     if (flat.length === 0) return
 
-    const rel = await scoreRelevance(opts.niche, opts.persona, flat, opts.judge, { onLog: log })
+    // Dezelfde LLM-aanroep, ander antwoordformaat — daarom hier expliciet
+    // omgezet in plaats van de types op elkaar te forceren.
+    const relevanceJudge: RelevanceJudge = async (system, user) =>
+      (await opts.judge(system, user)) as Awaited<ReturnType<RelevanceJudge>>
+    const rel = await scoreRelevance(opts.niche, opts.persona, flat, relevanceJudge, { onLog: log })
     verdicts.push(...rel.verdicts)
     if (rel.skipped) relevanceSkipped = rel.skipped
     const byId = new Map(rel.verdicts.map(v => [v.productId, v]))
