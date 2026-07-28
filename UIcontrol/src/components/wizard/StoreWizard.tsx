@@ -470,9 +470,14 @@ export function StoreWizard({ onClose, onStarted }: Props) {
 
   // ── Navigatie ────────────────────────────────────────────────────────────────
 
+  // Een te kleine collectie is geen fout, maar wel een keuze. Zolang die keuze
+  // niet gemaakt is blijft "Volgende" dicht — anders loopt de gebruiker zonder
+  // het te weten een build van een paar minuten in met twee producten.
+  const isSmallAssortment = !loadingShortlist && shortlist.length > 0 && shortlist.length < SMALL_ASSORTMENT
+
   const canNext =
     (step === 0 && !!chosenDirection) ||
-    (step === 1 && selectedProducts.size > 0) ||
+    (step === 1 && selectedProducts.size > 0 && (!isSmallAssortment || acceptedSmall)) ||
     (step === 2 && !!structure)
 
   // ── Render ───────────────────────────────────────────────────────────────────
