@@ -208,6 +208,33 @@ export async function atomicDeploy(
 // De conf heet `_apex.conf`; de underscore houdt hem uit de weg van de
 // subdomain-scan (die leest `<sub>.conf` en zou hem anders als store zien).
 
+/**
+ * Stopt een eventueel PM2-proces van deze store.
+ *
+ * In het huidige model is dat er niet: stores zijn statische Next-exports die
+ * nginx rechtstreeks serveert, dus er draait geen proces per winkel. De functie
+ * bestaat voor legacy-stores die wél server-side draaiden, en om te garanderen
+ * dat "verwijderen" écht niets laat staan. Best-effort: geen pm2 of geen proces
+ * met die naam is geen fout.
+ */
+export async function stopStoreProcess(subdomain: string): Promise<{ stopped: boolean; output: string }> {
+  const sub = safeSub(subdomain)
+  const list = await runShell('pm2 jlist', 15_000)
+  if (!list.ok || !list.output.trim().startsWith('[')) {
+    return { stopped: false, output: 'pm2 niet beschikbaar — overgeslagen' }
+  }
+  try {
+    const procs = JSON.parse(list.output) as Array<{ name?: string }>
+    if (!procs.some(p => p.name === sub || p.name === `store-${sub}`)) {
+      return { stopped: false, output: 'geen PM2-proces voor deze store' }
+    }
+  } catch {
+    return { stopped: false, output: 'pm2 jlist onleesbaar — overgeslagen' }
+  }
+  const del = await runShell(`pm2 delete ${sub} || pm2 delete store-${sub}`, 20_000)
+  return { stopped: del.ok, output: del.output }
+}
+
 export const APEX_CONF_NAME = '_apex'
 
 function apexConf(domain: string, port: number): string {
