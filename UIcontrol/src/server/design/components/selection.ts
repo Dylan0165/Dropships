@@ -180,11 +180,20 @@ export function buildSelection(
   if (llm?.sections?.length) {
     const valid = llm.sections.filter(s => getComponent(s.id))
     const hasProducts = valid.some(s => s.id.startsWith('products.'))
-    const sections: ComponentSelection[] = valid.map(s => ({
-      id: s.id, style: s.style, anim: s.anim, props: { ...propsFor(s.id), ...(s.props ?? {}) },
-    }))
+    const sections: ComponentSelection[] = valid.map(s => {
+      // Weergave-keuze toetsen aan de werkelijke collectie: de LLM kiest zonder
+      // te weten hoeveel producten het uiteindelijk worden.
+      if (s.id.startsWith('products.') && count > 0 && !fitsCollection(s.id, count)) {
+        notes.push(`productweergave "${s.id}" past niet bij ${count} producten → "${productsId}"`)
+        return { id: productsId, style: s.style, anim: s.anim, props: { ...propsFor(productsId), ...(s.props ?? {}) } }
+      }
+      return { id: s.id, style: s.style, anim: s.anim, props: { ...propsFor(s.id), ...(s.props ?? {}) } }
+    })
     // Producten zijn nooit optioneel — voeg toe als de LLM ze vergat
-    if (!hasProducts) sections.splice(1, 0, { id: PRODUCTS_BY_VARIANT[layout.product], props: propsFor('products.grid-3') })
+    if (!hasProducts) {
+      sections.splice(1, 0, { id: productsId, props: propsFor(productsId) })
+      notes.push(`geen productweergave gekozen → "${productsId}" toegevoegd`)
+    }
     const nav = (llm.nav && getComponent(llm.nav)) ? llm.nav : 'nav.classic'
     const footer = (llm.footer && getComponent(llm.footer)) ? llm.footer : 'footer.simple'
     // Een topbar-keuze van de LLM telt alleen als het écht een topbar is; kiest
