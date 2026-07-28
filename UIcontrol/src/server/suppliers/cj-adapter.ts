@@ -29,6 +29,24 @@ const AUTH_MIN_INTERVAL_MS = 5 * 60_000     // CJ: getAccessToken max 1× per 5 
 const REQUEST_SPACING_MS = 1_100            // CJ: ~1 request per seconde
 const MARKUP_FACTOR = 2.8                   // default verkoopprijs-indicatie
 
+// ── Zoek-passes per zoekterm ──────────────────────────────────────────────────
+// Elke warehouse-pass is een aparte /product/list-call van ~1.1s. Met 7 EU-landen
+// + een globale pass kost één zoekterm ~9 seconden; bij een assortiment van 12
+// producttypes is dat bijna twee minuten wachten en 96 calls tegen een limiet van
+// ~1 req/s. Drie representatieve landen (DE = grootste EU-warehouse, FR = west,
+// PL = centraal/oost) plus de globale pass dekken in de praktijk hetzelfde aanbod:
+// de globale pass ziet ALLE voorraad, de landen-passes bestaan alleen om het
+// warehouse (en dus de levertijd) correct te kunnen taggen.
+// Een expliciete `warehouseCountries` in de opties blijft strikt en onaangetast.
+const DEFAULT_SEARCH_WAREHOUSES = ['DE', 'FR', 'PL'] as const
+
+function searchWarehouseSample(): string[] {
+  const raw = process.env.CJ_SEARCH_WAREHOUSES
+  if (!raw) return [...DEFAULT_SEARCH_WAREHOUSES]
+  const list = raw.split(',').map(s => s.trim().toUpperCase()).filter(Boolean)
+  return list.length > 0 ? list : [...DEFAULT_SEARCH_WAREHOUSES]
+}
+
 function cjEnv() {
   return {
     email: process.env.CJ_EMAIL ?? '',
