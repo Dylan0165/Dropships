@@ -1163,25 +1163,63 @@ app.post('/api/wizard/structure', async (req, res) => {
 // Verwijdert de store van de store server (nginx vhost + files), geeft de poort
 // vrij en ruimt de DB-rijen op. Werkt ook voor stores die alleen in de DB staan.
 
+// Verwijderen in één klik — maar niet per ongeluk. De client moet de
+// subdomeinnaam meesturen als `confirm`; dat is dezelfde tekst die de gebruiker
+// in het dialoogvenster moet typen. Een misklik op een rij in een lijst kan zo
+// nooit een live winkel offline halen.
+//
+// Wat er opgeruimd wordt, in deze volgorde (server eerst, database daarna —
+// omgekeerd zou een mislukte serveropruiming een weesbestand achterlaten dat
+// niemand meer kan vinden):
+//   1. nginx-vhost + bestanden op de server
+//   2. eventueel PM2-proces (alleen relevant bij een legacy store met server-side
+//      rendering; de huidige stores zijn statische exports achter nginx)
+//   3. poort vrijgeven zodat de volgende deploy hem opnieuw kan pakken
+//   4. de design-combinatie vrijgeven voor de uniciteitscontrole
+//   5. deals die naar deze winkel wijzen van het kopers-dashboard halen
+//   6. de rij uit `stores` — daarmee verdwijnt hij ook uit de publieke etalage
 app.delete('/api/stores/:storeId', async (req, res) => {
   try {
-    const store = db.prepare(`SELECT store_id, subdomein, status FROM stores WHERE store_id = ?`)
-      .get(req.params.storeId) as { store_id: string; subdomein: string; status: string } | undefined
+    const store = db.prepare(`SELECT store_id, subdomein, status, port FROM stores WHERE store_id = ?`)
+      .get(req.params.storeId) as { store_id: string; subdomein: string; status: string; port: number | null } | undefined
     if (!store) { res.status(404).json({ error: 'Store niet gevonden' }); return }
 
-    // 1 — van de store server verwijderen (no-op in lokale modus)
+    const confirm = String((req.body as { confirm?: unknown } | undefined)?.confirm ?? req.query.confirm ?? '').trim()
+    if (confirm !== store.subdomein) {
+      res.status(428).json({
+        error: 'Bevestiging ontbreekt of klopt niet',
+        expected: store.subdomein,
+        hint: `Stuur { "confirm": "${store.subdomein}" } mee om te bevestigen.`,
+      })
+      return
+    }
+
+    const steps: string[] = []
+
     const remote = await removeDeployedStore(store.subdomein, (m) => console.log(`[store-delete] ${m}`))
     if (!remote.ok) {
       res.status(502).json({ error: `Store server opruimen mislukt: ${remote.error}` })
       return
     }
+    steps.push('nginx-vhost en bestanden verwijderd')
 
-    // 2 — poort vrijgeven + DB opruimen
+    const pm2 = await stopStoreProcess(store.subdomein)
+    if (pm2.stopped) steps.push(`PM2-proces ${store.subdomein} gestopt`)
+
     releasePort(store.store_id)
-    db.prepare(`DELETE FROM stores WHERE store_id = ?`).run(store.store_id)
+    steps.push(store.port ? `poort ${store.port} vrijgegeven` : 'geen poort in gebruik')
 
-    console.log(`[store-delete] ${store.subdomein} (${store.store_id}) verwijderd`)
-    res.json({ deleted: true, storeId: store.store_id, subdomain: store.subdomein })
+    releaseCombination(store.subdomein)
+    steps.push('design-combinatie vrijgegeven')
+
+    const deals = db.prepare(`DELETE FROM market_deals WHERE store_id = ?`).run(store.store_id)
+    if (deals.changes) steps.push(`${deals.changes} deal(s) van het kopers-dashboard gehaald`)
+
+    db.prepare(`DELETE FROM stores WHERE store_id = ?`).run(store.store_id)
+    steps.push('uit de database en de publieke etalage')
+
+    console.log(`[store-delete] ${store.subdomein} (${store.store_id}) verwijderd — ${steps.join('; ')}`)
+    res.json({ deleted: true, storeId: store.store_id, subdomain: store.subdomein, steps })
   } catch (err) {
     console.error('[server] store delete mislukt:', err)
     res.status(500).json({ error: err instanceof Error ? err.message : 'Store verwijderen mislukt' })
