@@ -85,10 +85,20 @@ agentische lus (max 5 rondes). Onze eigen `isRelevantToQuery`-check en de
 EU-warehouse-voorkeur draaien daar bovenop — de LLM-keuze is niet het laatste
 woord. Faalt MCP → `McpUnavailableError`.
 
-`wizard.ts buildShortlist` → `discoverCandidates`: **MCP eerst, val terug op REST**
-(`deriveSearchTerms` + `adapter.searchProducts`). De response bevat
-`source: 'mcp' | 'rest' | 'mock'`. Handmatig "Zelf zoeken" in de UI gaat altijd
-via REST met het directe keyword.
+`wizard.ts buildShortlist` draait sinds 28 juli 2026 het **assortiment-pad**
+(`suppliers/assortment.ts`): 10-15 producttypes, elk apart doorzocht via REST met
+`{maxResults: 4, minResults: 2}` — één call per type in het gunstige geval. MCP
+past daar niet in: `mcpProductDiscovery` is een agentische lus die zijn eigen
+zoektermen bedenkt, en die twaalf keer draaien is duur zonder iets toe te voegen.
+
+Faalt de producttype-generatie, dan valt hij terug op `buildShortlistSingleTerm`
+→ `discoverCandidates`: **MCP eerst, dan REST** (`deriveSearchTerms` +
+`adapter.searchProducts`). De response bevat `source: 'mcp' | 'rest' | 'mock'`.
+Handmatig "Zelf zoeken" in de UI gaat altijd via REST met het directe keyword.
+
+Zoek-cache: identieke zoekterm+opties komen 10 minuten uit `searchCache`
+(`CJ_SEARCH_CACHE_MS`). Na een 429 loopt de tussenruimte tussen calls vanzelf op
+(×1,6 tot max 4s) en zakt terug na een minuut zonder rate limit.
 
 ## Niche-discovery (`server/niche-discovery.ts`)
 
