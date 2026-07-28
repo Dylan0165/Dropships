@@ -279,7 +279,14 @@ ${JSON.stringify(persona, null, 2)}
 Beschikbare producten uit EU warehouses (inkoopprijs in USD):
 ${JSON.stringify(compact)}
 
-Kies de 8-15 beste producten voor deze doelgroep (genoeg voor een volwaardige collectie).
+Kies de beste producten voor deze doelgroep — maximaal 15, en NOOIT meer dan er
+hierboven staan.
+
+Belangrijk: vul de lijst NIET aan om een aantal te halen. Passen er maar drie
+producten écht bij deze doelgroep, geef er dan drie. Een half-passend product
+toevoegen om de collectie groter te laten lijken is erger dan een korte lijst —
+de klant ziet meteen dat het assortiment niet klopt.
+
 Weeg mee: past het bij de persona en het probleem, prijs binnen de prijsklasse
 (verkoopprijs = ca. 2.5-3× inkoop, USD→EUR ×0.92), review-kwaliteit (rating),
 verzendtijd en voorraad. Geef per product een suggestedPriceEur binnen de prijsklasse van de persona,
