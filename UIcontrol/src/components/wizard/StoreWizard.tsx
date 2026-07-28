@@ -400,6 +400,9 @@ export function StoreWizard({ onClose, onStarted }: Props) {
           costPriceUsd: p.costPrice,
           priceEur: p.suggestedPriceEur ?? Math.round(p.costPrice * 0.92 * 2.8 * 100) / 100,
           reason: p.reason,
+          // Producttype gaat mee naar de store: het wordt daar de categorie
+          // waarop de collectie te doorlopen is.
+          productType: p.productType,
         })),
         siteStructure: structure ? {
           nicheType: structure.nicheType,
