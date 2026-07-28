@@ -131,18 +131,7 @@ export function buildStorePage(input: BuildPageInput): BuildPageResult {
     log(`[assemble] ⚠ TERUGVAL op de oude renderer — ${reden}`)
     console.warn(`[build-page] ${subdomain}: terugval op renderStorePage — ${reden}`)
     return {
-      page: renderStorePage(dna, layout, {
-        brandName,
-        slogan: '',
-        heroLabel: content.heroLabel ?? content.eyebrow,
-        heroHeadline: content.headline,
-        heroSubheadline: content.subheadline,
-        heroCta: content.cta,
-        usps: content.usps,
-        footerTagline: content.footerTagline,
-        story: content.story,
-        reviews: content.reviews,
-      } as Parameters<typeof renderStorePage>[2], products, input.signature ?? undefined),
+      page: renderStorePage(dna, layout, content, products, input.signature ?? null),
       usedCatalog: false,
       componentMeta: { renderer: 'render-page (fallback)', reason: reden },
       uniqueMeta: {},
