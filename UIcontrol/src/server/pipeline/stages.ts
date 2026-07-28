@@ -278,6 +278,9 @@ export const STAGE_RUNNERS: Record<Stage, (ctx: StageContext) => Promise<StageOu
         slogan: brand.slogan as string,
         tone: brand.tone_of_voice as string | undefined,
         colors: brand.colors as { primary?: string; secondary?: string; accent?: string },
+        // USP's meegeven: het vangnet voor de brief gebruikt ze als de
+        // store-builder agent uitvalt (fallbackBrief in store-builder.ts).
+        usps: brand.usps as Array<{ title: string; desc: string }> | undefined,
       },
       products,
       // Persona + site-structuur uit de wizard bepalen design-DNA en sectie-volgorde
