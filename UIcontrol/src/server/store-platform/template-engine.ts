@@ -527,18 +527,12 @@ export default function CheckoutPage() {
   for (const page of infoPages) {
     const dir = path.join(appDir, page.slug)
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
-    fs.writeFileSync(path.join(dir, 'page.tsx'), `export default function Page() {
-  return (
-    <main style={{ minHeight: '100dvh', background: '#fafafa', color: '#111', padding: '3rem 1.5rem' }}>
-      <div style={{ maxWidth: 640, margin: '0 auto' }}>
-        <a href="/" style={{ fontSize: '0.8rem', color: '#666', textDecoration: 'none' }}>&larr; {${jsStr(vars.BRAND_NAME)}}</a>
-        <h1 style={{ fontSize: '1.75rem', fontWeight: 700, margin: '1rem 0 1.5rem' }}>${page.title}</h1>
-        <div style={{ lineHeight: 1.8, color: '#333', fontSize: '0.95rem' }} dangerouslySetInnerHTML={{ __html: ${JSON.stringify(page.body)} }} />
-      </div>
-    </main>
-  );
-}
-`, 'utf-8')
+    fs.writeFileSync(
+      path.join(dir, 'page.tsx'),
+      subPageShell(vars, dna, page.title,
+        `        <div dangerouslySetInnerHTML={{ __html: ${JSON.stringify(page.body)} }} />`),
+      'utf-8',
+    )
   }
 }
 
