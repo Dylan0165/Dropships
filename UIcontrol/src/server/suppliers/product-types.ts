@@ -150,7 +150,7 @@ Harde regels:
 - altTerm is een tweede Engelse formulering voor hetzelfde type, voor als de eerste niets oplevert.
 
 JSON formaat:
-{"types":[{"name":"baardolie","searchTerm":"beard oil","altTerm":"beard growth oil","tier":"mid","role":"Kernproduct, dagelijkse verzorging"}]}`)
+{"types":[{"name":"beard oil","searchTerm":"beard oil","altTerm":"beard growth oil","tier":"mid","role":"Kernproduct, dagelijkse verzorging"}]}`)
 
     const types = normalizeTypes(raw).slice(0, TYPES_MAX)
     if (types.length >= 3) {
