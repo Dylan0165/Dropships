@@ -136,6 +136,10 @@ export interface ShortlistedProduct extends SupplierProduct {
   suggestedPriceEur: number
   marginEur: number
   marginPct: number
+  /** Semantische relevantie 1-10 (zie product-relevance.ts). */
+  relevanceScore?: number
+  /** Waarom die score — zichtbaar in de wizard. */
+  relevanceReason?: string
 }
 
 /**
