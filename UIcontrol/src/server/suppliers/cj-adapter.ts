@@ -111,7 +111,9 @@ let lastRateLimitAt = 0
 
 function widenSpacing(): void {
   lastRateLimitAt = Date.now()
-  const next = Math.min(MAX_SPACING_MS, Math.round(spacingMs * 1.6))
+  // Ondergrens van 250ms: met een tussenruimte van 0 (tests) zou ×1.6 nul
+  // blijven, en dan doet de rem het juist wanneer hij nodig is niet.
+  const next = Math.min(MAX_SPACING_MS, Math.max(250, Math.round(spacingMs * 1.6)))
   if (next !== spacingMs) {
     console.warn(`[cj] tussenruimte tussen calls verhoogd naar ${next}ms na een rate limit`)
     spacingMs = next

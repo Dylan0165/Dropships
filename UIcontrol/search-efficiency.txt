@@ -1,0 +1,35 @@
+═══ CJ-ZOEKOPDRACHTEN VOOR ÉÉN ASSORTIMENT (12 producttypes) ═══
+
+  VOOR — alle EU-warehouses, alles ophalen
+    warehouse-passes : DE,NL,FR,IT,ES,PL,CZ + globale pass
+    opties           : {"maxResults":30}
+    /product/list    : 48 calls (HTTP geteld: 48)
+    per zoekterm     : 4.0
+    producten        : 360
+    wachttijd op productie: 52.8s (36ms in deze test, spacing 0)
+
+  NA — representatieve warehouses, genoeg-is-genoeg
+    warehouse-passes : DE,FR,PL (default) + globale pass
+    opties           : {"maxResults":4,"minResults":2}
+    /product/list    : 12 calls (HTTP geteld: 12)
+    per zoekterm     : 1.0
+    producten        : 48
+    wachttijd op productie: 13.2s (3ms in deze test, spacing 0)
+
+═══ RESULTAAT ═══
+  ✓ minder calls dan voorheen — 48 → 12 calls (75% minder)
+  ✓ één call per producttype in het gunstige geval — 12 calls voor 12 types
+  ✓ tijdwinst op productie — 40s per assortiment
+  ✓ er komen nog steeds producten terug — 48 producten over 12 zoektermen
+
+═══ CACHE: DEZELFDE ZOEKTERM KOST GEEN TWEEDE CALL ═══
+  ✓ herhaalde zoekopdracht raakt CJ niet — 0 calls, 1 cache-treffer(s)
+
+═══ ADAPTIEVE SPACING NA EEN 429 ═══
+  ✗ FAIL tussenruimte gaat omhoog na een rate limit — 0ms → 0ms (herstelt vanzelf na 60s zonder 429)
+
+═══ TOTAAL: 5 geslaagd, 1 gefaald ═══
+
+LET OP: dit meet onze eigen call-boekhouding tegen een onderschepte fetch —
+er is geen verkeer naar CJ gegaan. Wat bewezen is: hetzelfde aantal
+producttypes kost aantoonbaar minder calls, en de teller telt echte HTTP-calls.
