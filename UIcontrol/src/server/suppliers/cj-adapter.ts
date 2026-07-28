@@ -432,6 +432,7 @@ export class CJAdapter implements SupplierAdapter {
     // Eén zoek-pass; countryCode undefined = alle warehouses wereldwijd
     const runPass = async (countryCode?: string) => {
       attempts++
+      searchStats.listCalls++
       const params = {
         pageNum: options.page ?? 1,
         pageSize,
