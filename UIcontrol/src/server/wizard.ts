@@ -226,11 +226,40 @@ export async function buildShortlist(
     await discoverCandidates(niche, persona, options.maxResults ?? 30)
 
   if (candidates.length === 0) {
-    return { candidates: 0, shortlist: [], supplierIsMock: adapter.isMock, searchTermsTried, searchTermUsed: null, source }
+    return {
+      candidates: 0, shortlist: [], supplierIsMock: adapter.isMock,
+      searchTermsTried, searchTermUsed: null, source,
+      relevance: { evaluated: 0, rejected: 0, verdicts: [] },
+    }
+  }
+
+  // ── Semantische relevantie-poort ────────────────────────────────────────────
+  // Het woordfilter in cj-adapter.ts is grof: het weet of er een relevant wóórd
+  // in de titel staat. Hier beoordeelt de LLM of het product écht bij de niche
+  // past. Alles onder de drempel gaat eruit — dat is de reden dat er een
+  // ventilator op een blender-store kon staan.
+  const relevance = await scoreRelevance(
+    niche,
+    { label: persona.label, interests: persona.interests, problem: persona.problem, priceRange: persona.priceRange },
+    candidates,
+    (system, user) => chatJson(system, user, { maxTokens: 2048, temperature: 0.2 }),
+  )
+  const relevant = relevance.kept
+  const verdictById = new Map(relevance.verdicts.map(v => [v.productId, v]))
+
+  if (relevant.length === 0) {
+    // Liever een eerlijke lege lijst dan een gevulde met producten die er niet
+    // horen. De UI toont dan de afgewezen kandidaten mét reden.
+    console.warn(`[wizard] geen enkele kandidaat haalde de relevantie-drempel voor "${niche}"`)
+    return {
+      candidates: candidates.length, shortlist: [], supplierIsMock: adapter.isMock,
+      searchTermsTried, searchTermUsed, source,
+      relevance: { evaluated: candidates.length, rejected: relevance.verdicts.length, verdicts: relevance.verdicts, skipped: relevance.skipped },
+    }
   }
 
   // Compacte weergave voor het LLM (tokens besparen)
-  const compact = candidates.map(p => ({
+  const compact = relevant.map(p => ({
     id: p.productId,
     title: p.title.slice(0, 90),
     costUsd: p.costPrice,
