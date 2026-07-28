@@ -74,10 +74,16 @@ function limiter(opts: { limit: number; byUsername: boolean; skipSuccess?: boole
     standardHeaders: true,
     legacyHeaders: false,
     skipSuccessfulRequests: opts.skipSuccess ?? true,
+    // `ipKeyGenerator` normaliseert IPv6 naar het /64-prefix. Zonder die helper
+    // telt elk los IPv6-adres als een nieuwe bezoeker, en een IPv6-gebruiker
+    // heeft er miljarden — die kan de limiet dan simpelweg uitzitten door van
+    // adres te wisselen binnen z'n eigen blok. express-rate-limit v8 waarschuwt
+    // daar expliciet voor (ERR_ERL_KEY_GEN_IPV6).
     keyGenerator: (req) => {
-      if (!opts.byUsername) return req.ip ?? 'unknown'
+      const ip = ipKeyGenerator(req.ip ?? '')
+      if (!opts.byUsername) return ip
       const body = (req.body ?? {}) as { username?: string }
-      return `${req.ip}|${String(body.username ?? 'anon').toLowerCase()}`
+      return `${ip}|${String(body.username ?? 'anon').toLowerCase()}`
     },
     message: { error: 'Te veel pogingen. Wacht 15 minuten en probeer opnieuw.' },
   })
