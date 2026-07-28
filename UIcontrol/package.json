@@ -19,7 +19,8 @@
     "verify:subdomain": "tsx scripts/verify-subdomain-cleanup.ts",
     "verify:assortment": "tsx scripts/verify-assortment.ts",
     "verify:efficiency": "tsx scripts/verify-search-efficiency.ts",
-    "verify:collection": "tsx scripts/verify-collection-render.ts"
+    "verify:collection": "tsx scripts/verify-collection-render.ts",
+    "verify:small": "tsx scripts/verify-small-assortment.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
