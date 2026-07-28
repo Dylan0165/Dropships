@@ -42,6 +42,28 @@ Daarnaast, één niveau hoger in `design/`:
 
 Met stijl- en animatievarianten erbij zijn dat 251 concrete instanties.
 
+## Productweergave ↔ collectie-grootte
+
+Sinds 28 juli 2026 hangt de keuze van de `products.*`-component af van de
+werkelijke collectie, niet alleen van de toon:
+
+| Collectie | Weergave |
+|---|---|
+| ≥3 producttypes én ≥8 producten | `products.category-tabs` — per categorie te doorlopen |
+| ≥9 producten | catalogus: `grid-4`, `masonry`, `list-compact`, `grid-3` |
+| ≤5 producten | curated: `editorial-list`, `featured-grid`, `spotlight-stack` |
+
+`fitsCollection()` handhaaft de `few-products`/`many-products`-tags uit de
+catalogus: kiest de LLM `editorial-list` voor twaalf producten, dan wordt dat
+gecorrigeerd én gelogd (in `design-dna.json` onder `components.notes`). Een
+`few-products`-component met twaalf producten wordt een eindeloze muur; een
+`many-products`-component met drie staat vol gaten.
+
+`ProductTabs` (assemble.ts) groepeert op het echte `productType` van de producten
+— de tabs zijn dus de categorieën uit het assortiment, niet drie generieke labels.
+Alle producten blijven zichtbaar: componenten die een deel tonen
+(`spotlight-stack`, hero-strips) vullen zelf aan met de rest.
+
 ## Topbars — per niche, niet willekeurig
 
 De topbar is een eigen categorie boven de nav, en een van de sterkste signalen
