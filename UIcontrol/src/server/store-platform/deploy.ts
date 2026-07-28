@@ -99,3 +99,12 @@ export async function ensureApexVhost(onLog?: (m: string) => void): Promise<{ ok
   }
   return local.ensureApexVhost(onLog)
 }
+
+/**
+ * Stopt een eventueel PM2-proces van de store. Best-effort en alleen zinvol
+ * lokaal; bij een SSH-deploy beheert de store-server z'n eigen processen.
+ */
+export async function stopStoreProcess(subdomain: string): Promise<{ stopped: boolean; output: string }> {
+  if (deployTargetKind() !== 'local') return { stopped: false, output: `overgeslagen (deploy-modus: ${deployTargetKind()})` }
+  return local.stopStoreProcess(subdomain)
+}
