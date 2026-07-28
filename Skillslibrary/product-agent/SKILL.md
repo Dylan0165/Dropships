@@ -55,6 +55,13 @@ pricing, margin, and shipping time.
 
 - Return **8–15 products**, all in the same niche, each genuinely distinct (no
   near-duplicates). Enough for a full collection page.
+- Cover **different product types**, not variants of one item. For "beard care"
+  that means oil, balm, trimmer, comb, brush, shampoo, scissors, storage bag —
+  not five beard oils. `product_type` is the English category label; the store
+  groups the collection by it, so keep it consistent across products of the same
+  kind ("beard oil", not "oil for beards").
+- Never pad the list to reach a number. Fewer honest products beats a padded
+  collection of look-alikes.
 - `price` (EUR) = consumer selling price, > `cost_price`.
 - `cost_price` (EUR) = your wholesale cost incl. shipping.
 - `margin` = `price - cost_price` (EUR), should be > €10 ideally.
