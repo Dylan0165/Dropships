@@ -62,6 +62,30 @@ jobs:
           fi
           echo ".env aanwezig ($(grep -c '=' "$APP_DIR/UIcontrol/.env") variabelen) — niet overschreven"
 
+      # De database mag NOOIT uit git komen. `*.db` was genegeerd, maar
+      # `dropship.db-wal`/`-shm` niet — die stonden wél in de repo. Elke
+      # `git reset --hard` zette dan een WAL van een dev-machine over die van
+      # productie heen, waarna SQLite met SQLITE_CORRUPT weigerde en pm2 de app
+      # eindeloos herstartte (1982 keer). Deze stap blokkeert een herhaling en
+      # ruimt achtergebleven zijbestanden op.
+      - name: Guard database files
+        run: |
+          cd "$APP_DIR"
+          tracked=$(git ls-files -- 'UIcontrol/data/*' | grep -E '\.db(-wal|-shm|-journal)?$' || true)
+          if [ -n "$tracked" ]; then
+            echo "::error::Database-bestanden staan in git — dit overschrijft de productiedatabase bij elke deploy:"
+            echo "$tracked"
+            exit 1
+          fi
+          # Zijbestanden die niet bij de huidige database horen blijven soms
+          # achter van een eerdere deploy. Zonder database ernaast zijn ze
+          # sowieso waardeloos.
+          if [ ! -f UIcontrol/data/dropship.db ]; then
+            rm -f UIcontrol/data/dropship.db-wal UIcontrol/data/dropship.db-shm
+            echo "geen database aanwezig — verweesde -wal/-shm opgeruimd"
+          fi
+          echo "database-bestanden niet in git ✓"
+
       - name: Install dependencies
         run: |
           cd "$APP_DIR/UIcontrol"
