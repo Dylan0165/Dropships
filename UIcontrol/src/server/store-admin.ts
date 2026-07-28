@@ -309,17 +309,18 @@ export async function addProductsToStore(storeId: string, supplierProductIds: st
 
   for (const pid of supplierProductIds.slice(0, 15)) {
     if (existing.has(pid)) { skipped.push({ id: pid, reason: 'zit al in deze winkel' }); continue }
-    let detail: Record<string, unknown> | null = null
+    let detail: SupplierProduct | null = null
     try {
-      detail = await adapter.getProduct(pid) as unknown as Record<string, unknown>
+      detail = await adapter.getProduct(pid)
     } catch (err) {
       skipped.push({ id: pid, reason: err instanceof Error ? err.message : 'ophalen mislukt' })
       continue
     }
     if (!detail) { skipped.push({ id: pid, reason: 'niet gevonden bij de leverancier' }); continue }
 
-    const cost = Number(detail.sellPrice ?? detail.price ?? 0)
-    const price = priceFrom(cost)
+    const price = detail.suggestedPrice && detail.suggestedPrice > 0
+      ? Math.round(detail.suggestedPrice * 100) / 100
+      : priceFrom(detail.costPrice)
     if (!price) { skipped.push({ id: pid, reason: 'geen bruikbare prijs' }); continue }
 
     // Een eigen weergave-id houdt de store-interne ids stabiel, ook als dezelfde
@@ -327,13 +328,13 @@ export async function addProductsToStore(storeId: string, supplierProductIds: st
     const displayId = `added-${pid}`.slice(0, 60)
     const product: EditableProduct = {
       id: displayId,
-      title: String(detail.productNameEn ?? detail.title ?? pid),
-      description: String(detail.description ?? ''),
+      title: detail.title || pid,
+      description: detail.description ?? '',
       price,
-      image: String(detail.image ?? (Array.isArray(detail.images) ? detail.images[0] : '') ?? ''),
-      supplier: 'cj',
-      supplierProductId: pid,
-      supplierVariantId: String(detail.variantId ?? detail.vid ?? ''),
+      image: detail.image ?? '',
+      supplier: detail.supplier || 'cj',
+      supplierProductId: detail.productId || pid,
+      supplierVariantId: detail.variantId ?? '',
     }
     patch.push(product)
     added.push({ id: displayId, title: String(product.title), price })
