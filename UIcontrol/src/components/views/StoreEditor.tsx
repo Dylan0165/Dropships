@@ -184,6 +184,16 @@ export default function StoreEditor({ storeId, subdomain, niche, onClose, onSave
             </div>
           )}
 
+          {!loading && data && tab === 'manage' && (
+            <ManagePanel storeId={storeId} onChanged={() => {
+              // Na een bulkactie of AI-bewerking is de merged data verouderd
+              fetch(`/api/stores/${storeId}/cms-data`).then(r => r.json()).then((d: CmsResponse) => {
+                setData(d.merged)
+                setOverrides(d.overrides as Partial<StoreData & { layout?: number }> ?? {})
+              }).catch(() => { /* de panelen tonen hun eigen fout */ })
+            }} />
+          )}
+
           {!loading && data && tab === 'products' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
               {data.products.map((p, i) => (
