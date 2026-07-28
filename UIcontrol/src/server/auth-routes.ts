@@ -62,6 +62,33 @@ export function attachUser(
   next()
 }
 
+/**
+ * Dezelfde sessiecontrole, maar vanaf een rauwe `Cookie`-header.
+ *
+ * Nodig voor de WebSocket-upgrade: die loopt via `server.on('upgrade')` op de
+ * HTTP-server en gaat dus volledig buiten Express om — geen cookie-parser, geen
+ * middleware, dus ook niet langs `requireAuth`. Zonder deze controle kon
+ * iedereen zonder in te loggen meelezen met live pipeline- en build-updates.
+ *
+ * De sessielogica zelf wordt hergebruikt (`getSessionUser`); het enige extra
+ * werk is het uitlezen van de header die cookie-parser normaal doet.
+ */
+export function sessionUserFromCookieHeader(header: string | undefined): string | null {
+  if (!header) return null
+  for (const part of header.split(';')) {
+    const eq = part.indexOf('=')
+    if (eq < 0) continue
+    if (part.slice(0, eq).trim() !== SESSION_COOKIE) continue
+    const raw = part.slice(eq + 1).trim()
+    // cookie-parser decodeert waarden; onze token is hex, maar we volgen
+    // hetzelfde gedrag zodat de twee paden niet uit elkaar kunnen lopen.
+    let value = raw
+    try { value = decodeURIComponent(raw) } catch { /* laat de rauwe waarde staan */ }
+    return getSessionUser(value)
+  }
+  return null
+}
+
 // ── Rate limiting ─────────────────────────────────────────────────────────────
 // Gescheiden budgetten per doel. Eén gedeeld budget was fout: dan sluit een
 // normale setup-flow je daarna buiten bij het inloggen.
