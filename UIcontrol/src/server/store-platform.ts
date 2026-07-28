@@ -74,6 +74,9 @@ export interface StoreProduct {
   price: number
   compareAtPrice?: number
   badge?: string
+  description?: string
+  /** Producttype uit het assortiment — bepaalt de categorie-indeling op de pagina. */
+  productType?: string
   // Supplier koppeling voor automatische fulfillment
   supplier?: string
   supplierProductId?: string
