@@ -38,6 +38,13 @@ export interface ProductSearchOptions {
   pageSize?: number
   /** Stop zoeken zodra dit aantal unieke producten gevonden is */
   maxResults?: number
+  /**
+   * Genoeg-is-genoeg: zodra een warehouse-pass dit aantal relevante producten
+   * heeft opgeleverd, worden de resterende passes overgeslagen. Zoek je één goed
+   * product per producttype, dan hoef je de catalogus niet uit te putten — dat
+   * scheelt bij een assortiment van 12 types tientallen calls tegen de rate limit.
+   */
+  minResults?: number
 }
 
 export interface OrderItem {
