@@ -105,16 +105,22 @@ Poort-conflictdetectie, scan en audit lezen de lokale conf-bestanden — geen SS
 
 ```
 1. WIZARD (UIcontrol/src/components/wizard/, server/wizard.ts)
-   niche-keuze → AI-vragen → richtingen → shortlist → structuur
+   niche-keuze → AI-vragen → richtingen → ASSORTIMENT → structuur
+   Assortiment = suppliers/product-types.ts (10-15 distincte producttypes)
+                 + suppliers/assortment.ts (elk type doorzoeken, beste per type)
+                 → 7-15 VERSCHILLENDE producten, of eerlijk minder. Nooit
+                   duplicaten of half-passende producten om een aantal te halen.
    Optioneel: AI-niches uit CJ-voorraad (server/niche-discovery.ts, 24h cache)
-        │  wizardConfig
+        │  wizardConfig (incl. productType per product)
         ▼
 2. PIPELINE START  POST /api/pipeline/start
    pipeline/engine.ts draait 11 stages sequentieel, persist na elke stage
    Bij wizard-run worden stage 1-4 ge-short-circuit (keuzes staan al vast)
         │
         ├─ CJ PRODUCT-SOURCING (suppliers/)
-        │    MCP-discovery eerst (cj-mcp-search.ts) → REST-fallback (cj-adapter.ts)
+        │    Assortiment-pad: REST per producttype (3 EU-warehouses + globale pass,
+        │    stoppen zodra er genoeg is). MCP-discovery blijft de terugval als de
+        │    producttype-generatie faalt.
         │    Wereldwijde warehouse-scope; EU is voorkeur/label, geen filter
         │
         ├─ BRAND + CONTENT (deepseek-chat, hoge temperature)
