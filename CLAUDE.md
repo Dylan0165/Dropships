@@ -157,6 +157,16 @@ Runner-label `dropships-vps`.
   resterende passes zodra er genoeg is; korte zoek-cache (`CJ_SEARCH_CACHE_MS`, 10 min);
   spacing loopt automatisch op na een 429 (`CJ_REQUEST_SPACING_MS` alleen voor tests).
   Gemeten: 48 → **12 calls** voor 12 producttypes.
+- **Te klein assortiment (<5) is een KEUZE, geen fout** (sinds 28 juli 2026): de wizard toont
+  direct na de assortiment-fase (~1s) een keuzeblok — doorgaan met een kleinere winkel /
+  niche breder maken (`broaden: true` → bredere producttypes, zelfde doelgroep) / andere niche.
+  "Volgende" blijft dicht tot er gekozen is. Stage 7 kan niet meer omvallen op de brief:
+  `generateBrief` geeft de ECHTE fout terug (was: `null` → `'brief generation failed'`),
+  `fallbackBrief()` stelt een geldige brief samen uit de brand-stage en de run bouwt door
+  (`brief_source: 'fallback'` + `brief_error` in de stage-output). De brief krijgt een
+  `collection`-blok (aantal + types + guidance) zodat de LLM voor 2 producten een compacte
+  winkel ontwerpt. `runAgent` heeft `compactInput`: vanaf poging 2 gaat de componentcatalogus
+  uit de prompt (41k → 2k tekens); alleen-redenering-terug wordt als zodanig gerapporteerd.
 - `productType` loopt door de hele keten: shortlist → `WizardProduct` → `product_research`
   → `RenderProduct` → `PRODUCTS` in page.tsx → **categorie-tabs** op de winkel.
   `chooseProductComponent`/`fitsCollection` (selection.ts) toetsen de LLM-keuze aan de
