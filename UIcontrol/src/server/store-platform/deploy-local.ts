@@ -305,12 +305,26 @@ export async function ensureApexVhost(onLog?: (m: string) => void): Promise<{ ok
   }
   try {
     fs.mkdirSync(nginxConfDir, { recursive: true })
+    let changed = false
+
+    // Catch-all eerst; die bepaalt wat er met onbekende hosts gebeurt.
+    const defaultPath = path.join(nginxConfDir, `${DEFAULT_CONF_NAME}.conf`)
+    const nextDefault = defaultConf()
+    if ((fs.existsSync(defaultPath) ? fs.readFileSync(defaultPath, 'utf-8') : '') !== nextDefault) {
+      fs.writeFileSync(defaultPath, nextDefault, 'utf-8')
+      onLog?.(`[apex] ${defaultPath} geschreven — onbekende subdomeinen geven nu 404`)
+      changed = true
+    }
+
     const confPath = path.join(nginxConfDir, `${APEX_CONF_NAME}.conf`)
     const next = apexConf(domain, port)
-    const current = fs.existsSync(confPath) ? fs.readFileSync(confPath, 'utf-8') : ''
-    if (current === next) return { ok: true, changed: false }
-    fs.writeFileSync(confPath, next, 'utf-8')
-    onLog?.(`[apex] ${confPath} bijgewerkt → ${domain} naar 127.0.0.1:${port}/market`)
+    if ((fs.existsSync(confPath) ? fs.readFileSync(confPath, 'utf-8') : '') !== next) {
+      fs.writeFileSync(confPath, next, 'utf-8')
+      onLog?.(`[apex] ${confPath} bijgewerkt → ${domain} naar 127.0.0.1:${port}/market`)
+      changed = true
+    }
+
+    if (!changed) return { ok: true, changed: false }
     const reload = await reloadNginx(onLog)
     return { ok: reload.ok, changed: true, error: reload.ok ? undefined : reload.output }
   } catch (err) {
