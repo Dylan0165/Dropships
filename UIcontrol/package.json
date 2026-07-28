@@ -16,7 +16,10 @@
     "verify:fulfillment": "tsx scripts/verify-checkout-fulfillment.ts",
     "verify:store-mgmt": "tsx scripts/verify-store-management.ts",
     "verify:relevance": "tsx scripts/verify-relevance.ts",
-    "verify:subdomain": "tsx scripts/verify-subdomain-cleanup.ts"
+    "verify:subdomain": "tsx scripts/verify-subdomain-cleanup.ts",
+    "verify:assortment": "tsx scripts/verify-assortment.ts",
+    "verify:efficiency": "tsx scripts/verify-search-efficiency.ts",
+    "verify:collection": "tsx scripts/verify-collection-render.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
