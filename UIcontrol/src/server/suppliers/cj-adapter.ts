@@ -156,7 +156,7 @@ export function getCjStatus() {
 function enqueue<T>(task: () => Promise<T>): Promise<T> {
   cjStatus.queueDepth++
   const run = queueTail.then(async () => {
-    const wait = lastRequestAt + REQUEST_SPACING_MS - Date.now()
+    const wait = lastRequestAt + currentSpacing() - Date.now()
     if (wait > 0) await new Promise(r => setTimeout(r, wait))
     lastRequestAt = Date.now()
     return task()
