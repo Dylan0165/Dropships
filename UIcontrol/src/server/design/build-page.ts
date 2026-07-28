@@ -17,9 +17,9 @@
 import type { DesignDNA } from './tokens.js'
 import type { LayoutPlan } from './layout.js'
 import type { SignatureElement } from './design-plan.js'
-import { renderStorePage, type RenderProduct } from './render-page.js'
+import { renderStorePage, type RenderProduct, type RenderContent } from './render-page.js'
 import { assemblePage } from './components/assemble.js'
-import { buildSelection, type ComponentSelectionInput, type BriefContentForSelection } from './components/selection.js'
+import { buildSelection, type ComponentSelectionInput } from './components/selection.js'
 import { selectMotionProfile, motionCharacterIds } from './anime-presets.js'
 import { ensureUniqueCombination, paletteKey } from './uniqueness.js'
 
