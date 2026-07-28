@@ -2,6 +2,36 @@
 
 Nieuwste bovenaan. Zie `ai-must-read/release-and-changelog.md` voor het formaat.
 
+## 2026-07-28 — Een winkel is een assortiment, geen één-product-pagina
+**Tag:** volgt hieronder
+
+- De wizard bedacht per niche wél meerdere producttypes (beard grooming kit,
+  beard oil, beard brush) maar **zocht alleen de eerste af**: `discoverCandidates`
+  brak de lus af bij de eerste term die íets opleverde. `fitProducts` vulde de
+  rest daarna aan met **klonen** van al gekozen producten (`--v1`-suffix). Netto
+  een winkel die vol leek en drie keer hetzelfde item toonde.
+- Nieuw: `suppliers/product-types.ts` (10-15 distincte types per niche, gespreid
+  over instap/midden/premium) + `suppliers/assortment.ts` (zoekt **elk** type af,
+  scoort alles in één call, kiest per type de beste). Te weinig → eerst EXTRA
+  types laten bedenken, dan een tweede prijsvariant per type. Nooit duplicaten of
+  half-passende producten om een quotum te halen; wel een eerlijke melding met
+  het echte aantal.
+- De duplicate-opvulling in `fitProducts` is **weg**. Er wordt ook niet meer
+  teruggeschaald naar een geseed doel-aantal — wat de gebruiker kiest, komt op de
+  winkel (alleen boven 15 begrensd).
+- Efficiëntie was hier een ontwerp-eis: 12 types × 8 warehouse-passes zou bijna
+  twee minuten rate-limit kosten. Warehouse-passes van 7 EU naar 3
+  representatieve (DE/FR/PL) + globale pass, `minResults` stopt de rest zodra er
+  genoeg is, plus een korte zoek-cache en spacing die na een 429 vanzelf oploopt.
+  **Gemeten: 48 → 12 calls** voor 12 producttypes (75% minder).
+- `productType` loopt nu door de hele keten tot in `PRODUCTS` op de pagina en
+  wordt daar de **categorie-indeling**: `products.category-tabs` bij ≥3 types en
+  ≥8 producten. `fitsCollection` corrigeert een LLM die een `few-products`-weergave
+  kiest voor twaalf producten (en logt dat).
+- **Geverifieerd:** assortiment 23/23, efficiëntie 6/6, collectie-rendering 15/15,
+  plus een écht gebouwde teststore (`next build`) waarin alle 12 producten en 12
+  categorie-tabs zichtbaar zijn. Zie `logs/assortiment-2026-07-28.md`.
+
 ## 2026-07-28 — WebSocket zat buiten de 2FA-gate
 **Tag:** volgt hieronder
 
