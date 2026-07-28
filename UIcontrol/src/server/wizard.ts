@@ -140,6 +140,22 @@ export interface ShortlistResult {
   searchTermUsed: string | null
   source: 'mcp' | 'rest' | 'mock'
   /**
+   * Het assortiment: welke producttypes zijn bedacht, welke zijn doorzocht en
+   * wat leverde elk op. Zonder dit is niet na te gaan of een korte lijst komt
+   * doordat de leverancier niets heeft of doordat er niet gezocht is — precies
+   * de blinde vlek waardoor "baard verzorging" op één producttype bleef steken.
+   */
+  assortment?: {
+    types: Array<{ id: string; name: string; searchTerm: string; tier: string; role: string }>
+    attempts: Array<{ typeId: string; name: string; terms: string[]; candidates: number; chosen?: { productId: string; title: string; score?: number }; note?: string }>
+    distinctTypes: number
+    searchCalls: number
+    /** Eerlijke melding als er minder producten zijn dan het streefgetal. */
+    shortfall?: string
+    /** Gevuld als de producttype-generatie faalde en er op één term gezocht is. */
+    typesFallback?: string
+  }
+  /**
    * Uitslag van de semantische poort. `verdicts` bevat ÓÓK de afgewezen
    * producten met hun score en reden — zonder dat kan niemand nakijken waarom
    * een lijst kort is, en dat is precies waarom er ooit stilzwijgend werd
