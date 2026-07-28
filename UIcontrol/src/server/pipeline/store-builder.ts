@@ -118,8 +118,49 @@ function slugify(s: string): string {
     .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40)
 }
 
-// Call store-builder skill to generate the brief
-export async function generateBrief(input: StoreBuildInput): Promise<StoreBrief | null> {
+/**
+ * Beschrijft de collectie voor de store-builder LLM.
+ *
+ * Zonder dit ontwerpt het model impliciet voor "een winkel" — meestal een volle
+ * collectie — terwijl er soms maar twee producten zijn. Een smalle niche is een
+ * legitieme uitkomst (zie suppliers/assortment.ts), dus de brief moet daar
+ * expliciet op gericht worden in plaats van eromheen te werken.
+ */
+export function collectionContext(products: StoreBuildInput['products']): Record<string, unknown> {
+  const count = products.length
+  const types = [...new Set(products.map(p => p.productType).filter((t): t is string => !!t))]
+  const guidance = count <= 2
+    ? `This store has only ${count} product(s). Design a focused single-product-style store: one strong hero, deep product storytelling, trust and FAQ sections. Do NOT pick a catalog or grid layout — there is nothing to fill it with. Never invent products that are not in the list.`
+    : count <= 6
+      ? `This store has ${count} products — a small curated collection. Use an editorial or featured layout that makes ${count} products look deliberate, not empty. Never invent extra products.`
+      : `This store has ${count} products across ${types.length} product type(s). Use a catalog-style layout.`
+  return { product_count: count, product_types: types, guidance }
+}
+
+/**
+ * Roept de store-builder skill aan voor de brief.
+ *
+ * Geeft bij falen de ECHTE reden terug in plaats van `null`. Dat was de reden
+ * dat een mislukte brief in de UI aankwam als "brief generation failed" zonder
+ * verdere uitleg: `runAgent` levert `error` + `validationErrors`, en die werden
+ * hier weggegooid.
+ */
+export async function generateBrief(input: StoreBuildInput): Promise<{
+  brief: StoreBrief | null
+  error?: string
+  validationErrors?: string[]
+  attempts?: number
+}> {
+  const collection = collectionContext(input.products)
+  const baseInput: Record<string, unknown> = {
+    niche: input.niche,
+    previous_agent_output: { brand: input.brand, products: input.products },
+    collection,
+    // Persona + site-structuur uit de wizard sturen de creatieve richting
+    ...(input.persona ? { doelgroep_persona: input.persona } : {}),
+    ...(input.siteStructure ? { site_structuur: input.siteStructure } : {}),
+  }
+
   const result = await runAgent({
     runId: input.runId,
     stage: 'store-build',
@@ -127,15 +168,16 @@ export async function generateBrief(input: StoreBuildInput): Promise<StoreBrief 
     skillName: 'store-builder',
     model: process.env.LLM_MODEL_STORE ?? 'deepseek-reasoner',
     input: {
-      niche: input.niche,
-      previous_agent_output: { brand: input.brand, products: input.products },
-      // Persona + site-structuur uit de wizard sturen de creatieve richting
-      ...(input.persona ? { doelgroep_persona: input.persona } : {}),
-      ...(input.siteStructure ? { site_structuur: input.siteStructure } : {}),
+      ...baseInput,
       // Component-catalogus: de LLM KIEST hieruit (van genereren → combineren).
       // Checkout staat er bewust NIET in — die is vast en wordt automatisch toegevoegd.
       component_catalog: catalogForPrompt(),
     },
+    // Vanaf poging 2 gaat de catalogus (~10k tokens) eruit. Een antwoord dat
+    // halverwege afgekapt is, wordt niet beter van dezelfde volle prompt; zonder
+    // catalogus is er ruimte, en een ontbrekend `components`-blok is geen
+    // probleem — dan leidt buildSelection de keuze af uit toon en layout.
+    compactInput: baseInput,
     outputSchema: StoreBriefSchema,
     timeoutMs: 240_000,
     retries: 3,
@@ -144,8 +186,55 @@ export async function generateBrief(input: StoreBuildInput): Promise<StoreBrief 
     onLog: input.onLog ? (lvl, m) => input.onLog!(`[${lvl}] ${m}`) : undefined,
   })
 
-  if (!result.ok || !result.parsed) return null
-  return result.parsed
+  if (!result.ok || !result.parsed) {
+    return { brief: null, error: result.error, validationErrors: result.validationErrors, attempts: result.attempts }
+  }
+  return { brief: result.parsed, attempts: result.attempts }
+}
+
+/**
+ * Een geldige brief zonder LLM, uit wat er al ligt.
+ *
+ * brand-creation heeft de naam, slogan, kleuren en USP's al opgeleverd; de brief
+ * voegt daar vooral hero-copy aan toe. Valt de store-builder agent uit, dan is
+ * een run laten sneuvelen op die ene call slechter dan doorbouwen met een
+ * eerlijke, iets soberdere winkel — het design-DNA, de componentselectie en de
+ * Engelse content komen sowieso uit code (seeded), niet uit de brief.
+ *
+ * Er wordt hier NIETS verzonnen wat de klant misleidt: geen productclaims, geen
+ * aantallen, geen reviews. Alleen neutrale winkel-copy.
+ */
+export function fallbackBrief(input: StoreBuildInput): StoreBrief {
+  const brandName = input.brand.name?.trim() || input.niche
+  const count = input.products.length
+  const lead = input.products[0]?.title?.trim()
+  const usps = (input.brand.usps ?? []).filter(u => u?.title && u?.desc).slice(0, 3)
+  while (usps.length < 3) {
+    usps.push([
+      { title: 'European stock', desc: 'Shipped from within the EU, with tracking from day one.' },
+      { title: '30-day returns', desc: 'Changed your mind? Send it back, no questions asked.' },
+      { title: 'Secure checkout', desc: 'Card, iDEAL and PayPal, handled by Stripe.' },
+    ][usps.length])
+  }
+  return {
+    brand_name: brandName.slice(0, 40),
+    slogan: (input.brand.slogan?.trim() || 'Chosen carefully, shipped from Europe').slice(0, 60),
+    hero_headline: (count === 1 && lead ? lead : `${brandName} — a short, honest selection`).slice(0, 80),
+    hero_subheadline: (count <= 2
+      ? 'A small range we actually use ourselves, shipped from within Europe.'
+      : 'A focused range, shipped from within Europe with 30-day returns.').slice(0, 160),
+    hero_cta: count <= 2 ? 'View the product' : 'Shop the collection',
+    colors: {
+      primary: input.brand.colors?.primary ?? '#1f2933',
+      secondary: input.brand.colors?.secondary ?? '#f4f5f7',
+      accent: input.brand.colors?.accent ?? '#c2410c',
+    },
+    usps: usps.slice(0, 3),
+    footer_tagline: `${brandName} — shipped across Europe`.slice(0, 80),
+    story_angle: 'We would rather sell a few things we stand behind than a catalogue we do not.',
+    // Geen `design` en geen `components`: dan pakken het seeded design-DNA en
+    // de afgeleide componentselectie het over — precies waar die vangnetten voor zijn.
+  } as StoreBrief
 }
 
 // Render the brief into a Next.js project on disk.
