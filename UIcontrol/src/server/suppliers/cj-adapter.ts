@@ -383,7 +383,7 @@ export class CJAdapter implements SupplierAdapter {
     // EU-warehouses eerst (levert per-warehouse tagging + snelle opties bovenaan),
     // daarna één GLOBALE pass zonder countryCode — warehouse is informatie, geen
     // harde uitsluiting meer. Expliciete warehouseCountries in options = strikt.
-    const euWarehouses = options.warehouseCountries ?? [...EU_WAREHOUSES]
+    const euWarehouses = options.warehouseCountries ?? searchWarehouseSample()
     const strictWarehouses = options.warehouseCountries != null
     const pageSize = options.pageSize ?? 20
     const maxResults = options.maxResults ?? 30
