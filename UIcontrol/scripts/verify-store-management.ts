@@ -4,7 +4,7 @@
 import fs from 'node:fs'
 import { generateSync } from 'otplib'
 import db, { allocatePort, releasePort } from '../src/server/db.js'
-import { mergedStore, saveOverrides, applyPriceChange } from '../src/server/store-admin.js'
+import { mergedStore, saveOverrides, applyPriceChange, applyAiEdit, parseAiEdit } from '../src/server/store-admin.js'
 import { recordCombination, combinationHash, combinationTaken } from '../src/server/design/uniqueness.js'
 
 const B = process.env.TEST_BASE ?? 'http://127.0.0.1:3313'
@@ -80,6 +80,57 @@ function cleanup() {
   } catch { /* opruimen bepaalt de uitslag niet */ }
 }
 
+/**
+ * De LLM-aanroep zelf zit niet in deze test — daar is een geldige DeepSeek-key
+ * voor nodig. Wat hier getest wordt is het deel dat de LLM in toom houdt:
+ * schemavalidatie, hallucinatie eruit filteren, emoji strippen en de diff.
+ * Dat is precies het deel waar een fout schade doet.
+ */
+async function aiEditSection() {
+  const store = mergedStore('sm-b')!
+
+  const raw = {
+    slogan: 'Sharper than before',
+    products: [
+      { id: 'p-1', title: 'Alpha Pro 🚀', description: 'Shorter, sharper copy.', price: 27.5 },
+      { id: 'p-2', price: 39.99 },
+      { id: 'bestaat-niet', title: 'Verzonnen product', price: 1 },
+      { id: 'p-3', title: 'Gamma' },
+    ],
+    summary: 'Beschrijvingen ingekort en twee prijzen aangepast.',
+  }
+
+  const parsed = parseAiEdit(raw)
+  check('LLM-antwoord voldoet aan het schema', parsed.ok, parsed.ok ? 'gevalideerd' : parsed.error)
+  if (!parsed.ok) return
+
+  const before = store.products.map(p => `${p.id}=${p.price}`).join(' ')
+  const r = applyAiEdit('sm-b', store, parsed.edit)
+  check('bewerking toegepast', r.ok && r.applied!.products === 2,
+    `${r.applied!.products} producten gewijzigd (van de 4 die de LLM noemde)`)
+  check('verzonnen product genegeerd', !r.diff!.some(d => d.id === 'bestaat-niet'),
+    'onbekend id komt niet in de diff')
+  check('ongewijzigd veld levert geen diff', !r.diff!.some(d => d.id === 'p-3'),
+    'p-3 kreeg dezelfde titel terug → geen wijziging')
+
+  const after = mergedStore('sm-b')!
+  const alpha = after.products.find(p => p.id === 'p-1')!
+  check('emoji uit de LLM-output geweerd', alpha.title === 'Alpha Pro',
+    `LLM stuurde "Alpha Pro 🚀" → opgeslagen "${alpha.title}"`)
+  check('prijzen uit de bewerking overgenomen', alpha.price === 27.5 && after.products[1].price === 39.99,
+    `${before} → ${after.products.map(p => `${p.id}=${p.price}`).join(' ')}`)
+  check('slogan bijgewerkt', after.slogan === 'Sharper than before', `"${after.slogan}"`)
+  check('supplier-velden onaangeroerd', alpha.supplierProductId === 'CJ-1', `${alpha.supplierProductId}`)
+  say(`  diff (${r.diff!.length} regels): ${r.diff!.map(d => `${d.id}.${d.field}`).join(', ')}`)
+  say(`  samenvatting van de AI: "${r.summary}"`)
+
+  // Een antwoord dat het schema schendt hoort te stranden vóór het de database raakt
+  const badPrice = parseAiEdit({ products: [{ id: 'p-1', price: -5 }] })
+  check('negatieve prijs afgekeurd door het schema', !badPrice.ok, badPrice.ok ? 'DOORGELATEN' : badPrice.error)
+  const noId = parseAiEdit({ products: [{ title: 'zonder id' }] })
+  check('product zonder id afgekeurd', !noId.ok, noId.ok ? 'DOORGELATEN' : noId.error)
+}
+
 async function main() {
   cleanup()
   seed()
@@ -142,6 +193,10 @@ async function main() {
   check('supplier-velden overleven de bewerking', merged.products[0].supplierProductId === 'CJ-1',
     `supplierProductId=${merged.products[0].supplierProductId}`)
   check('niet-bewerkte producten ongemoeid', merged.products[1].title === 'Beta', `${merged.products[1].title}`)
+
+  say('')
+  say('═══ 3b. AI-BEWERKING — NABEWERKING VAN HET LLM-ANTWOORD ═══')
+  await aiEditSection()
 
   say('')
   say('═══ 4. VERWIJDEREN VIA DE API ═══')
