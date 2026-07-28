@@ -1164,6 +1164,62 @@ app.post('/api/wizard/structure', async (req, res) => {
 // Verwijdert de store van de store server (nginx vhost + files), geeft de poort
 // vrij en ruimt de DB-rijen op. Werkt ook voor stores die alleen in de DB staan.
 
+// ═══════ Store-beheer ═══════
+// Bewerken van een LIVE store zonder de pipeline opnieuw te draaien. Alles komt
+// als override in `stores.custom_data`; de originele pipeline-output blijft
+// staan. Na een wijziging moet je `POST /api/stores/:id/rebuild` aanroepen om
+// hem live te zetten — bewust een aparte stap, zodat je meerdere bewerkingen
+// kunt stapelen voor één rebuild van 2-3 minuten.
+
+app.get('/api/stores/:storeId/editable', (req, res) => {
+  const store = mergedStore(req.params.storeId)
+  if (!store) { res.status(404).json({ error: 'Store niet gevonden' }); return }
+  res.json(store)
+})
+
+app.put('/api/stores/:storeId/editable', (req, res) => {
+  const b = (req.body ?? {}) as { brand_name?: string; slogan?: string; products?: Array<{ id: string }> }
+  const r = saveOverrides(req.params.storeId, b)
+  if (!r.ok) { res.status(404).json({ error: 'Store niet gevonden' }); return }
+  res.json({ ok: true, changedProducts: r.changedProducts, store: mergedStore(req.params.storeId) })
+})
+
+app.post('/api/stores/:storeId/prices', (req, res) => {
+  const b = (req.body ?? {}) as { percent?: number; delta?: number; roundTo?: number; productIds?: string[] }
+  const r = applyPriceChange(req.params.storeId, b)
+  if (!r.ok) { res.status(400).json({ error: r.error }); return }
+  res.json(r)
+})
+
+app.post('/api/stores/:storeId/ai-edit', async (req, res) => {
+  const instruction = String((req.body as { instruction?: unknown } | undefined)?.instruction ?? '').trim()
+  if (!instruction) { res.status(400).json({ error: 'instruction is verplicht' }); return }
+  try {
+    const r = await aiEditStore(req.params.storeId, instruction)
+    res.status(r.ok ? 200 : 400).json(r)
+  } catch (err) {
+    console.error('[store-admin] ai-edit mislukt:', err)
+    res.status(500).json({ error: err instanceof Error ? err.message : 'AI-bewerking mislukt' })
+  }
+})
+
+app.get('/api/stores/:storeId/product-suggestions', async (req, res) => {
+  const r = await suggestProductsForStore(req.params.storeId, req.query.q ? String(req.query.q) : undefined)
+  res.status(r.ok ? 200 : 400).json(r)
+})
+
+app.post('/api/stores/:storeId/products', async (req, res) => {
+  const ids = (req.body as { supplierProductIds?: unknown } | undefined)?.supplierProductIds
+  if (!Array.isArray(ids) || !ids.length) { res.status(400).json({ error: 'supplierProductIds is verplicht' }); return }
+  try {
+    const r = await addProductsToStore(req.params.storeId, ids.map(String))
+    res.status(r.ok ? 200 : 400).json(r)
+  } catch (err) {
+    console.error('[store-admin] producten toevoegen mislukt:', err)
+    res.status(500).json({ error: err instanceof Error ? err.message : 'Toevoegen mislukt' })
+  }
+})
+
 // Verwijderen in één klik — maar niet per ongeluk. De client moet de
 // subdomeinnaam meesturen als `confirm`; dat is dezelfde tekst die de gebruiker
 // in het dialoogvenster moet typen. Een misklik op een rij in een lijst kan zo
