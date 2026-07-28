@@ -140,6 +140,12 @@ export interface RunAgentConfig<T> {
   skillName: string
   model: string
   input: Record<string, unknown>
+  /**
+   * Kleinere invoer voor pogingen ná de eerste. Een antwoord dat afgekapt raakt
+   * wordt niet beter van dezelfde volle prompt; met minder invoer is er ruimte
+   * voor het antwoord. Weglaten = elke poging dezelfde invoer.
+   */
+  compactInput?: Record<string, unknown>
   outputSchema: ZodSchema<T>
   timeoutMs?: number
   retries?: number
