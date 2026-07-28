@@ -214,8 +214,10 @@ Stuur nu uitsluitend valide JSON volgens schema.`
 
       const jsonText = extractJson(content)
       if (!jsonText) {
-        lastErr = 'no parseable JSON in response'
-        log('warn', `JSON parse mislukt — retry`)
+        lastErr = reasoningOnly
+          ? `model gaf alleen redenering terug, geen antwoord (${outputTokens} output-tokens) — waarschijnlijk max_tokens bereikt tijdens het denken`
+          : `geen parseerbare JSON in het antwoord (${outputTokens} output-tokens, begint met: ${content.slice(0, 80).replace(/\s+/g, ' ')})`
+        log('warn', `JSON parse mislukt — ${lastErr}`)
         if (attempt < maxRetries) await delay(backoff[attempt - 1] ?? 2000)
         continue
       }
