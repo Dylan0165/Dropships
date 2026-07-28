@@ -255,82 +255,18 @@ export function renderStore(input: StoreBuildInput, briefRaw: StoreBrief): Store
   const appDir = path.join(buildDir, 'app')
   fs.mkdirSync(appDir, { recursive: true })
 
-  let pageTsx: string
-  let componentMeta: Record<string, unknown> = { renderer: 'render-page (fallback)' }
-  let uniqueMeta: Record<string, unknown> = {}
-  try {
-    const selection = buildSelection(dna, layout, {
-      brandName,
-      eyebrow: content.heroLabel,
-      headline: brief.hero_headline,
-      subheadline: brief.hero_subheadline,
-      cta: brief.hero_cta,
-      usps: content.usps,
-      storyTitle: content.story.title,
-      storyBody: content.story.body,
-      reviews: content.reviews,
-      footerTagline: brief.footer_tagline,
-    }, brief.components, {
-      niche: input.niche,
-      interests: persona.interests ?? [],
-      seed: dna.seed,
-    })
-
-    // ── Bewegingskarakter (Anime.js-laag) ────────────────────────────────────
-    const motion = selectMotionProfile(dna.tone, dna.seed)
-
-    // ── Uniciteit afdwingen over de zes assen ────────────────────────────────
-    // Botst deze store met een bestaande, dan draait ensureUniqueCombination aan
-    // hero/topbar/motion tot de hash vrij is. Palet en fonts blijven staan: die
-    // komen uit de persona en de art-direction, en dáár aan sleutelen zou de
-    // store minder passend maken dan een andere hero-variant.
-    const heroIdx = selection.sections.findIndex(s => s.id.startsWith('hero.'))
-    const unique = ensureUniqueCombination(
-      {
-        layout: layout.sections.join('>'),
-        hero: heroIdx >= 0 ? selection.sections[heroIdx].id : 'none',
-        topbar: selection.topbar.id,
-        motion: motion.id,
-        palette: paletteKey(dna.palette),
-        fonts: `${dna.typography.heading}/${dna.typography.body}`,
-      },
-      { hero: selection.alternatives.hero, topbar: selection.alternatives.topbar, motion: motionCharacterIds() },
-      subdomain,
-      dna.seed,
-    )
-    if (unique.attempts > 0) {
-      input.onLog?.(`[uniqueness] combinatie botste — ${unique.rotated.join('+')} gedraaid na ${unique.attempts} poging(en) → ${unique.hash}`)
-      if (heroIdx >= 0 && unique.combination.hero !== selection.sections[heroIdx].id) {
-        selection.sections[heroIdx] = { ...selection.sections[heroIdx], id: unique.combination.hero }
-      }
-      if (unique.combination.topbar !== selection.topbar.id) selection.topbar = { ...selection.topbar, id: unique.combination.topbar }
-    }
-    if (unique.warning) input.onLog?.(`[uniqueness] ⚠ ${unique.warning}`)
-    const activeMotion = unique.combination.motion === motion.id ? motion : selectMotionProfile(dna.tone, dna.seed)
-    uniqueMeta = { hash: unique.hash, combination: unique.combination, attempts: unique.attempts, rotated: unique.rotated }
-
-    const assembled = assemblePage({
-      dna, brandName, topbar: selection.topbar, nav: selection.nav,
-      sections: selection.sections, footer: selection.footer, products,
-      defaultStyle: selection.style, motion: activeMotion,
-    })
-    for (const w of assembled.warnings) input.onLog?.(`[assemble] ⚠ ${w}`)
-    input.onLog?.(`[assemble] ${assembled.usedComponents.length} componenten (${selection.source}, thema ${selection.iconTheme}, beweging ${activeMotion.id}): ${assembled.usedComponents.join(', ')}${assembled.cssConflicts.length ? ` — ${assembled.cssConflicts.length} CSS-conflict!` : ''}`)
-    if (assembled.cssConflicts.length === 0 && assembled.usedComponents.length >= 3) {
-      pageTsx = assembled.page
-      componentMeta = {
-        renderer: 'component-catalog', source: selection.source, iconTheme: selection.iconTheme,
-        topbar: selection.topbar.id, motion: { id: activeMotion.id, label: activeMotion.label },
-        used: assembled.usedComponents, cssConflicts: assembled.cssConflicts,
-      }
-    } else {
-      throw new Error(assembled.cssConflicts.length ? 'CSS-conflicten in assemblage' : 'te weinig componenten')
-    }
-  } catch (err) {
-    input.onLog?.(`[assemble] terugval op directe renderer: ${err instanceof Error ? err.message : err}`)
-    pageTsx = renderStorePage(dna, layout, content, products, applied.signature)
-  }
-  fs.writeFileSync(path.join(appDir, 'page.tsx'), pageTsx, 'utf-8')
+  // De assemblage zelf staat in design/build-page.ts — gedeeld met de
+  // CMS-rebuild, zodat een herbouwde store niet stilzwijgend op de oude,
+  // vrije renderer terugvalt.
+  const built = buildStorePage({
+    dna, layout, brandName, niche: input.niche, subdomain, products, content,
+    interests: persona.interests ?? [],
+    llmComponents: brief.components,
+    signature: applied.signature,
+    onLog: input.onLog,
+  })
+  const { componentMeta, uniqueMeta } = built
+  fs.writeFileSync(path.join(appDir, 'page.tsx'), built.page, 'utf-8')
 
   buildLayoutSharedFiles(buildDir, vars)
   buildCheckoutAndInfoPages(buildDir, vars)
