@@ -151,22 +151,25 @@ async function main() {
   db.prepare(`INSERT INTO market_deals (store_id,title,subtitle,label,url,active,sort_order,created_at) VALUES (?,?,?,?,?,1,0,?)`)
     .run('sm-c', 'SM testdeal', '', '', '', new Date().toISOString())
 
-  const noConfirm = await fetch(`${B}/api/stores/sm-c`, {
-    method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}),
+  const anon = await fetch(`${B}/api/stores/sm-c`, {
+    method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ confirm: 'sm-c' }),
   })
-  const ncBody = await noConfirm.json() as { expected?: string }
-  check('zonder bevestiging geweigerd', noConfirm.status === 428, `HTTP ${noConfirm.status}, verwacht "${ncBody.expected}"`)
+  check('verwijderen zonder sessie geweigerd', anon.status === 401, `HTTP ${anon.status}`)
 
-  const wrong = await fetch(`${B}/api/stores/sm-c`, {
-    method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ confirm: 'sm-verkeerd' }),
-  })
+  const loggedIn = await login()
+  check('ingelogd met 2FA voor de beheeracties', loggedIn, loggedIn ? `als ${LOGIN_USER}` : 'INLOGGEN MISLUKT — account bestaat mogelijk al')
+  if (!loggedIn) { say('  (rest van sectie 4 overgeslagen)'); fail++; }
+
+  const noConfirm = await api('/api/stores/sm-c', { method: 'DELETE', body: {} })
+  check('zonder bevestiging geweigerd', noConfirm.status === 428,
+    `HTTP ${noConfirm.status}, verwacht "${noConfirm.json?.expected}"`)
+
+  const wrong = await api('/api/stores/sm-c', { method: 'DELETE', body: { confirm: 'sm-verkeerd' } })
   check('verkeerde bevestiging geweigerd', wrong.status === 428, `HTTP ${wrong.status}`)
   check('store staat er nog', !!db.prepare(`SELECT 1 FROM stores WHERE store_id='sm-c'`).get(), 'rij aanwezig')
 
-  const del = await fetch(`${B}/api/stores/sm-c`, {
-    method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ confirm: 'sm-c' }),
-  })
-  const delBody = await del.json() as { deleted?: boolean; steps?: string[] }
+  const del = await api('/api/stores/sm-c', { method: 'DELETE', body: { confirm: 'sm-c' } })
+  const delBody = (del.json ?? {}) as { deleted?: boolean; steps?: string[] }
   check('met de juiste naam verwijderd', del.status === 200 && delBody.deleted === true, `HTTP ${del.status}`)
   say(`  opruimstappen: ${(delBody.steps ?? []).join(' | ')}`)
   check('uit de database', !db.prepare(`SELECT 1 FROM stores WHERE store_id='sm-c'`).get(), 'rij weg')
