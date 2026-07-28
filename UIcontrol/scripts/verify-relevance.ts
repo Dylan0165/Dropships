@@ -45,13 +45,19 @@ say('')
 say('═══ 2. LAAG 2 — SEMANTISCHE SCORE ═══')
 // De judge simuleert wat de LLM teruggeeft. De logica die getest wordt is:
 // score toekennen, onder de drempel wegfilteren, alles loggen.
+// Koppel op het echte product, niet op een fragment van het id: dat id wordt
+// afgekapt, waardoor een substring-match stilzwijgend het verkeerde product
+// beoordeelt.
+const titleById = new Map(KANDIDATEN.map(c => [c.productId, c.title]))
 const judge = async (_s: string, u: string) => {
   const ids = [...u.matchAll(/"id":"([^"]+)"/g)].map(m => m[1])
   return {
     scores: ids.map(id => {
-      if (id.includes('cooling-fan')) return { id, score: 1, reason: 'Een ventilator, geen blender — deelt alleen het woord "portable".' }
-      if (id.includes('vacuum')) return { id, score: 2, reason: 'Autostofzuiger; andere productcategorie en andere doelgroep.' }
-      if (id.includes('mini-juicer')) return { id, score: 7, reason: 'Sapcentrifuge-variant, past logisch bij het assortiment.' }
+      const t = titleById.get(id) ?? ''
+      if (t.includes('Cooling Fan')) return { id, score: 1, reason: 'Een ventilator, geen blender — deelt alleen het woord "portable".' }
+      if (t.includes('Vacuum')) return { id, score: 2, reason: 'Autostofzuiger; andere productcategorie en andere doelgroep.' }
+      if (t.includes('LED Strip')) return { id, score: 1, reason: 'Verlichting, staat volledig los van deze niche.' }
+      if (t.includes('Mini Juicer')) return { id, score: 7, reason: 'Sapcentrifuge-variant, past logisch bij het assortiment.' }
       return { id, score: 9, reason: 'Precies waarvoor de klant komt.' }
     }),
   }
