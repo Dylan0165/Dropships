@@ -90,13 +90,7 @@ export function usePipelineSocket({ runId, url }: UsePipelineSocketOpts) {
   const runIdRef = useRef<string | null>(runId)
   useEffect(() => { runIdRef.current = runId }, [runId])
 
-  const wsUrl = url ?? (() => {
-    if (typeof window === 'undefined') return ''
-    const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-    const host = window.location.hostname
-    const port = import.meta.env.VITE_WS_PORT ?? '3001'
-    return `${proto}//${host}:${port}/ws`
-  })()
+  const wsUrl = url ?? dashboardWsUrl()
 
   const startHeartbeat = useCallback(() => {
     if (heartbeatRef.current) clearInterval(heartbeatRef.current)
