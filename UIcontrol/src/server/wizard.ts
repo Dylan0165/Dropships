@@ -261,7 +261,155 @@ async function discoverCandidates(
   return { candidates, searchTermsTried: terms, searchTermUsed, source: adapter.isMock ? 'mock' : 'rest' }
 }
 
+/**
+ * Prijs + onderbouwing voor een compleet assortiment, in ÉÉN LLM-call.
+ * Per product vragen zou twaalf calls kosten voor hetzelfde antwoord; faalt de
+ * call, dan pakt de deterministische markup het op (2.8× inkoop, eindigend op
+ * .95) — een winkel zonder prijzen is geen winkel.
+ */
+async function priceAssortment(
+  niche: string,
+  persona: WizardPersona,
+  picks: AssortmentPick[],
+): Promise<Map<string, { priceEur: number; reason: string }>> {
+  const out = new Map<string, { priceEur: number; reason: string }>()
+  if (picks.length === 0) return out
+  try {
+    const result = await chatJson<{ prices: Array<{ id: string; priceEur: number; reason: string }> }>(
+      'Je bent een dropshipping product-analist voor de EU-markt. Je bepaalt verkoopprijzen binnen één samenhangend assortiment.',
+      `Niche: "${niche}"
+Doelgroepprofiel:
+${JSON.stringify(persona, null, 2)}
+
+Dit assortiment is al samengesteld — je kiest NIET welke producten meedoen, je bepaalt alleen prijs en onderbouwing:
+${JSON.stringify(picks.map(p => ({
+        id: p.product.productId,
+        title: p.product.title.slice(0, 90),
+        type: p.typeName,
+        tier: p.tier,
+        costUsd: p.product.costPrice,
+        warehouse: p.product.warehouse,
+      })))}
+
+Geef per product een verkoopprijs in euro's:
+- verkoopprijs ≈ 2.5-3× inkoop (USD→EUR ×0.92), eindigend op .95
+- respecteer de prijsklasse van het type: entry onderin, premium bovenin de range van de persona
+- het assortiment moet als geheel prijsspreiding tonen, niet tien keer hetzelfde bedrag
+Plus één zin Nederlands waarom dit product in deze winkel past.
+
+JSON formaat:
+{"prices":[{"id":"<product id>","priceEur":29.95,"reason":"1 zin Nederlands"}]}`,
+      { maxTokens: 3072, temperature: 0.4 },
+    )
+    for (const p of result.prices ?? []) {
+      const price = Number(p.priceEur)
+      if (!p.id || !isFinite(price) || price <= 0) continue
+      out.set(String(p.id), { priceEur: price, reason: String(p.reason ?? '') })
+    }
+  } catch (err) {
+    console.warn('[wizard] prijsbepaling via LLM mislukt — deterministische markup gebruikt:', err instanceof Error ? err.message : err)
+  }
+  return out
+}
+
+/** Van assortiment-keuze naar het shortlist-formaat dat de UI toont. */
+function toShortlisted(
+  pick: AssortmentPick,
+  priced: Map<string, { priceEur: number; reason: string }>,
+): ShortlistedProduct {
+  const product = pick.product
+  const costEur = Math.round(product.costPrice * USD_TO_EUR * 100) / 100
+  const llm = priced.get(product.productId)
+  const price = llm && llm.priceEur > costEur
+    ? llm.priceEur
+    : (product.suggestedPrice ?? Math.max(9.95, Math.floor(costEur * 2.8) + 0.95))
+  return {
+    ...product,
+    reason: llm?.reason || pick.reason || '',
+    suggestedPriceEur: Math.round(price * 100) / 100,
+    marginEur: Math.round((price - costEur) * 100) / 100,
+    marginPct: Math.round(((price - costEur) / price) * 100),
+    relevanceScore: pick.score,
+    relevanceReason: pick.reason,
+    productType: pick.typeName,
+    productTier: pick.tier,
+    typeRole: pick.typeRole,
+  }
+}
+
+/**
+ * Stelt een COMPLEET assortiment samen: 10-15 producttypes bedenken, ze allemaal
+ * doorzoeken en daar 7-15 verschillende producten uit kiezen.
+ *
+ * Faalt de producttype-generatie, dan valt hij terug op het oude één-zoekterm-pad
+ * (inclusief MCP-discovery) — met een expliciete melding, niet stilzwijgend.
+ */
 export async function buildShortlist(
+  niche: string,
+  persona: WizardPersona,
+  options: { maxResults?: number; min?: number; max?: number } = {},
+): Promise<ShortlistResult> {
+  const adapter = getSupplier('cj')
+  const judge: TypeJudge = (system, user) => chatJson(system, user, { maxTokens: 3072, temperature: 0.3 })
+
+  const gen = await generateProductTypes(niche, persona, judge)
+  // Eén type = de generatie is mislukt → oude gedrag, inclusief MCP.
+  if (gen.types.length <= 1) {
+    console.warn(`[wizard] geen producttype-lijst (${gen.fallback ?? 'onbekend'}) — terug naar één-zoekterm-discovery`)
+    const legacy = await buildShortlistSingleTerm(niche, persona, options)
+    return { ...legacy, assortment: { types: [], attempts: [], distinctTypes: 0, searchCalls: 0, typesFallback: gen.fallback } }
+  }
+
+  const before = getCjSearchStats().listCalls
+  const result = await buildAssortment({
+    niche, persona,
+    types: gen.types,
+    min: options.min ?? ASSORTMENT_MIN,
+    max: options.max ?? ASSORTMENT_MAX,
+    judge,
+    // Klein aantal per type + "genoeg is genoeg": zo kost één producttype in de
+    // praktijk één CJ-call in plaats van acht.
+    search: (term, maxResults) => adapter.searchProducts(term, { maxResults, minResults: 2 }),
+  })
+  const listCalls = getCjSearchStats().listCalls - before
+
+  const priced = await priceAssortment(niche, persona, result.picks)
+  const shortlist = result.picks.map(p => toShortlisted(p, priced))
+  const distinctTypes = new Set(result.picks.map(p => p.typeId)).size
+
+  console.log(`[wizard] assortiment "${niche}": ${shortlist.length} producten, ${distinctTypes} distincte types, ` +
+    `${result.searchCalls} zoekopdrachten → ${listCalls} CJ /product/list-calls`)
+
+  return {
+    candidates: result.verdicts.length,
+    shortlist,
+    supplierIsMock: adapter.isMock,
+    searchTermsTried: result.types.map(t => t.searchTerm),
+    searchTermUsed: result.types[0]?.searchTerm ?? null,
+    source: adapter.isMock ? 'mock' : 'rest',
+    relevance: {
+      evaluated: result.verdicts.length,
+      rejected: result.verdicts.filter(v => !v.accepted).length,
+      verdicts: result.verdicts,
+      skipped: result.relevanceSkipped,
+    },
+    assortment: {
+      types: result.types.map(t => ({ id: t.id, name: t.name, searchTerm: t.searchTerm, tier: t.tier, role: t.role })),
+      attempts: result.attempts,
+      distinctTypes,
+      searchCalls: result.searchCalls,
+      shortfall: result.shortfall,
+      typesFallback: result.typesFallback,
+    },
+  }
+}
+
+/**
+ * Het oorspronkelijke pad: één zoekterm (MCP-discovery met REST-terugval), de
+ * LLM kiest daaruit. Blijft bestaan voor het geval de producttype-generatie
+ * faalt — dan is één goede zoekterm beter dan niets.
+ */
+async function buildShortlistSingleTerm(
   niche: string,
   persona: WizardPersona,
   options: { maxResults?: number } = {},
