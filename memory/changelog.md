@@ -2,6 +2,35 @@
 
 Nieuwste bovenaan. Zie `ai-must-read/release-and-changelog.md` voor het formaat.
 
+## 2026-07-28 — Een te klein assortiment legde de hele run om
+**Tag:** volgt hieronder
+
+- Een smalle niche die terecht 2 producten oplevert (gewenst gedrag sinds de
+  assortiment-fix) eindigde ~3 minuten later in `"brief generation failed"`.
+- **De hypothese "de brief gaat uit van een minimum aantal producten" klopte
+  niet** — die ondergrens bestaat nergens. Wat er wél was: `generateBrief()` gaf
+  `StoreBrief | null` terug en gooide daarmee `error` + `validationErrors` van
+  `runAgent` weg. De melding was dus per constructie onbruikbaar.
+- Stage 7 had vangnetten voor het design-DNA en voor de componentassemblage,
+  maar niet voor de brief zelf. Nu wel: `fallbackBrief()` stelt een geldige brief
+  samen uit de brand-stage (naam, slogan, kleuren, USP's) en de run bouwt door.
+  Dat wordt luid gelogd en staat als `brief_source: 'fallback'` + `brief_error`
+  in de stage-output — nooit stil.
+- De brief krijgt nu een `collection`-blok mee (`product_count`, `product_types`,
+  guidance). Bij 2 producten: "design a focused single-product-style store, do
+  NOT pick a catalog layout, never invent products".
+- Vanaf poging 2 gaat de componentcatalogus uit de prompt (41k → 2k tekens).
+  Een afgekapt antwoord wordt niet beter van dezelfde volle prompt. Levert het
+  model alleen `reasoning_content` terug, dan zegt de fout dat nu letterlijk
+  in plaats van "no parseable JSON".
+- **De wizard vraagt het nu vóóraf**: bij < 5 producten verschijnt direct na de
+  assortiment-fase (854 ms, niet 3 minuten) een keuze — doorgaan met een kleinere
+  winkel / niche breder maken / andere niche. "Volgende" blijft dicht tot er
+  gekozen is.
+- **Geverifieerd:** 27/27 tegen een nagebootst LLM-endpoint, plus een écht
+  gebouwde 2-product-winkel (`next build`, exit 0) en alle drie de UI-keuzes in
+  een headless browser. Zie `logs/klein-assortiment-2026-07-28.md`.
+
 ## 2026-07-28 — Een winkel is een assortiment, geen één-product-pagina
 **Tag:** volgt hieronder
 
