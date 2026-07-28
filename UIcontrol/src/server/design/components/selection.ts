@@ -243,6 +243,6 @@ export function buildSelection(
     nav: { id: navId, props: propsFor(navId) },
     sections,
     footer: { id: footerId, props: propsFor(footerId) },
-    style, source: 'derived', iconTheme, alternatives,
+    style, source: 'derived', iconTheme, alternatives, notes,
   }
 }
