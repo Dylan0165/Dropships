@@ -167,6 +167,43 @@ function enqueue<T>(task: () => Promise<T>): Promise<T> {
   return run
 }
 
+// ── Zoek-cache + teller ───────────────────────────────────────────────────────
+// De teller maakt meetbaar hoeveel /product/list-calls een assortiment kost —
+// zonder dat kun je niet aantonen dat een efficiëntie-ingreep werkt.
+
+const SEARCH_CACHE_MS = parseInt(process.env.CJ_SEARCH_CACHE_MS ?? '600000', 10)   // 10 min
+const searchCache = new Map<string, { at: number; products: SupplierProduct[] }>()
+
+const searchStats = { listCalls: 0, cacheHits: 0 }
+
+/** Aantal /product/list-calls en cache-treffers sinds de laatste reset. */
+export function getCjSearchStats(): { listCalls: number; cacheHits: number } {
+  return { ...searchStats }
+}
+
+export function resetCjSearchStats(): void {
+  searchStats.listCalls = 0
+  searchStats.cacheHits = 0
+}
+
+function readSearchCache(key: string): SupplierProduct[] | null {
+  if (SEARCH_CACHE_MS <= 0) return null
+  const hit = searchCache.get(key)
+  if (!hit) return null
+  if (Date.now() - hit.at > SEARCH_CACHE_MS) { searchCache.delete(key); return null }
+  return hit.products
+}
+
+function writeSearchCache(key: string, products: SupplierProduct[]): void {
+  if (SEARCH_CACHE_MS <= 0) return
+  searchCache.set(key, { at: Date.now(), products })
+  // Ongelimiteerd groeien hoeft niet: dit is een korte-termijn cache.
+  if (searchCache.size > 200) {
+    const oldest = [...searchCache.entries()].sort((a, b) => a[1].at - b[1].at)[0]
+    if (oldest) searchCache.delete(oldest[0])
+  }
+}
+
 // ── 429 backoff: exponentieel 3s → 6s → 12s → 24s → 48s ──────────────────────
 
 const MAX_ATTEMPTS = 6            // 1 poging + 5 retries
