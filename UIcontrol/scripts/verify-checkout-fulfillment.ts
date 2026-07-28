@@ -4,7 +4,7 @@
 // en de juiste supplier-producten uitkomt.
 import fs from 'node:fs'
 import Stripe from 'stripe'
-import db from './db.js'
+import db from '../src/server/db.js'
 
 const B = process.env.TEST_BASE ?? 'http://127.0.0.1:3312'
 const GOOD = 'https://trailform.clynado.com'

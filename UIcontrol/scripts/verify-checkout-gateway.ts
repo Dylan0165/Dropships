@@ -1,6 +1,6 @@
 // Verificatie van de centrale checkout-gateway tegen een draaiende server.
 import fs from 'node:fs'
-import db from './db.js'
+import db from '../src/server/db.js'
 
 const B = process.env.TEST_BASE ?? 'http://127.0.0.1:3312'
 const GOOD = 'https://trailform.clynado.com'
