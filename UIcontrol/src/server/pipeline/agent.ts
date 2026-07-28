@@ -174,10 +174,12 @@ CRITICAL RULES:
 - Geen markdown fences. Geen uitleg vooraf of erna.
 - Volg het OUTPUT schema exact.`
 
-  const userPrompt = `Input voor deze stage:
-${JSON.stringify(cfg.input, null, 2)}
+  const promptFor = (input: Record<string, unknown>) => `Input voor deze stage:
+${JSON.stringify(input, null, 2)}
 
 Geef je antwoord als één JSON object.`
+  const userPrompt = promptFor(cfg.input)
+  const compactPrompt = cfg.compactInput ? promptFor(cfg.compactInput) : userPrompt
 
   let lastErr = ''
   let lastValidationErrors: string[] = []
