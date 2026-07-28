@@ -193,7 +193,92 @@ export function ensureTailwindSupport(targetDir: string): boolean {
 // de brand-kleuren). De checkout-pagina verzamelt het verzendadres — verplicht
 // voor automatische supplier fulfillment (CJ) — en stuurt daarna door naar Mollie.
 
-export function buildCheckoutAndInfoPages(targetDir: string, vars: TemplateVars): void {
+/**
+ * De styling die sub-pagina's van de homepage erven.
+ *
+ * Zonder dit kregen /about/, /contact/, /faq/ en /returns/ een hardgecodeerde
+ * lichte look (`#fafafa` op `#111`) die niets met de winkel te maken had. Op een
+ * donkere of kleurrijke store zag dat eruit alsof de CSS niet geladen was —
+ * precies de melding die binnenkwam. Het probleem was dus niet dat er CSS
+ * ontbrak, maar dat het de VERKEERDE CSS was.
+ *
+ * Met het design-DNA erbij gebruiken de sub-pagina's dezelfde variabelen,
+ * lettertypen en kleuren als de homepage; zonder DNA valt het terug op de
+ * neutrale look van hiervoor.
+ */
+function subPageStyles(dna?: DesignDNA): { css: string; fontLink: string } {
+  if (!dna) {
+    return {
+      css: [
+        ':root{--c-bg:#fafafa;--c-surface:#fff;--c-text:#111;--c-muted:#666;--c-border:#e6e6e6;',
+        '--c-primary:#111;--c-primary-text:#fff;--c-accent:#111;--r-md:8px;--r-lg:12px;--bw:1px;',
+        "--f-head:system-ui,sans-serif;--f-body:system-ui,sans-serif;--fw-head:700;--tt-head:none}",
+      ].join(''),
+      fontLink: '',
+    }
+  }
+  const p = dna.palette, t = dna.typography, s = dna.shape
+  const vars = {
+    '--c-bg': p.bg, '--c-surface': p.surface, '--c-surface-alt': p.surfaceAlt,
+    '--c-text': p.text, '--c-muted': p.textMuted, '--c-border': p.border,
+    '--c-primary': p.primary, '--c-primary-text': p.primaryText, '--c-accent': p.accent,
+    '--f-head': t.heading, '--f-body': t.body, '--fw-head': String(t.headingWeight),
+    '--tt-head': t.headingTransform, '--ls-head': t.headingLetterSpacing,
+    '--r-md': s.radiusMd, '--r-lg': s.radiusLg, '--bw': s.borderWidth,
+  }
+  return {
+    css: ':root{' + Object.entries(vars).map(([k, v]) => `${k}:${v}`).join(';') + '}',
+    fontLink: t.fontUrl,
+  }
+}
+
+/** Gedeelde opmaak voor elke sub-pagina — zelfde nav en footer als de homepage. */
+function subPageShell(vars: TemplateVars, dna: DesignDNA | undefined, title: string, inner: string): string {
+  const { css } = subPageStyles(dna)
+  const base = [
+    css,
+    '*{box-sizing:border-box}',
+    'body{margin:0;background:var(--c-bg);color:var(--c-text);font-family:var(--f-body);line-height:1.7}',
+    'a{color:inherit}',
+    'h1,h2,h3{font-family:var(--f-head);font-weight:var(--fw-head);text-transform:var(--tt-head);letter-spacing:var(--ls-head,normal)}',
+    ':focus-visible{outline:2px solid var(--c-accent);outline-offset:3px}',
+    '.sp-nav{display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;padding:1.1rem clamp(1.25rem,5vw,4rem);border-bottom:var(--bw) solid var(--c-border)}',
+    '.sp-nav a{text-decoration:none;font-size:.84rem;color:var(--c-muted)}',
+    '.sp-nav a:hover{color:var(--c-text)}',
+    '.sp-brand{font-family:var(--f-head);font-weight:var(--fw-head);font-size:1.05rem;color:var(--c-text);text-transform:var(--tt-head)}',
+    '.sp-main{max-width:680px;margin:0 auto;padding:clamp(2.5rem,6vw,4.5rem) clamp(1.25rem,5vw,2rem)}',
+    '.sp-main h1{font-size:clamp(1.6rem,4vw,2.3rem);margin:0 0 1.5rem}',
+    '.sp-main p{color:var(--c-muted);margin:0 0 1rem}',
+    '.sp-main a{color:var(--c-accent)}',
+    '.sp-foot{border-top:var(--bw) solid var(--c-border);padding:1.5rem clamp(1.25rem,5vw,4rem);display:flex;gap:1.25rem;flex-wrap:wrap;justify-content:center}',
+    '.sp-foot a{font-size:.8rem;color:var(--c-muted);text-decoration:none}',
+  ].join('\n')
+
+  const links = [['Shop', '/'], ['About', '/about/'], ['FAQ', '/faq/'], ['Returns', '/returns/'], ['Contact', '/contact/']]
+  return `export default function Page() {
+  return (
+    <>
+      <style dangerouslySetInnerHTML={{ __html: ${jsStr(base)} }} />
+      <nav className="sp-nav">
+        <a className="sp-brand" href="/">{${jsStr(vars.BRAND_NAME)}}</a>
+        <div style={{ display: 'flex', gap: '1.25rem', flexWrap: 'wrap' }}>
+          ${links.map(([l, h]) => `<a href=${jsStr(h)}>{${jsStr(l)}}</a>`).join('\n          ')}
+        </div>
+      </nav>
+      <main className="sp-main">
+        <h1>{${jsStr(title)}}</h1>
+${inner}
+      </main>
+      <footer className="sp-foot">
+        ${links.map(([l, h]) => `<a href=${jsStr(h)}>{${jsStr(l)}}</a>`).join('\n        ')}
+      </footer>
+    </>
+  );
+}
+`
+}
+
+export function buildCheckoutAndInfoPages(targetDir: string, vars: TemplateVars, dna?: DesignDNA): void {
   const appDir = path.join(targetDir, 'app')
 
   // ── /checkout ──
