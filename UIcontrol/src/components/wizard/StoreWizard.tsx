@@ -147,6 +147,8 @@ export function StoreWizard({ onClose, onStarted }: Props) {
   const [rejected, setRejected] = useState<RelevanceVerdict[]>([])
   const [relevanceSkipped, setRelevanceSkipped] = useState<string | null>(null)
   const [showRejected, setShowRejected] = useState(false)
+  const [assortment, setAssortment] = useState<AssortmentInfo | null>(null)
+  const [showTypes, setShowTypes] = useState(false)
   const [sortKey, setSortKey] = useState<SortKey>('relevance')
   const [replacing, setReplacing] = useState<string | null>(null)
   const [supplierIsMock, setSupplierIsMock] = useState(false)
