@@ -21,6 +21,7 @@ import { renderStorePage, type RenderProduct, type RenderContent } from './rende
 import { assemblePage } from './components/assemble.js'
 import { buildSelection, type ComponentSelectionInput } from './components/selection.js'
 import { selectMotionProfile, motionCharacterIds } from './anime-presets.js'
+import { resolveHeroVisual } from './hero-visual.js'
 import { ensureUniqueCombination, paletteKey } from './uniqueness.js'
 
 export interface BuildPageInput {
