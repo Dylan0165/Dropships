@@ -92,7 +92,7 @@ const heroDefs: ComponentDef[] = [
               <div className="hi hi-4" style={{ display:'flex', justifyContent:'flex-end' }}><a href="#products" className="btnp btn">${'{'}${txtRaw(p.cta, 'Browse')}${'}'}</a></div>
             </div>
           </div>
-          {${P0IMG} ? <div className="hi-img" style={{ marginTop:'3rem', width:'100%', aspectRatio:'21/8', overflow:'hidden', background:'var(--c-surface-alt)' }}><img src={PRODUCTS[0].image} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} /></div> : null}
+          <div className="hi-img" style={{ marginTop:'3rem', width:'100%', aspectRatio:'21/8', overflow:'hidden', background:'var(--c-surface-alt)' }}>${HERO_IMG}</div>
         </section>`,
       }
     },
