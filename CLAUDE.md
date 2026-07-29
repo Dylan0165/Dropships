@@ -195,6 +195,22 @@ Runner-label `dropships-vps`.
 - `design-dna.json` wordt per store weggeschreven (debug/reproduceerbaarheid).
 - Store slugs zijn Engels: `/checkout/ /thank-you/ /about/ /contact/ /faq/ /returns/`.
 
+## Visuele kwaliteit — hero-beeld en componentbreedte (sinds 29 juli 2026)
+- **Hero-beeld** (`design/hero-visual.ts`): `lifestyle` (gegenereerd/meegegeven sfeerbeeld,
+  full-bleed `cover` + scrim) óf `staged` (productfoto `contain` op een DNA-kleurverloop; in
+  full-bleed hero's rechts, tekst links). Altijd één van beide — nooit een lege hero. Elke hero
+  gebruikt `<HeroImg>` uit assemble.ts; `PRODUCTS[0].image` rechtstreeks in een component is
+  precies de bug die dit oploste (5/5 hero's sneden de pakshot uit).
+  `generateHeroImage()` draait alleen mét `OPENAI_API_KEY`/`REPLICATE_API_TOKEN`, met time-out,
+  en kopieert het bestand de winkel in als `/img/hero.webp` (provider-URL's verlopen).
+- **Componentbreedte**: pools per gleuf = de hele categorie (waren lijstjes van 3-4);
+  `design/component-usage.ts` houdt bij wat al ergens staat en `pickFresh` pakt eerst het
+  ongebruikte. Bereik 55 → 102 van 106; 5,6 → 9,5 unieke componenten per winkel.
+  `catalogForPrompt()` geeft de LLM een `used`-teller per component.
+- **Toon stuurt alles** (palet/fonts/componentpools). `deriveTone` gaf +3 voor `priceMax >= 55`
+  → 4 van 5 winkels "premium". Prijs is nu een hint (≥85 → +1,5), jitter 0,9 → 1,8.
+- Verificatie: `npm run verify:quality` (26), audit-baseline via `npm run audit:stores`.
+
 ## Supplier / checkout flow (sinds juli 2026)
 - `CJ_EMAIL`/`CJ_API_KEY`/`CJ_ENV` in .env — geen key = mock-modus; `sandbox` = orders aanmaken maar nooit betalen; `production` = payBalance na createOrderV2
 - Checkout: store `/checkout/` pagina (adresformulier) → POST `/api/checkout/session` (met `customer` + `redirectUrl`) → Mollie → webhook paid → `fulfillment.ts` → `getSupplier('cj').placeOrder()`
