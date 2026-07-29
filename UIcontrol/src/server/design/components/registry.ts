@@ -34,12 +34,26 @@ export function buildCatalog(): CatalogEntry[] {
   return ALL.map(({ render, ...meta }) => { void render; return meta })
 }
 
-/** Compacte, per-categorie gegroepeerde catalogus (voor in de LLM-prompt). */
-export function catalogForPrompt(): Record<ComponentCategory, Array<{ id: string; label: string; styles: string[]; tags: string[]; props: string[] }>> {
-  const out = {} as Record<ComponentCategory, Array<{ id: string; label: string; styles: string[]; tags: string[]; props: string[] }>>
+/**
+ * Compacte, per-categorie gegroepeerde catalogus (voor in de LLM-prompt).
+ *
+ * `used` = hoe vaak dit component al ergens in het netwerk staat. Zonder dat
+ * getal kiest het model puur op smaak en komt het steeds bij dezelfde handvol
+ * varianten uit — de audit van 29 juli 2026 liet zien dat vijf winkels samen
+ * 28 van de 106 componenten gebruikten. Mét het getal kan de skill vragen om
+ * bewust iets te pakken dat nog nergens staat.
+ */
+export function catalogForPrompt(): Record<ComponentCategory, Array<{ id: string; label: string; styles: string[]; tags: string[]; props: string[]; used: number }>> {
+  const usage = componentUsage()
+  const out = {} as Record<ComponentCategory, Array<{ id: string; label: string; styles: string[]; tags: string[]; props: string[]; used: number }>>
   for (const d of ALL) {
-    ;(out[d.category] ??= []).push({ id: d.id, label: d.label, styles: d.styles, tags: d.tags, props: Object.keys(d.props) })
+    ;(out[d.category] ??= []).push({
+      id: d.id, label: d.label, styles: d.styles, tags: d.tags,
+      props: Object.keys(d.props), used: usage.get(d.id) ?? 0,
+    })
   }
+  // Minst gebruikt bovenaan: wat het model als eerste leest, kiest het vaker.
+  for (const cat of Object.keys(out) as ComponentCategory[]) out[cat].sort((a, b) => a.used - b.used)
   return out
 }
 
