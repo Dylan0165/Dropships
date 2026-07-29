@@ -207,7 +207,7 @@ const heroDefs: ComponentDef[] = [
         <div className="hp-l1" aria-hidden="true" style={{ position:'absolute', top:'12%', left:'-6%', width:'42vw', maxWidth:'520px', aspectRatio:'1', borderRadius:'50%', background:'var(--c-surface-alt)', filter:'blur(2px)' }} />
         <div className="hp-l2" aria-hidden="true" style={{ position:'absolute', bottom:'-10%', right:'-4%', width:'34vw', maxWidth:'420px', aspectRatio:'1', borderRadius:'50%', background:'color-mix(in srgb, var(--c-accent) 22%, transparent)' }} />
         <div style={{ position:'relative', display:'flex', flexDirection:'column', alignItems:'center' }}>${heroText(ctx, p, { center: true })}</div>
-        {${P0IMG} ? <div className="hp-l3 hi-img" style={{ position:'relative', marginTop:'2.5rem', width:'min(520px,80%)', aspectRatio:'4/3', overflow:'hidden', borderRadius:'var(--r-lg)', boxShadow:'var(--shadow)' }}><img src={PRODUCTS[0].image} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} /></div> : null}
+        <div className="hp-l3 hi-img" style={{ position:'relative', marginTop:'2.5rem', width:'min(520px,80%)', aspectRatio:'4/3', overflow:'hidden', borderRadius:'var(--r-lg)', boxShadow:'var(--shadow)' }}>${HERO_IMG}</div>
       </section>`,
       // Parallax via CSS scroll-timeline waar ondersteund; elders staat alles
       // gewoon stil. Bewust geen scroll-listener: dat kost frames op mobiel.
