@@ -221,7 +221,12 @@ export function buildSelection(
   const fresh = <T extends string>(pool: readonly T[], offset: number): T =>
     pool.length ? pickFresh(pool, usage, seed, offset) : pool[0]
 
-  const heroId = HERO_BY_HERO[layout.hero]
+  // De hero uit het layout-plan is de voorkeur, maar niet ten koste van alles:
+  // staat die al in meer winkels dan het minst gebruikte alternatief, dan wint
+  // het alternatief. Anders krijgt elke "editorial"-layout dezelfde hero.
+  const layoutHero = HERO_BY_HERO[layout.hero]
+  const freshHero = fresh(heroPool, 0)
+  const heroId = (usage.get(layoutHero) ?? 0) <= (usage.get(freshHero) ?? 0) ? layoutHero : freshHero
   // Componenten die per definitie ergens anders horen (producten hebben hun
   // eigen gleuf; de hero staat vast bovenaan).
   const contentPool = idsIn('content')
