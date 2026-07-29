@@ -14,6 +14,7 @@ import { baseCss } from './base-css.js'
 import { getComponent } from './registry.js'
 import { BRAND_TOKEN } from './chrome.js'
 import { motionCss, motionRuntime, type MotionProfile } from '../anime-presets.js'
+import { resolveHeroVisual, type HeroVisual } from '../hero-visual.js'
 
 export interface AssembleInput {
   dna: DesignDNA
