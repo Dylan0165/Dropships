@@ -210,28 +210,40 @@ export function buildSelection(
   }
 
   // ── Afgeleide default uit toon + layout ─────────────────────────────────────
+  //
+  // Hier stonden tot 29 juli 2026 hardgecodeerde lijstjes van 3-4 id's per
+  // gleuf. Daardoor kon de afgeleide selectie hooguit de helft van de catalogus
+  // bereiken, en kregen vier van de vijf audit-winkels dezelfde nav, footer en
+  // gallery. Nu is de pool per gleuf de HELE categorie, en wordt er eerst
+  // gekozen uit wat nog niet gebruikt is (`pickFresh` tegen `component_usage`).
+  const usage = componentUsage()
+  const fresh = <T extends string>(pool: readonly T[], offset: number): T =>
+    pool.length ? pickFresh(pool, usage, seed, offset) : pool[0]
+
   const heroId = HERO_BY_HERO[layout.hero]
-  // Sectie-volgorde vertaalt de layout.sections naar componenten. De tweede
-  // batch componenten wordt seeded ingemengd, zodat twee stores met dezelfde
-  // toon niet steeds dezelfde vijf blokken krijgen.
+  // Componenten die per definitie ergens anders horen (producten hebben hun
+  // eigen gleuf; de hero staat vast bovenaan).
+  const contentPool = idsIn('content')
   const map: Record<string, string> = {
-    usps: pick(['content.why-us-grid', 'content.values-grid', 'content.feature-alternating'], seed, 1),
+    usps: fresh(contentPool, 1),
     products: productsId,
-    reviews: pick(['testimonials.cards-grid', 'testimonials.avatar-row', 'testimonials.timeline-list', 'testimonials.stat-proof'], seed, 2),
-    story: pick(['content.story-split', 'content.timeline-story', 'content.big-statement'], seed, 3),
-    'cta-band': pick(['cta.stock-indicator', 'cta.split-image', 'cta.gradient-banner', 'cta.guarantee-panel'], seed, 4),
+    reviews: fresh(idsIn('testimonials'), 2),
+    story: fresh(contentPool.filter(id => id !== map0(contentPool, usage, seed, 1)), 3),
+    'cta-band': fresh(idsIn('cta'), 4),
   }
-  const trustId = pick(['badges.trust-row', 'badges.icon-grid', 'badges.shipping-map', 'badges.payment-icons'], seed, 5)
+  const trustId = fresh(idsIn('badges'), 5)
   const bodyIds = [trustId, ...layout.sections.map(s => map[s]).filter(Boolean)]
   if (!bodyIds.includes(productsId)) bodyIds.splice(1, 0, productsId)
-  // Toon-afhankelijke extra's voor variatie
-  if (dna.tone === 'playful' || dna.tone === 'urban') bodyIds.push(pick(['cta.countdown', 'cta.inline-strip', 'gallery.scroll-strip'], seed, 6))
-  if (dna.tone === 'premium' || dna.tone === 'organic') bodyIds.push(pick(['content.faq-accordion', 'content.tabs-info', 'gallery.detail-pair'], seed, 7))
-  if (dna.tone === 'tech' || dna.tone === 'minimal') bodyIds.push(pick(['content.spec-table', 'content.comparison-table', 'form.question-box'], seed, 8))
+  // Eén toon-passende extra uit een categorie die verder nog niet aan bod kwam.
+  // Zo komen gallery en form ook echt in winkels terecht in plaats van alleen in
+  // de catalogus te staan.
+  const extraPool = [...idsIn('gallery'), ...idsIn('form'), ...contentPool, ...idsIn('cta')]
+    .filter(id => !bodyIds.includes(id))
+  if (extraPool.length) bodyIds.push(fresh(extraPool, 6))
 
-  const navId = ({ minimal: 'nav.classic', premium: 'nav.split-links', urban: 'nav.sticky-solid-on-scroll', tech: 'nav.icon-compact', playful: 'nav.announcement-bar', organic: 'nav.centered-logo' } as Record<VisualTone, string>)[dna.tone]
-  const footerId = ({ minimal: 'footer.simple', premium: 'footer.sitemap-columns', urban: 'footer.big-wordmark', tech: 'footer.dark-compact', playful: 'footer.social-strip', organic: 'footer.contact-block' } as Record<VisualTone, string>)[dna.tone]
-  const topbarId = pick(topbarPool, seed)
+  const navId = fresh(idsIn('nav'), 7)
+  const footerId = fresh(idsIn('footer'), 8)
+  const topbarId = fresh(topbarPool, 9)
 
   // dedup terwijl volgorde behouden blijft
   const seen = new Set<string>()
