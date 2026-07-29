@@ -71,7 +71,7 @@ const heroDefs: ComponentDef[] = [
     render: (ctx, p): RenderResult => ({
       jsx: `<section style={{ minHeight:'80vh', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', textAlign:'center', padding:'clamp(3rem,8vw,6rem) clamp(1.5rem,5vw,3rem)', background:'var(--c-bg)' }}>
         ${heroText(ctx, p, { center: true })}
-        {${P0IMG} ? <div className="hi-img" style={{ marginTop:'3rem', width:'100%', maxWidth:'860px', aspectRatio:'16/8', overflow:'hidden', borderRadius:'var(--r-lg)', boxShadow:'var(--shadow)' }}><img src={PRODUCTS[0].image} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} /></div> : null}
+        <div className="hi-img" style={{ marginTop:'3rem', width:'100%', maxWidth:'860px', aspectRatio:'16/8', overflow:'hidden', borderRadius:'var(--r-lg)', boxShadow:'var(--shadow)' }}>${HERO_IMG}</div>
       </section>`,
     }),
   },
