@@ -143,7 +143,8 @@ export function buildSelection(
   const notes: string[] = []
   const count = ctx.productCount ?? 0
   const types = ctx.productTypes ?? []
-  const productsId = chooseProductComponent(PRODUCTS_BY_VARIANT[layout.product], count, types, seed)
+  const usage = componentUsage()
+  const productsId = chooseProductComponent(PRODUCTS_BY_VARIANT[layout.product], count, types, seed, usage)
 
   // Topbar-pool: de varianten die bij dít nichethema passen, niet de hele
   // catalogus. Zo krijgt een sportwinkel geen wellness-toon in de balk.
