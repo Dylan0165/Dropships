@@ -166,11 +166,11 @@ const heroDefs: ComponentDef[] = [
       const video = typeof p.videoUrl === 'string' && /^https?:\/\/.+\.(mp4|webm)$/i.test(p.videoUrl) ? p.videoUrl : ''
       const bg = video
         ? `<video autoPlay muted loop playsInline aria-hidden="true" style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover' }}><source src=${JSON.stringify(video)} /></video>`
-        : `{${P0IMG} ? <img className="hb-zoom" src={PRODUCTS[0].image} alt="" style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover' }} /> : <div style={{ position:'absolute', inset:0, background:'var(--c-secondary)' }} />}`
+        : `<div className="hb-zoom" style={{ position:'absolute', inset:0 }}>${HERO_IMG}</div>`
       return {
         jsx: `<section style={{ position:'relative', minHeight:'92vh', display:'flex', alignItems:'flex-end', overflow:'hidden' }}>
           ${bg}
-          <div style={{ position:'absolute', inset:0, background:'linear-gradient(0deg, rgba(0,0,0,.82) 0%, rgba(0,0,0,.35) 45%, rgba(0,0,0,.15) 100%)' }} />
+          <div style={{ position:'absolute', inset:0, background: HERO_VISUAL.fill ? 'linear-gradient(0deg, rgba(0,0,0,.82) 0%, rgba(0,0,0,.35) 45%, rgba(0,0,0,.15) 100%)' : 'linear-gradient(0deg, rgba(0,0,0,.72) 0%, rgba(0,0,0,.18) 45%, rgba(0,0,0,0) 100%)' }} />
           <div style={{ position:'relative', padding:'clamp(2.5rem,7vw,6rem)', maxWidth:'760px', width:'100%' }}>${heroText(ctx, p, { onDark: true })}</div>
         </section>`,
         css: '@keyframes hbZoom{from{transform:scale(1)}to{transform:scale(1.12)}}\n.hb-zoom{animation:hbZoom 18s ease-out forwards}\n@media(prefers-reduced-motion:reduce){.hb-zoom{animation:none}}',
