@@ -120,11 +120,13 @@ export function fitsCollection(id: string, count: number): boolean {
  */
 export function chooseProductComponent(
   fallback: string, count: number, types: string[], seed: number,
+  usage: Map<string, number> = new Map(),
 ): string {
+  const from = (pool: readonly string[], offset: number) => pickFresh(pool, usage, seed, offset)
   if (types.length >= 3 && count >= 8) return 'products.category-tabs'
-  if (count >= MANY) return pick(['products.grid-4', 'products.masonry', 'products.list-compact', 'products.grid-3'], seed, 11)
-  if (count > 0 && count <= FEW) return pick(['products.editorial-list', 'products.featured-grid', 'products.spotlight-stack'], seed, 12)
-  return fitsCollection(fallback, count) ? fallback : 'products.grid-3'
+  if (count >= MANY) return from(['products.grid-4', 'products.masonry', 'products.list-compact', 'products.grid-3', 'products.quickview-grid'], 11)
+  if (count > 0 && count <= FEW) return from(['products.editorial-list', 'products.featured-grid', 'products.spotlight-stack'], 12)
+  return fitsCollection(fallback, count) ? fallback : from(['products.grid-3', 'products.grid-4', 'products.quickview-grid'], 13)
 }
 
 /** Bouwt de uiteindelijke selectie: LLM-keuze indien geldig, anders afgeleid. */
