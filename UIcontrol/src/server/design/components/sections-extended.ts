@@ -133,7 +133,7 @@ const defs: ComponentDef[] = [
     render: (ctx, p): RenderResult => ({
       jsx: `<section className="split" style={{ display:'grid', gridTemplateColumns:'1fr 1fr', alignItems:'stretch', background:'var(--c-secondary)', color:'#fff' }}>
         <div style={{ minHeight:'42vh', overflow:'hidden' }}>
-          {PRODUCTS[0] && PRODUCTS[0].image ? <img src={PRODUCTS[0].image} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} /> : null}
+          <HeroImg />
         </div>
         <div style={{ display:'flex', flexDirection:'column', justifyContent:'center', padding:'clamp(2.5rem,6vw,5rem)' }}>
           <h2${am(ctx.anim, 'lift')} style={{ fontSize:'clamp(1.7rem,3.4vw,2.6rem)', margin:'0 0 1rem', lineHeight:1.15 }}>${txt(p.title, 'Ready when you are')}</h2>
