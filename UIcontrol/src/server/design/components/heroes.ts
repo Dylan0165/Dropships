@@ -34,9 +34,8 @@ function heroText(ctx: RenderCtx, p: ComponentProps, opts: { center?: boolean; o
 // helper: inner expression without wrapping braces (voor plekken waar we zelf { } zetten)
 function txtRaw(v: unknown, fb: string): string { return JSON.stringify(String(v ?? fb)) }
 
-function imgBox(style: string, extraClass = 'hi-img'): string {
-  // `style` bevat al de {{ }} — geen extra braces eromheen (anders {{{ }}} → crash)
-  return `{${P0IMG} ? <img className=${JSON.stringify(extraClass)} src={PRODUCTS[0].image} alt="" style=${style} /> : <div style={{ width:'60%', aspectRatio:'1', background:'var(--c-border)', borderRadius:'var(--r-lg)' }} />}`
+function imgBox(_style: string, extraClass = 'hi-img'): string {
+  return `<div className=${JSON.stringify(extraClass)} style={{ width:'100%', height:'100%' }}>${HERO_IMG}</div>`
 }
 
 const heroDefs: ComponentDef[] = [
