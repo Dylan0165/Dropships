@@ -10,6 +10,9 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { renderStore, type StoreBrief } from '../src/server/pipeline/store-builder.js'
 import { allComponents, catalogStats } from '../src/server/design/components/registry.js'
+import { buildSelection } from '../src/server/design/components/selection.js'
+import { deriveDesignDNA } from '../src/server/design/tokens.js'
+import { selectLayout } from '../src/server/design/layout.js'
 
 const OUT = process.env.AUDIT_OUT ?? path.join(process.cwd(), 'audit')
 const LABEL = process.env.AUDIT_LABEL ?? 'baseline'
