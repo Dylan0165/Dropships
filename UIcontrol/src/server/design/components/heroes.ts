@@ -166,7 +166,7 @@ const heroDefs: ComponentDef[] = [
       const video = typeof p.videoUrl === 'string' && /^https?:\/\/.+\.(mp4|webm)$/i.test(p.videoUrl) ? p.videoUrl : ''
       const bg = video
         ? `<video autoPlay muted loop playsInline aria-hidden="true" style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover' }}><source src=${JSON.stringify(video)} /></video>`
-        : `<div className="hb-zoom" style={{ position:'absolute', inset:0 }}>${HERO_IMG}</div>`
+        : `<div className="hb-zoom" style={{ position:'absolute', inset:0 }}><HeroImg inset /></div>`
       return {
         jsx: `<section style={{ position:'relative', minHeight:'92vh', display:'flex', alignItems:'flex-end', overflow:'hidden' }}>
           ${bg}
