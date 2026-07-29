@@ -42,6 +42,44 @@ Daarnaast, één niveau hoger in `design/`:
 
 Met stijl- en animatievarianten erbij zijn dat 251 concrete instanties.
 
+## Hero-beeld — sfeerbeeld of gepresenteerde productfoto
+
+Tot 29 juli 2026 gebruikte **elke** hero letterlijk `PRODUCTS[0].image`,
+full-bleed met `object-fit: cover`. Bij een CJ-pakshot op wit levert dat een
+witte vlakte met een fragment product; bij `fullbleed-overlay` stond het product
+pal achter de kop. Dat sculpt-fade er goed uitzag kwam doordat CJ daar toevallig
+een lifestyle-foto leverde.
+
+`design/hero-visual.ts` kent nu twee soorten (`resolveHeroVisual`):
+
+| Soort | Wanneer | Gedrag |
+|---|---|---|
+| `lifestyle` | er is een gegenereerd of meegegeven sfeerbeeld | full-bleed `cover` + scrim |
+| `staged` | anders | productfoto `contain` op een kleurverloop uit het design-DNA; in full-bleed hero's rechts, tekst links |
+
+Alle hero's (en `content.story-split`, `cta.split-image`) gaan via het
+`<HeroImg>`-component uit assemble.ts. Rechtstreeks `PRODUCTS[0].image` in een
+component zetten is de fout die dit moest oplossen.
+
+`generateHeroImage()` (image-gen.ts) draait alleen als er een `OPENAI_API_KEY`
+of `REPLICATE_API_TOKEN` is, met een time-out, en schrijft het bestand de winkel
+in als `/img/hero.webp` — provider-URL's verlopen.
+
+## Componentbreedte — `component_usage`
+
+De afgeleide selectie koos uit hardgecodeerde lijstjes van 3-4 id's per gleuf.
+Structureel bereik: 55 van 106; in de praktijk kregen 4 van 5 winkels dezelfde
+nav, footer én gallery. Nu is de pool per gleuf de hele categorie en kiest
+`pickFresh` (`design/component-usage.ts`) eerst wat nog nergens gebruikt is.
+Gemeten: bereik 102/106, 9,5 unieke componenten per winkel.
+
+`catalogForPrompt()` geeft de LLM per component een `used`-teller mee (minst
+gebruikt bovenaan); de SKILL vraagt expliciet om een lage teller te kiezen.
+
+Let op: **toon** stuurt palet, fonts én componentpools. `deriveTone` gaf tot
+29 juli +3 voor `priceMax >= 55`, waardoor bijna alles "premium" werd. Prijs is
+nu een hint, geen beslissing.
+
 ## Productweergave ↔ collectie-grootte
 
 Sinds 28 juli 2026 hangt de keuze van de `products.*`-component af van de
