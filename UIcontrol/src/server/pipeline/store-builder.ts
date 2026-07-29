@@ -459,6 +459,30 @@ export async function buildStore(input: StoreBuildInput): Promise<StoreBuildOutp
   }
 
   log('→ terugval: brief samengesteld uit de brand-stage; design-DNA en componentkeuze komen uit code')
-  const rendered = renderStore(input, fallbackBrief(input))
+  const rendered = renderStore(withHero, fallbackBrief(input))
   return { ...rendered, briefSource: 'fallback', briefError: reden }
+}
+
+/**
+ * Probeert één sfeerbeeld te genereren. Mag alles fout gaan: dit is een
+ * verbetering, geen voorwaarde. De store-build wacht er hooguit `timeoutMs` op.
+ */
+async function maybeHeroImage(input: StoreBuildInput, log: (m: string) => void): Promise<string | null> {
+  if (input.heroImage) return input.heroImage
+  if (!hasImageProvider()) {
+    log('[hero] geen beeldprovider geconfigureerd — productfoto wordt op een sfeerlaag gepresenteerd')
+    return null
+  }
+  const t0 = Date.now()
+  const url = await generateHeroImage({
+    storeId: `store-${input.runId}`,
+    niche: input.niche,
+    brandName: input.brand.name ?? input.niche,
+    audience: input.persona?.label,
+    primaryColor: input.brand.colors?.primary,
+  })
+  log(url
+    ? `[hero] sfeerbeeld gegenereerd in ${((Date.now() - t0) / 1000).toFixed(1)}s`
+    : `[hero] beeldgeneratie leverde niets op na ${((Date.now() - t0) / 1000).toFixed(1)}s — productfoto op sfeerlaag`)
+  return url
 }
