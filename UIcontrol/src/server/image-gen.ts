@@ -59,10 +59,21 @@ function imagePath(storeId: string, subfolder: string, name: string): string {
 function downloadFile(url: string, dest: string): Promise<string> {
   return new Promise((resolve, reject) => {
     const file = fs.createWriteStream(dest)
-    https.get(url, (res) => {
+    // Protocol volgen in plaats van https aannemen: providers leveren soms een
+    // http-redirect, en een test-provider draait lokaal op http. Hardgecodeerd
+    // https gaf hier stil een mislukte download waarna de (verlopende)
+    // provider-URL in de winkel belandde.
+    const client = url.startsWith('http://') ? http : https
+    client.get(url, (res) => {
       if (res.statusCode === 301 || res.statusCode === 302) {
         file.close()
         downloadFile(res.headers.location!, dest).then(resolve).catch(reject)
+        return
+      }
+      if ((res.statusCode ?? 0) >= 400) {
+        file.close()
+        fs.unlink(dest, () => { /* ignore */ })
+        reject(new Error(`download ${res.statusCode} voor ${url}`))
         return
       }
       res.pipe(file)
