@@ -12,6 +12,7 @@ import { buildStorePage } from '../design/build-page.js'
 import { ComponentSelectionSchema } from '../design/components/selection.js'
 import { catalogForPrompt } from '../design/components/registry.js'
 import { sanitizeCopyDeep } from '../design/sanitize.js'
+import { generateHeroImage, hasImageProvider } from '../image-gen.js'
 import {
   generateReviews, generateStory, generateCtaBand,
   buildNavLinks, buildFooterLinks, heroLabel, badgeFor,
