@@ -175,6 +175,13 @@ Fill the `components` field:
   cheap impulse niche, `premium`/`considered` for a considered purchase).
 - Choose ids that VARY the store from a generic layout — two different stores
   should rarely share the same set.
+- **Every entry has a `used` count**: how many stores in the network already use
+  that component. The catalog is sorted with the least-used first. Prefer ids
+  with a LOW `used` count when several would fit. If your first instinct is a
+  component with a high count, pick the next one that fits instead — a network
+  of shops that all pick `nav.split-links` and `footer.sitemap-columns` reads as
+  one template with different colours. Only reach for a heavily used component
+  when nothing else genuinely fits the niche.
 - **Match the products component to the actual collection.** The input has a
   `collection` block with `product_count`, `product_types` and a `guidance`
   sentence — follow it. A narrow niche legitimately yields 2 products; design a
