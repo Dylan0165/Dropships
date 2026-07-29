@@ -75,6 +75,11 @@ coverage/
 !memory/logs/
 !memory/logs/**
 
+# ── Gegenereerde beelden ──────────────────────────────────────
+# image-gen.ts schrijft hero-/product-/ad-beelden per store hierheen. Runtime-
+# artefacten, geen broncode — en op de VPS lopen ze snel in de honderden MB's.
+UIcontrol/data/images/
+
 # ── Losse output van de verify:*-scripts ──────────────────────
 # Die schrijven naar $LOGFILE, of naar de projectmap als die niet gezet is.
 # Het bewijs hoort in memory/logs/, niet als kladbestand in de repo.
