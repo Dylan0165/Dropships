@@ -366,11 +366,28 @@ export function renderStore(input: StoreBuildInput, briefRaw: StoreBrief): Store
   // De assemblage zelf staat in design/build-page.ts — gedeeld met de
   // CMS-rebuild, zodat een herbouwde store niet stilzwijgend op de oude,
   // vrije renderer terugvalt.
+  // Sfeerbeeld: een lokaal gegenereerd bestand gaat mee de store in als
+  // /img/hero.webp (de URL van de provider verloopt; het bestand niet).
+  let heroImage: string | null = input.heroImage ?? null
+  if (heroImage && !/^https?:\/\//i.test(heroImage)) {
+    try {
+      const imgDir = path.join(buildDir, 'public', 'img')
+      fs.mkdirSync(imgDir, { recursive: true })
+      const ext = path.extname(heroImage) || '.webp'
+      fs.copyFileSync(heroImage, path.join(imgDir, `hero${ext}`))
+      heroImage = `/img/hero${ext}`
+    } catch (err) {
+      input.onLog?.(`[hero] sfeerbeeld kon niet gekopieerd worden (${err instanceof Error ? err.message : err}) — productfoto op sfeerlaag`)
+      heroImage = null
+    }
+  }
+
   const built = buildStorePage({
     dna, layout, brandName, niche: input.niche, subdomain, products, content,
     interests: persona.interests ?? [],
     llmComponents: brief.components,
     signature: applied.signature,
+    heroImage,
     onLog: input.onLog,
   })
   const { componentMeta, uniqueMeta } = built
