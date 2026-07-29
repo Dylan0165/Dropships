@@ -124,11 +124,18 @@ export function generateStory(opts: {
 
 export function generateCtaBand(seed: number): { title: string; sub: string; button: string } {
   const rng = rngFrom(seed ^ 0x9abc)
+  // Concreet en controleerbaar: een verzendtermijn, een retourtermijn, een plek.
+  // Geen "join thousands of happy customers" — dat is een verzonnen aantal, en
+  // precies het soort regel dat elke gegenereerde winkel verraadt.
   const options = [
     { title: 'Free shipping across Europe', sub: 'On every order, no minimum. Delivered in 3–8 days.', button: 'Shop the collection' },
-    { title: 'Join thousands of happy customers', sub: 'Loved across NL, BE, DE and FR.', button: 'Browse products' },
-    { title: '30-day money-back guarantee', sub: 'Not for you? Send it back, no questions asked.', button: 'Start shopping' },
-    { title: 'Limited stock, fast delivery', sub: 'Shipped from our European warehouse within 1–2 days.', button: 'Get yours' },
+    { title: '30-day returns, no questions', sub: 'Send it back within a month and we refund it.', button: 'Browse products' },
+    { title: 'Shipped from inside the EU', sub: 'No customs, no six-week wait, tracking from day one.', button: 'Start shopping' },
+    { title: 'Packed and sent within 48 hours', sub: 'Order before Thursday and it is with you next week.', button: 'Get yours' },
+    { title: 'One order, one parcel', sub: 'Everything ships together — no drip-feed of packages.', button: 'See the range' },
+    { title: 'Questions get a real answer', sub: 'A reply from a person within one working day.', button: 'Shop the collection' },
+    { title: 'Tested before it goes on the site', sub: 'If we would not use it ourselves, we do not list it.', button: 'Browse products' },
+    { title: 'Pay the way you already pay', sub: 'iDEAL, card, PayPal and Bancontact, handled by Stripe.', button: 'Start shopping' },
   ]
   return pick(rng, options)
 }
