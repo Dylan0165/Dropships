@@ -3,6 +3,27 @@
 Wat er nog open staat. Afgerond werk verhuist naar `../changelog.md` en het
 bijbehorende dossier.
 
+## Clynado-netwerkkeurmerk in elke winkel (vastgelegd 29 juli 2026)
+
+Elke winkel houdt **zijn eigen merknaam** — daar verandert niets aan. Daarnaast
+komt er een klein Clynado-element als herkenbaar netwerk-keurmerk, bijvoorbeeld
+een icoon of "Powered by Clynado" in de footer.
+
+Nog niet ontworpen en bewust nog niet gebouwd. Aandachtspunten voor als het
+zover is:
+
+- **Waar**: de footer is de logische plek (subtiel, niet concurrerend met het
+  merk). De footer-componenten verschillen per store, dus het element moet in de
+  gedeelde footer-laag zitten, niet per variant.
+- **Vormgeving**: moet werken op elk palet uit het design-DNA (licht en donker)
+  en mag de per-store identiteit niet verwateren — klein, monochroom, met de
+  merkkleur als accent.
+- **Vertrouwen vs. verwarring**: een keurmerk werkt alleen als het ergens naar
+  verwijst. Overweeg een link naar het kopersdashboard op clynado.com, zodat een
+  bezoeker ziet dat het een echt netwerk is.
+- Raakt `marketplace.ts` (het kopersdashboard) en de footer-componenten in
+  `design/components/chrome.ts`.
+
 ## Componentbibliotheek — verdere uitbreiding
 
 De catalogus is uitgebreid naar een veel groter aantal varianten per categorie
