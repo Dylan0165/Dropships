@@ -256,6 +256,47 @@ export async function generateProductImages(params: {
   return results
 }
 
+/**
+ * Eén sfeerbeeld voor de hero.
+ *
+ * De pipeline gebruikte image-gen helemaal niet — elke hero toonde de kale
+ * leveranciersfoto. Dit is de enige beeldgeneratie die in de store-build zit:
+ * één brede lifestyle-shot, met een harde tijdslimiet en zonder te gooien.
+ * Lukt het niet (geen key, time-out, provider down), dan komt er `null` terug en
+ * presenteert de renderer de productfoto op een sfeerlaag — nooit een lege hero.
+ */
+export async function generateHeroImage(params: {
+  storeId: string
+  niche: string
+  brandName: string
+  audience?: string
+  primaryColor?: string
+  timeoutMs?: number
+}): Promise<string | null> {
+  if (!hasImageProvider()) return null
+  const prompt = [
+    `Editorial lifestyle photograph for a ${params.niche} brand.`,
+    params.audience ? `The scene suits: ${params.audience}.` : '',
+    'Wide cinematic composition with generous empty space on the left for a headline.',
+    'Natural daylight, shallow depth of field, muted realistic colours, European interior or outdoor setting.',
+    'No text, no logos, no watermarks, no collage, no product packaging close-up.',
+  ].filter(Boolean).join(' ')
+
+  const timeout = params.timeoutMs ?? 75_000
+  try {
+    const url = await Promise.race([
+      generateImage(prompt, { preferOpenAI: true, openaiSize: '1792x1024', aspectRatio: '16:9' }),
+      new Promise<null>(r => setTimeout(() => r(null), timeout)),
+    ])
+    if (!url) return null
+    const dest = imagePath(params.storeId, 'hero', 'hero.webp')
+    return await saveImage(url, dest, 'hero')
+  } catch (err) {
+    console.warn('[image-gen] hero-beeld mislukt:', err instanceof Error ? err.message : err)
+    return null
+  }
+}
+
 /** Full store image set */
 export async function generateStoreImages(params: {
   storeId: string
