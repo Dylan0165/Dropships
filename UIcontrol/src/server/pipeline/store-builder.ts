@@ -428,9 +428,14 @@ export async function buildStore(input: StoreBuildInput): Promise<StoreBuildOutp
   log(`Generating brief for "${input.niche}" (${collection.product_count} product(en))...`)
   const result = await generateBrief(input)
 
+  // Sfeerbeeld voor de hero — alleen als er een beeldprovider geconfigureerd is.
+  // Zonder key gebeurt hier niets en presenteert de renderer de productfoto op
+  // een sfeerlaag; dat is de terugval, niet een gebroken hero.
+  const withHero = { ...input, heroImage: await maybeHeroImage(input, log) }
+
   if (result.brief) {
     log(`Brief OK — brand="${result.brief.brand_name}", rendering ${selectTemplate(input.niche)} template...`)
-    return { ...renderStore(input, result.brief), briefSource: 'llm' }
+    return { ...renderStore(withHero, result.brief), briefSource: 'llm' }
   }
 
   // ── De LLM-brief is niet gelukt ─────────────────────────────────────────────
