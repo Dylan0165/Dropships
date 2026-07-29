@@ -117,10 +117,17 @@ export function buildStorePage(input: BuildPageInput): BuildPageResult {
     if (unique.warning) log(`[uniqueness] ⚠ ${unique.warning}`)
     const activeMotion = unique.combination.motion === motion.id ? motion : selectMotionProfile(dna.tone, dna.seed)
 
+    const heroVisual = resolveHeroVisual({
+      dna, products,
+      generated: input.heroImage ?? null,
+      supplied: input.suppliedHeroImage ?? null,
+    })
+    log(`[hero] beeld: ${heroVisual.kind} (bron ${heroVisual.source})${heroVisual.kind === 'staged' ? ' — productfoto op sfeerlaag, niet uitgesneden' : ''}`)
+
     const assembled = assemblePage({
       dna, brandName, topbar: selection.topbar, nav: selection.nav,
       sections: selection.sections, footer: selection.footer, products,
-      defaultStyle: selection.style, motion: activeMotion,
+      defaultStyle: selection.style, motion: activeMotion, heroVisual,
     })
     for (const w of assembled.warnings) log(`[assemble] ⚠ ${w}`)
     log(`[assemble] ${assembled.usedComponents.length} componenten (${selection.source}, thema ${selection.iconTheme}, beweging ${activeMotion.id}): ${assembled.usedComponents.join(', ')}${assembled.cssConflicts.length ? ` — ${assembled.cssConflicts.length} CSS-conflict!` : ''}`)
