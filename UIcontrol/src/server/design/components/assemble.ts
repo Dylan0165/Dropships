@@ -244,6 +244,9 @@ function Card({p,i,layout='card',reverse}:{p:any;i:number;layout?:'card'|'featur
 
 export function assemblePage(input: AssembleInput): AssembleResult {
   const { dna, brandName, products } = input
+  // Altijd een hero-beeld-definitie: ook als de aanroeper er geen meegeeft valt
+  // hij terug op de productfoto-op-sfeerlaag, nooit op een lege <img>.
+  const heroVisual = input.heroVisual ?? resolveHeroVisual({ dna, products })
   const dStyle = input.defaultStyle ?? 'minimal'
   const dAnim = input.defaultAnim ?? 'subtle'
   const warnings: string[] = []
