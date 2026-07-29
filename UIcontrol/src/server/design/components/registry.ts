@@ -3,6 +3,7 @@
 // (metadata, GEEN broncode) en (b) lookup per id voor de assembler.
 
 import type { ComponentDef, CatalogEntry, ComponentCategory } from './types.js'
+import { componentUsage } from '../component-usage.js'
 import heroDefs from './heroes.js'
 import productDefs from './products.js'
 import sectionDefs from './sections.js'
