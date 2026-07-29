@@ -31,6 +31,12 @@ export interface HeroVisual {
   fill: boolean
   /** Achtergrond onder/achter het beeld, afgeleid van het design-DNA. */
   backdrop: string
+  /**
+   * Donkere variant voor full-bleed hero's. Die zetten hun tekst altijd in wit
+   * (`onDark`), dus daar mag de sfeerlaag nooit licht zijn — anders staat er
+   * witte tekst op een lichte achtergrond.
+   */
+  backdropDark: string
   /** Extra gloed over de sfeerlaag — geeft diepte achter een pakshot. */
   glow: string
   /** Overlay boven het beeld zodat hero-tekst leesbaar blijft. */
