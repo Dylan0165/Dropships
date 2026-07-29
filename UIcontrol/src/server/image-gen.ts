@@ -18,8 +18,14 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const DATA_DIR   = path.resolve(__dirname, '../../data/images')
 
 const OPENAI_API_KEY      = () => process.env.OPENAI_API_KEY ?? ''
+const OPENAI_BASE_URL     = () => process.env.OPENAI_BASE_URL ?? 'https://api.openai.com/v1'
 const REPLICATE_API_TOKEN = () => process.env.REPLICATE_API_TOKEN ?? ''
 const IMAGE_PROVIDER      = () => (process.env.IMAGE_PROVIDER ?? 'flux').toLowerCase()
+
+/** Is er überhaupt een beeldprovider geconfigureerd? Zonder key: nee. */
+export function hasImageProvider(): boolean {
+  return !!OPENAI_API_KEY() || !!REPLICATE_API_TOKEN()
+}
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
