@@ -140,16 +140,25 @@ export function deriveTone(persona: PersonaLike, niche: string, rng: () => numbe
 
   const scores: Record<VisualTone, number> = { minimal: 1, playful: 0, premium: 0, urban: 0, organic: 0, tech: 0 }
 
-  if (priceMax >= 55 || /premium|luxe|luxury|exclusive|professional|office|design/.test(text)) scores.premium += 3
+  // Prijs was tot 29 juli 2026 het zwaarste signaal (>= EUR 55 gaf +3), en dat
+  // maakte 4 van de 5 audit-winkels "premium". Een middenprijs van 55 euro zegt
+  // weinig; het WOORD premium/luxe zegt meer. Prijs telt nu mee als hint, niet
+  // als beslissing — anders krijgt het halve netwerk hetzelfde palet, dezelfde
+  // fonts en dezelfde componentpools, want alles hangt aan de toon.
+  if (priceMax >= 85) scores.premium += 1.5
+  else if (priceMax >= 55) scores.premium += 0.75
+  if (/premium|luxe|luxury|exclusive|refined|craft|artisan/.test(text)) scores.premium += 2.5
+  if (/professional|office|desk|work/.test(text)) { scores.minimal += 1.5; scores.tech += 0.5 }
   if (ageMin <= 28 || /fitness|sport|gym|gaming|street|urban|energie|energy|workout|bold/.test(text)) { scores.urban += 2; scores.playful += 1 }
   if (/tech|gadget|smart|device|electronic|audio|charge|drone/.test(text)) scores.tech += 3
-  if (/food|drink|coffee|tea|organic|eco|natural|wellness|beauty|skin|plant|garden|home/.test(text)) scores.organic += 2
-  if (/kids|fun|colorful|playful|party|pet|cute|toy|hobby/.test(text)) scores.playful += 2
+  if (/food|drink|coffee|tea|organic|eco|natural|wellness|beauty|skin|plant|garden|home|sleep/.test(text)) scores.organic += 2
+  if (/kids|fun|colorful|playful|party|pet|dog|cat|cute|toy|hobby/.test(text)) scores.playful += 2
   if (ageMin >= 40 && priceMax < 55) scores.minimal += 1
   if (/minimal|clean|simple|scandi/.test(text)) scores.minimal += 2
 
-  // seed-jitter zodat gelijke scores per store anders vallen
-  for (const k of Object.keys(scores) as VisualTone[]) scores[k] += rng() * 0.9
+  // Seed-jitter: bij scores die dicht bij elkaar liggen mag de winkel zelf
+  // beslissen. Was 0.9 — te weinig om ooit iets te veranderen naast een +3.
+  for (const k of Object.keys(scores) as VisualTone[]) scores[k] += rng() * 1.8
 
   return (Object.entries(scores).sort((a, b) => b[1] - a[1])[0][0]) as VisualTone
 }
