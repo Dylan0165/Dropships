@@ -224,11 +224,14 @@ export function buildSelection(
   // Componenten die per definitie ergens anders horen (producten hebben hun
   // eigen gleuf; de hero staat vast bovenaan).
   const contentPool = idsIn('content')
+  const uspsId = fresh(contentPool, 1)
+  // Story komt óók uit content, maar nooit hetzelfde blok als de USP's.
+  const storyPool = contentPool.filter(id => id !== uspsId)
   const map: Record<string, string> = {
-    usps: fresh(contentPool, 1),
+    usps: uspsId,
     products: productsId,
     reviews: fresh(idsIn('testimonials'), 2),
-    story: fresh(contentPool.filter(id => id !== map0(contentPool, usage, seed, 1)), 3),
+    story: fresh(storyPool, 3),
     'cta-band': fresh(idsIn('cta'), 4),
   }
   const trustId = fresh(idsIn('badges'), 5)
