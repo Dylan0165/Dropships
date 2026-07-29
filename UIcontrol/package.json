@@ -20,7 +20,9 @@
     "verify:assortment": "tsx scripts/verify-assortment.ts",
     "verify:efficiency": "tsx scripts/verify-search-efficiency.ts",
     "verify:collection": "tsx scripts/verify-collection-render.ts",
-    "verify:small": "tsx scripts/verify-small-assortment.ts"
+    "verify:small": "tsx scripts/verify-small-assortment.ts",
+    "verify:quality": "tsx scripts/verify-store-quality.ts",
+    "audit:stores": "tsx scripts/audit-store-quality.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
