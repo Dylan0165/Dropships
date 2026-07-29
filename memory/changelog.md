@@ -2,6 +2,41 @@
 
 Nieuwste bovenaan. Zie `ai-must-read/release-and-changelog.md` voor het formaat.
 
+## 2026-07-29 — Elke hero toonde de kale leveranciersfoto
+**Tag:** volgt hieronder
+
+- Audit van vijf teststores + de live winkel die de gebruiker het mooist vindt
+  (sculpt-fade.clynado.com). Uitkomst: **5 van 5 hero's tonen `PRODUCTS[0].image`
+  full-bleed uitgesneden**. Dat sculpt-fade er wél goed uitziet komt doordat CJ
+  daar toevallig een lifestyle-foto leverde in plaats van een pakshot op wit —
+  geluk bij de leverancier, niet iets wat de pipeline deed.
+- Tweede bevinding uit dezelfde audit: de hero-copy van sculpt-fade is letterlijk
+  `fallbackBrief()`. De winkel die als beste geldt draait voor de helft op
+  deterministische code, niet op de store-builder-agent.
+- `design/hero-visual.ts` (nieuw): **lifestyle** (echt sfeerbeeld, mag bijgesneden)
+  of **staged** (productfoto NIET uitsnijden maar presenteren op een kleurverloop
+  uit het design-DNA, in full-bleed hero's rechts naast de tekst). Er is altijd
+  één van beide — een lege of gebroken hero kan niet meer.
+- `generateHeroImage()` haakt image-gen eindelijk in de store-build, maar alleen
+  met een key en met een harde time-out; het bestand gaat mee de winkel in
+  (`/img/hero.webp`) want provider-URL's verlopen.
+- **Componentbreedte**: de afgeleide selectie koos uit hardgecodeerde lijstjes van
+  3-4 id's (55 van 106 bereikbaar; 4 van 5 winkels kregen dezelfde nav én footer
+  én gallery). Nu: hele categorie per gleuf + `component_usage`-tabel die
+  bijhoudt wat al ergens staat. Bereik 55 → **102 van 106**, 5,6 → **9,5 unieke
+  componenten per winkel**, nav/footer nergens dubbel over zes winkels.
+- **Toon-monocultuur**: `deriveTone` gaf +3 voor `priceMax >= 55` tegen een jitter
+  van 0,9 — vier van vijf winkels werden "premium", en toon bepaalt palet, fonts
+  én componentpools. Prijs telt nu mee als hint (≥85 → +1,5), jitter naar 1,8.
+- **Copy**: SKILL-sectie "Copy that works" met goede/slechte voorbeelden en vier
+  tests; cta-banden 4 → 8, verhaal-varianten flink uitgebreid, en "Join thousands
+  of happy customers" verwijderd — dat is een verzonnen aantal.
+- Onderweg: `downloadFile` sprak hardgecodeerd https, waardoor een http-redirect
+  stil mislukte en de verlopende provider-URL in de winkel belandde.
+- **Geverifieerd:** `verify:quality` 26/26, drie nieuwe teststores echt gebouwd
+  (`next build`) met `object-fit: contain` in plaats van `cover`, screenshots voor
+  en na. Zie `logs/visuele-kwaliteit-2026-07-29.md`.
+
 ## 2026-07-28 — Een te klein assortiment legde de hele run om
 **Tag:** volgt hieronder
 
