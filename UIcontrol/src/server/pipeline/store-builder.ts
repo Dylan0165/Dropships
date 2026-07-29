@@ -87,6 +87,12 @@ export interface StoreBuildInput {
     supplierVariantId?: string
     costPrice?: number
   }>
+  /**
+   * Sfeerbeeld voor de hero: een lokaal bestandspad (wordt in de store
+   * gekopieerd) of een URL. Ontbreekt het, dan presenteert de renderer de
+   * productfoto op een sfeerlaag — zie design/hero-visual.ts.
+   */
+  heroImage?: string | null
   onLog?: (msg: string) => void
 }
 
