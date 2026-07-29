@@ -98,21 +98,37 @@ export function generateStory(opts: {
     'Small idea, big difference',
     'Designed around one problem',
     'The story behind ' + opts.brandName,
+    'What we would not sell you',
+    'How this range came together',
+    'Fewer things, chosen better',
   ]
   const openers = [
     `${opts.brandName} started with a simple frustration`,
     `We built ${opts.brandName} because the options out there felt the same`,
     `${opts.brandName} exists for one reason`,
     `Everything about ${opts.brandName} comes back to one idea`,
+    `We ordered a lot of bad versions before we started ${opts.brandName}`,
+    `${opts.brandName} began as a shortlist we kept passing between friends`,
+  ]
+  // Zonder `storyAngle` (die komt uit de LLM-brief) toch iets concreets zeggen —
+  // "everyday products should just work" is precies het soort zin dat op elke
+  // gegenereerde winkel past en daarom niets toevoegt.
+  const genericAngles = [
+    ` — the cheap versions break, and the expensive ones are mostly branding.`,
+    ` — most shops sell everything and stand behind nothing.`,
+    ` — waiting six weeks for something that arrives wrong is not shopping.`,
+    ` — a short list you can trust beats a catalogue you have to sift through.`,
   ]
   const problemLine = problem
     ? ` — ${problem.replace(/\.$/, '')}.`
-    : ` — everyday products should just work, and look good doing it.`
+    : pick(rng, genericAngles)
   const closers = [
     `That's why we ship from within Europe, keep the range focused, and stand behind every order.`,
     `So we obsess over the details, source carefully, and back it all with a 30-day guarantee.`,
     `We keep things simple: a tight collection, fast European delivery, and honest support.`,
     `No bloated catalogue — just a few things we'd actually use ourselves, delivered fast across Europe.`,
+    `Everything here is stocked in the EU, so it arrives in days and goes back just as easily.`,
+    `We would rather explain one product properly than list fifty we have never touched.`,
   ]
   return {
     title: pick(rng, titles),
