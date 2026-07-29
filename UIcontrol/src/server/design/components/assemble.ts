@@ -296,6 +296,7 @@ const PRODUCTS: any[] = ${j(products)};
 const BRAND: string = ${j(brandName)};
 const CSS: string = ${j(dedupedCss)};
 const AM_PLAN: any = ${j(input.motion?.plan ?? {})};
+const HERO_VISUAL: any = ${j(heroVisual)};
 ${HELPERS}${input.motion ? motionRuntime() : ''}
 export default function Home() {
   ${input.motion ? 'useMotion(AM_PLAN);' : ''}
