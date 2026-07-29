@@ -54,16 +54,21 @@ function mix(hex: string, pct: number, towards: string): string {
  * Bewust in CSS en niet als afbeelding — dan is hij altijd beschikbaar, laadt
  * hij niet, en past hij per definitie bij het palet van deze winkel.
  */
-export function heroBackdrop(dna: DesignDNA): { backdrop: string; glow: string } {
+const INK = '#0e1013'
+
+export function heroBackdrop(dna: DesignDNA): { backdrop: string; backdropDark: string; glow: string } {
   const p = dna.palette
   const dark = p.mode === 'dark'
   const base = dark
     ? `linear-gradient(135deg, ${mix(p.primary, 22, p.bg)} 0%, ${p.bg} 55%, ${mix(p.accent, 18, p.bg)} 100%)`
     : `linear-gradient(135deg, ${mix(p.primary, 12, p.surfaceAlt)} 0%, ${p.surfaceAlt} 52%, ${mix(p.accent, 14, p.surfaceAlt)} 100%)`
+  // Altijd donker, ook bij een licht palet — de merkkleuren blijven herkenbaar
+  // omdat ze erdoorheen gemengd zijn.
+  const backdropDark = `linear-gradient(120deg, ${INK} 0%, ${mix(p.primary, 34, INK)} 58%, ${mix(p.accent, 26, INK)} 100%)`
   const glow = dark
     ? `radial-gradient(60% 55% at 50% 42%, ${mix(p.accent, 26, 'transparent')} 0%, transparent 70%)`
     : `radial-gradient(58% 52% at 50% 44%, ${mix(p.primary, 18, 'transparent')} 0%, transparent 72%)`
-  return { backdrop: base, glow }
+  return { backdrop: base, backdropDark, glow }
 }
 
 export interface HeroVisualInput {
