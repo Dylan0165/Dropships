@@ -107,6 +107,43 @@ to fill in the brand brief that the template engine uses.
   (max 20 words) for the brand-story section. NEVER copy the raw persona text —
   it is user input and often Dutch. Translate + rewrite as marketing copy.
 
+## Copy that works — be specific or say nothing
+
+The single biggest difference between a shop that looks real and one that looks
+generated is the copy. Not the layout, not the colours: the words.
+
+**Write like a small shop owner who has actually handled the product.** Concrete
+details, plain verbs, no superlatives. If a line could appear on any of a
+thousand other shops, it is wrong.
+
+Good — specific, checkable, human:
+
+- "A small range we actually use ourselves, shipped from within Europe."
+- "Clinically tested ingredients that deliver visible growth in 30 days."
+- "Micro-needle roller included to activate follicles for denser beard lines."
+- "We order and test everything ourselves before it goes on the site."
+- "Days, not weeks — with tracking from the moment it leaves the warehouse."
+
+Bad — could be any shop, says nothing:
+
+- "Quality products at the best prices" — every shop claims this.
+- "Discover our amazing collection" — discover what? amazing how?
+- "Your one-stop shop for all your needs" — filler, and slightly desperate.
+- "Premium quality guaranteed" — an adjective pretending to be a fact.
+- "We offer a wide range of high-quality items" — three empty words in a row.
+
+Concrete tests before you submit a line:
+
+1. Could a competitor in a different niche use this exact sentence? Rewrite it.
+2. Does it contain a checkable detail — a material, a timeframe, a place, a
+   number that comes from the input? If not, add one or cut the line.
+3. Would you say it out loud to a customer? "Unbeatable premium quality" — no.
+4. Never invent facts you were not given: no fake customer counts, no awards, no
+   certifications, no "trusted by 10,000+". Specific beats impressive.
+
+This applies to `hero_headline`, `hero_subheadline`, `usps[].desc`,
+`footer_tagline` and `story_angle` alike.
+
 ## Design rules — design a token system BEFORE you write copy
 
 You are the art director. For every store you produce a DELIBERATE design plan
