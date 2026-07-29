@@ -84,7 +84,7 @@ async function openaiGenerateImage(
   if (!key) return null
 
   try {
-    const resp = await fetch('https://api.openai.com/v1/images/generations', {
+    const resp = await fetch(`${OPENAI_BASE_URL()}/images/generations`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
       body: JSON.stringify({
