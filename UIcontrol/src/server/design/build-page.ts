@@ -144,6 +144,7 @@ export function buildStorePage(input: BuildPageInput): BuildPageResult {
         topbar: selection.topbar.id, motion: { id: activeMotion.id, label: activeMotion.label },
         used: assembled.usedComponents, cssConflicts: assembled.cssConflicts,
         collection: { products: products.length, types: productTypes },
+        hero: { kind: heroVisual.kind, source: heroVisual.source },
         notes: selection.notes,
       },
       uniqueMeta: { hash: unique.hash, combination: unique.combination, attempts: unique.attempts, rotated: unique.rotated },
