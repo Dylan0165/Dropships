@@ -169,7 +169,11 @@ export function derivedReach(): { reachable: string[]; total: number } {
       usps: [{ title: 'a', desc: 'b' }, { title: 'c', desc: 'd' }, { title: 'e', desc: 'f' }],
       storyTitle: 'T', storyBody: 'B', reviews: [{ name: 'X', stars: 5, text: 'y' }], footerTagline: 'F',
     }, undefined, { niche, seed: dna.seed, productCount: 6 + (i % 8), productTypes: ['a', 'b', 'c'].slice(0, i % 4) })
-    for (const s of [sel.topbar.id, sel.nav.id, sel.footer.id, ...sel.sections.map(x => x.id)]) seen.add(s)
+    const ids = [sel.topbar.id, sel.nav.id, sel.footer.id, ...sel.sections.map(x => x.id)]
+    for (const s of ids) seen.add(s)
+    // Zoals in productie: elke gebouwde winkel telt mee, zodat de volgende
+    // winkel de nog ongebruikte varianten pakt.
+    recordComponentUse(ids)
   }
   return { reachable: [...seen].sort(), total: allComponents().length }
 }
