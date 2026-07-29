@@ -137,6 +137,10 @@ export function buildStorePage(input: BuildPageInput): BuildPageResult {
     if (assembled.cssConflicts.length > 0) throw new Error('CSS-conflicten in assemblage')
     if (assembled.usedComponents.length < 3) throw new Error('te weinig componenten')
 
+    // Vastleggen wat deze winkel gebruikt, zodat de vólgende winkel eerst de
+    // varianten pakt die nog nergens staan.
+    recordComponentUse(assembled.usedComponents)
+
     return {
       page: assembled.page,
       usedCatalog: true,
