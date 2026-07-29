@@ -146,15 +146,29 @@ export function auditStore(spec: typeof NICHES[number], index: number): StoreMet
   }
 }
 
-// ── Hoeveel van de catalogus kan de afgeleide selectie überhaupt bereiken? ─────
-// Dit is een code-analyse, geen steekproef: het antwoord ligt vast in de pools
-// die buildSelection gebruikt.
+/**
+ * Hoeveel van de catalogus bereikt de afgeleide selectie in de praktijk?
+ * Geen code-analyse maar een echte steekproef: 24 winkels met verschillende
+ * persona's en seeds, en tellen hoeveel unieke componenten daar samen uit komen.
+ */
 export function derivedReach(): { reachable: string[]; total: number } {
-  const src = fs.readFileSync(path.join(process.cwd(), 'src/server/design/components/selection.ts'), 'utf-8')
-  const ids = new Set<string>()
-  for (const m of src.matchAll(/'([a-z]+\.[a-z0-9-]+)'/g)) ids.add(m[1])
-  const real = [...ids].filter(id => allComponents().some(c => c.id === id))
-  return { reachable: real.sort(), total: allComponents().length }
+  const seen = new Set<string>()
+  const tones = ['fitness gear', 'coffee brewing', 'kids toys', 'smart home tech', 'skincare', 'office desk setup']
+  for (let i = 0; i < 24; i++) {
+    const niche = tones[i % tones.length]
+    const dna = deriveDesignDNA({
+      persona: { label: `${niche} buyer`, interests: [niche.split(' ')[0]], ageRange: i % 2 ? '20-30' : '35-55', priceRange: { min: 10 + i, max: 30 + i * 4 } },
+      niche, seed: `reach-probe-${i}`,
+    })
+    const layout = selectLayout({ tone: dna.tone, seed: dna.seed })
+    const sel = buildSelection(dna, layout, {
+      brandName: 'Probe', eyebrow: 'New', headline: 'H', subheadline: 'S', cta: 'Shop',
+      usps: [{ title: 'a', desc: 'b' }, { title: 'c', desc: 'd' }, { title: 'e', desc: 'f' }],
+      storyTitle: 'T', storyBody: 'B', reviews: [{ name: 'X', stars: 5, text: 'y' }], footerTagline: 'F',
+    }, undefined, { niche, seed: dna.seed, productCount: 6 + (i % 8), productTypes: ['a', 'b', 'c'].slice(0, i % 4) })
+    for (const s of [sel.topbar.id, sel.nav.id, sel.footer.id, ...sel.sections.map(x => x.id)]) seen.add(s)
+  }
+  return { reachable: [...seen].sort(), total: allComponents().length }
 }
 
 async function main() {
