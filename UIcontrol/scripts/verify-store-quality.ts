@@ -36,7 +36,8 @@ const provider = http.createServer((req, res) => {
 })
 await new Promise<void>(r => provider.listen(4988, () => r()))
 
-const { renderStore, type StoreBrief } = await import('../src/server/pipeline/store-builder.js')
+import type { StoreBrief } from '../src/server/pipeline/store-builder.js'
+const { renderStore } = await import('../src/server/pipeline/store-builder.js')
 const { resolveHeroVisual } = await import('../src/server/design/hero-visual.js')
 const { deriveDesignDNA } = await import('../src/server/design/tokens.js')
 const { catalogStats } = await import('../src/server/design/components/registry.js')
