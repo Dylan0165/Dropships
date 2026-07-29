@@ -101,11 +101,11 @@ export function resolveHeroVisual(input: HeroVisualInput): HeroVisual {
     src: product,
     fill: false,
     backdrop, backdropDark, glow,
-    // Lichte scrim: het product moet zichtbaar blijven, de tekst staat ernaast
-    // en niet eroverheen.
+    // Scrim alleen links, waar de tekst staat. Rechts (waar het product komt te
+    // staan) blijft hij weg — anders wordt een pakshot op wit een grijs blok.
     scrim: dark
-      ? 'linear-gradient(90deg, rgba(0,0,0,.55), rgba(0,0,0,.10))'
-      : 'linear-gradient(90deg, rgba(0,0,0,.30), rgba(0,0,0,.04))',
+      ? 'linear-gradient(90deg, rgba(0,0,0,.55) 0%, rgba(0,0,0,.22) 45%, rgba(0,0,0,0) 68%)'
+      : 'linear-gradient(90deg, rgba(0,0,0,.42) 0%, rgba(0,0,0,.16) 45%, rgba(0,0,0,0) 68%)',
     source: product ? 'product-photo' : 'none',
   }
 }
