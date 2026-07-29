@@ -220,7 +220,6 @@ export function buildSelection(
   // bereiken, en kregen vier van de vijf audit-winkels dezelfde nav, footer en
   // gallery. Nu is de pool per gleuf de HELE categorie, en wordt er eerst
   // gekozen uit wat nog niet gebruikt is (`pickFresh` tegen `component_usage`).
-  const usage = componentUsage()
   const fresh = <T extends string>(pool: readonly T[], offset: number): T =>
     pool.length ? pickFresh(pool, usage, seed, offset) : pool[0]
 
