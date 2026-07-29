@@ -34,6 +34,11 @@ export interface AssembleInput {
   defaultAnim?: AnimationVariant
   /** Bewegingskarakter voor de Anime.js-laag; weglaten = geen data-am-runtime. */
   motion?: MotionProfile
+  /**
+   * Hero-beeld: een echt sfeerbeeld (mag bijgesneden) of de productfoto op een
+   * sfeerlaag (volledig in beeld). Zie design/hero-visual.ts.
+   */
+  heroVisual?: HeroVisual
 }
 
 export interface AssembleResult {
