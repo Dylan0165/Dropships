@@ -13,6 +13,7 @@ import { allComponents, catalogStats } from '../src/server/design/components/reg
 import { buildSelection } from '../src/server/design/components/selection.js'
 import { deriveDesignDNA } from '../src/server/design/tokens.js'
 import { selectLayout } from '../src/server/design/layout.js'
+import { recordComponentUse } from '../src/server/design/component-usage.js'
 
 const OUT = process.env.AUDIT_OUT ?? path.join(process.cwd(), 'audit')
 const LABEL = process.env.AUDIT_LABEL ?? 'baseline'
