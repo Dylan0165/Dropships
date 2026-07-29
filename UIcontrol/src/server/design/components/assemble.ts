@@ -213,6 +213,20 @@ function QuickFeedback({question}:{question:string}){
     {['Yes','Not really'].map(o=><button key={o} type="button" className="btnp btn2" style={{padding:'.45rem 1rem',fontSize:'.8rem'}} onClick={()=>setV(o)}>{o}</button>)}
   </div>);
 }
+function HeroImg({className}:{className?:string}){
+  const v:any=HERO_VISUAL;
+  // Zonder beeld blijft de sfeerlaag over — nooit een lege of gebroken hero.
+  if(!v||!v.src)return <div className={className} style={{width:'100%',height:'100%',background:(v&&v.backdrop)||'var(--c-surface-alt)'}} />;
+  // Echt sfeerbeeld: mag bijgesneden worden, dat is waar zo'n foto voor gemaakt is.
+  if(v.fill)return <img className={className} src={v.src} alt="" style={{width:'100%',height:'100%',objectFit:'cover'}} />;
+  // Kale productfoto: NIET uitsnijden. Op een sfeerlaag zetten en volledig tonen,
+  // dan ziet een pakshot op wit eruit als een bewuste keuze in plaats van een
+  // toevallige uitsnede.
+  return(<div className={className} style={{position:'relative',width:'100%',height:'100%',minHeight:'100%',background:v.backdrop,display:'grid',placeItems:'center',overflow:'hidden'}}>
+    <div aria-hidden="true" style={{position:'absolute',inset:0,background:v.glow}} />
+    <img src={v.src} alt="" style={{position:'relative',width:'78%',height:'78%',objectFit:'contain',filter:'drop-shadow(0 24px 38px rgba(0,0,0,.28))'}} />
+  </div>);
+}
 function Card({p,i,layout='card',reverse}:{p:any;i:number;layout?:'card'|'featured'|'row';reverse?:boolean}){
   const price=(<div style={{display:'flex',gap:'.6rem',alignItems:'baseline',marginBottom:'.9rem'}}><span style={{fontWeight:700,fontSize:layout==='featured'?'1.4rem':'1.05rem'}}>&#8364;{Number(p.price).toFixed(2)}</span>{p.compareAtPrice?<span style={{color:'var(--c-muted)',fontSize:'.9rem',textDecoration:'line-through'}}>&#8364;{Number(p.compareAtPrice).toFixed(2)}</span>:null}</div>);
   const cta=(<button type="button" className="btnp btn" style={{width:layout==='row'?'auto':'100%'}} onClick={()=>startCheckout(p)}>Order now</button>);
