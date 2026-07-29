@@ -104,8 +104,8 @@ const heroDefs: ComponentDef[] = [
     props: { eyebrow: '', headline: '', subheadline: '', cta: '' },
     render: (ctx, p): RenderResult => ({
       jsx: `<section style={{ position:'relative', minHeight:'88vh', display:'flex', alignItems:'center', overflow:'hidden' }}>
-        <div style={{ position:'absolute', inset:0 }}>${HERO_IMG}</div>
-        <div style={{ position:'absolute', inset:0, background:HERO_VISUAL.scrim }} />
+        <div style={{ position:'absolute', inset:0 }}><HeroImg inset /></div>
+        <div style={{ position:'absolute', inset:0, background:HERO_VISUAL.scrim, pointerEvents:'none' }} />
         <div style={{ position:'relative', padding:'clamp(2.5rem,6vw,5rem)', maxWidth:'720px' }}>${heroText(ctx, p, { onDark: true })}</div>
       </section>`,
     }),
