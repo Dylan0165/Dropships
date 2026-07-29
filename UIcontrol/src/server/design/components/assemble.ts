@@ -223,7 +223,7 @@ function HeroImg({className,inset}:{className?:string;inset?:boolean}){
   // dan ziet een pakshot op wit eruit als een bewuste keuze in plaats van een
   // toevallige uitsnede.
   //
-  // `inset` = de hero vult het hele scherm en zet z'n tekst eroverheen. Dan gaat
+  // inset = de hero vult het hele scherm en zet z'n tekst eroverheen. Dan gaat
   // het product naar de rechterhelft en blijft links schone ruimte voor de kop;
   // een pakshot achter de tekst maakte die eerder onleesbaar.
   return(<div className={className} style={{position:'relative',width:'100%',height:'100%',minHeight:'100%',background:inset?v.backdropDark:v.backdrop,display:'grid',placeItems:'center',overflow:'hidden'}}>
