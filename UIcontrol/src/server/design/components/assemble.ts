@@ -213,18 +213,24 @@ function QuickFeedback({question}:{question:string}){
     {['Yes','Not really'].map(o=><button key={o} type="button" className="btnp btn2" style={{padding:'.45rem 1rem',fontSize:'.8rem'}} onClick={()=>setV(o)}>{o}</button>)}
   </div>);
 }
-function HeroImg({className}:{className?:string}){
+function HeroImg({className,inset}:{className?:string;inset?:boolean}){
   const v:any=HERO_VISUAL;
   // Zonder beeld blijft de sfeerlaag over — nooit een lege of gebroken hero.
-  if(!v||!v.src)return <div className={className} style={{width:'100%',height:'100%',background:(v&&v.backdrop)||'var(--c-surface-alt)'}} />;
+  if(!v||!v.src)return <div className={className} style={{width:'100%',height:'100%',background:(inset?v&&v.backdropDark:v&&v.backdrop)||'var(--c-surface-alt)'}} />;
   // Echt sfeerbeeld: mag bijgesneden worden, dat is waar zo'n foto voor gemaakt is.
   if(v.fill)return <img className={className} src={v.src} alt="" style={{width:'100%',height:'100%',objectFit:'cover'}} />;
   // Kale productfoto: NIET uitsnijden. Op een sfeerlaag zetten en volledig tonen,
   // dan ziet een pakshot op wit eruit als een bewuste keuze in plaats van een
   // toevallige uitsnede.
-  return(<div className={className} style={{position:'relative',width:'100%',height:'100%',minHeight:'100%',background:v.backdrop,display:'grid',placeItems:'center',overflow:'hidden'}}>
+  //
+  // `inset` = de hero vult het hele scherm en zet z'n tekst eroverheen. Dan gaat
+  // het product naar de rechterhelft en blijft links schone ruimte voor de kop;
+  // een pakshot achter de tekst maakte die eerder onleesbaar.
+  return(<div className={className} style={{position:'relative',width:'100%',height:'100%',minHeight:'100%',background:inset?v.backdropDark:v.backdrop,display:'grid',placeItems:'center',overflow:'hidden'}}>
     <div aria-hidden="true" style={{position:'absolute',inset:0,background:v.glow}} />
-    <img src={v.src} alt="" style={{position:'relative',width:'78%',height:'78%',objectFit:'contain',filter:'drop-shadow(0 24px 38px rgba(0,0,0,.28))'}} />
+    {inset
+      ? <img className="hv-inset" src={v.src} alt="" style={{position:'absolute',right:'6%',top:'50%',transform:'translateY(-50%)',width:'38%',maxHeight:'72%',objectFit:'contain',filter:'drop-shadow(0 30px 46px rgba(0,0,0,.45))'}} />
+      : <img src={v.src} alt="" style={{position:'relative',width:'78%',height:'78%',objectFit:'contain',filter:'drop-shadow(0 24px 38px rgba(0,0,0,.28))'}} />}
   </div>);
 }
 function Card({p,i,layout='card',reverse}:{p:any;i:number;layout?:'card'|'featured'|'row';reverse?:boolean}){

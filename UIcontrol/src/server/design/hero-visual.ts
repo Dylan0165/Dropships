@@ -88,7 +88,7 @@ export function resolveHeroVisual(input: HeroVisualInput): HeroVisual {
   const lifestyle = (input.generated ?? '').trim() || (input.supplied ?? '').trim()
   if (lifestyle) {
     return {
-      kind: 'lifestyle', src: lifestyle, fill: true, backdrop, glow,
+      kind: 'lifestyle', src: lifestyle, fill: true, backdrop, backdropDark, glow,
       // Sterke scrim: een foto met veel detail maakt witte kopregels onleesbaar.
       scrim: 'linear-gradient(90deg, rgba(0,0,0,.74), rgba(0,0,0,.30))',
       source: input.generated ? 'generated' : 'supplied',
@@ -100,7 +100,7 @@ export function resolveHeroVisual(input: HeroVisualInput): HeroVisual {
     kind: 'staged',
     src: product,
     fill: false,
-    backdrop, glow,
+    backdrop, backdropDark, glow,
     // Lichte scrim: het product moet zichtbaar blijven, de tekst staat ernaast
     // en niet eroverheen.
     scrim: dark
