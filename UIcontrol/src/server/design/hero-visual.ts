@@ -82,7 +82,7 @@ export interface HeroVisualInput {
 }
 
 export function resolveHeroVisual(input: HeroVisualInput): HeroVisual {
-  const { backdrop, glow } = heroBackdrop(input.dna)
+  const { backdrop, backdropDark, glow } = heroBackdrop(input.dna)
   const dark = input.dna.palette.mode === 'dark'
 
   const lifestyle = (input.generated ?? '').trim() || (input.supplied ?? '').trim()
