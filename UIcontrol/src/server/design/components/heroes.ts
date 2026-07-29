@@ -5,7 +5,11 @@
 import type { ComponentDef, RenderCtx, ComponentProps, RenderResult } from './types.js'
 import { txt, styleTokens, am, arr } from './types.js'
 
-const P0IMG = 'PRODUCTS[0] && PRODUCTS[0].image'
+// Het hero-beeld loopt via <HeroImg> (zie assemble.ts). Dat component kent het
+// verschil tussen een echt sfeerbeeld (mag bijgesneden worden) en een kale
+// productfoto (wordt gepresenteerd op een sfeerlaag i.p.v. uitgesneden).
+// Rechtstreeks `PRODUCTS[0].image` in een hero zetten is precies wat er mis was.
+const HERO_IMG = '<HeroImg />'
 
 // Gedeelde hero-tekstblokken (gefaseerde opkomst via hi-1..hi-4)
 function heroText(ctx: RenderCtx, p: ComponentProps, opts: { center?: boolean; onDark?: boolean; charTitle?: boolean } = {}): string {
