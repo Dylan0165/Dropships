@@ -38,6 +38,14 @@ export interface BuildPageInput {
   llmComponents?: ComponentSelectionInput
   /** Signature-element voor de terugval-renderer. */
   signature?: SignatureElement | null
+  /**
+   * Gegenereerd sfeerbeeld voor de hero (image-gen). Ontbreekt het, dan wordt de
+   * productfoto op een sfeerlaag gepresenteerd in plaats van full-bleed
+   * uitgesneden — zie design/hero-visual.ts.
+   */
+  heroImage?: string | null
+  /** Handmatig meegegeven hero-beeld (CMS / store-beheer). */
+  suppliedHeroImage?: string | null
   onLog?: (msg: string) => void
 }
 
