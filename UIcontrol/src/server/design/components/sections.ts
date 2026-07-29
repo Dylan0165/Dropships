@@ -155,9 +155,11 @@ const defs: ComponentDef[] = [
     render: (ctx, p) => {
       // Zonder expliciete image-prop mag de `"" || …`-vorm er niet in staan: TS
       // ziet dan een altijd-falsy expressie en `next build` weigert (strict).
+      // Zonder eigen beeld: via <HeroImg> (assemble.ts), zodat een kale pakshot
+      // ook hier op de sfeerlaag komt in plaats van uitgesneden te worden.
       const img = typeof p.image === 'string' && p.image.trim()
         ? `<img src={${j(p.image)}} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} />`
-        : `{PRODUCTS[0] && PRODUCTS[0].image ? <img src={PRODUCTS[0].image} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} /> : null}`
+        : '<HeroImg />'
       return {
         jsx: sect(`<div className="split" style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'clamp(2rem,5vw,4rem)', alignItems:'center' }}>
         ${reveal(ctx.anim, 'left', `<div>
