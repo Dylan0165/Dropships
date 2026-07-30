@@ -12,6 +12,7 @@ import { getComponent, allComponents } from './registry.js'
 import { TOPBAR_BY_THEME } from './topbars.js'
 import { iconThemeFor, type IconTheme } from './icons.js'
 import { componentUsage, pickFresh } from '../component-usage.js'
+import { companyContact } from '../../company.js'
 
 export const ComponentSelectionSchema = z.object({
   style: z.enum(['minimal', 'bold', 'playful', 'editorial']).optional(),
