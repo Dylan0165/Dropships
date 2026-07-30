@@ -200,6 +200,16 @@ Richtlijn:
 Wees streng bij 6 en lager. Een ventilator in een blender-winkel is een 1, ook al
 zijn beide "portable".
 
+VRAAG JEZELF PER PRODUCT: wie gebruikt of draagt dit? Leveranciers stapelen
+zoekwoorden in de titel, dus woordovereenkomst met de niche zegt niets.
+- Verkleedkleding voor MENSEN (costume, cosplay, carnaval, Halloween, "for
+  adults", "for women", party accessory set) hoort NIET in een niche die niet
+  over verkleden gaat — ook niet als het woord "dog", "cat" of de niche-naam in
+  de titel staat. Een dalmatiër-pak met rokje is kleding voor de eigenaar, geen
+  hondenartikel: score 1.
+- Een artikel voor het dier/de gebruiker zelf is wél kandidaat.
+Deze regel weegt ZWAARDER dan trefwoord-overlap met de niche-naam.
+
 Producten:
 ${JSON.stringify(candidates.map(compact))}
 
