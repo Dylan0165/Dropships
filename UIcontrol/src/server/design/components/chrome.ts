@@ -214,7 +214,7 @@ const defs: ComponentDef[] = [
           </div>
           <div style={{ display:'flex', flexDirection:'column', gap:'.5rem' }}>
             <b style={{ fontSize:'.75rem', letterSpacing:'.14em', textTransform:'uppercase', color:'var(--c-accent)' }}>Reach us</b>
-            <span style={{ color:'var(--c-muted)', fontSize:'.86rem' }}>${txt(p.email, 'hello@example.com')}</span>
+            <span style={{ color:'var(--c-muted)', fontSize:'.86rem' }}>${txt(p.email, companyContact().email)}</span>
             <span style={{ color:'var(--c-muted)', fontSize:'.86rem' }}>${txt(p.hours, 'Mon-Fri, 09:00-17:00 CET')}</span>
           </div>
           <div style={{ display:'flex', flexDirection:'column', gap:'.55rem' }}>
