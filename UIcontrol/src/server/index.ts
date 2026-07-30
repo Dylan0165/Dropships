@@ -1126,12 +1126,23 @@ app.get('/api/suppliers/cj/mcp/status', async (_req, res) => {
 })
 
 app.get('/api/suppliers/cj/search', async (req, res) => {
-  const { q, limit } = req.query as { q?: string; limit?: string }
+  // `niche` is optioneel: staat hij erin, dan worden resultaten die duidelijk
+  // niet bij die niche horen (verkleedkleding voor mensen) gemarkeerd. Handmatig
+  // zoeken is een bewuste actie van de operator, dus we blokkeren niets — maar
+  // dit pad had helemaal GEEN relevantie-controle, en dat is hoe een
+  // dalmatiër-kostuum in een hondenwinkel kan belanden.
+  const { q, limit, niche } = req.query as { q?: string; limit?: string; niche?: string }
   if (!q || !q.trim()) { res.status(400).json({ error: 'q (zoekterm) is verplicht' }); return }
   try {
     const adapter = getSupplier('cj')
-    const products = await adapter.searchProducts(q.trim(), {
+    const found = await adapter.searchProducts(q.trim(), {
       maxResults: Math.min(parseInt(limit ?? '30', 10) || 30, 60),
+    })
+    const scope = (niche ?? '').trim()
+    const products = found.map(p => {
+      if (!scope) return p
+      const dq = costumeDisqualification(scope, p)
+      return dq.rejected ? { ...p, disqualified: true, disqualifiedReason: dq.reason } : p
     })
     res.json({ products, isMock: adapter.isMock })
   } catch (err) {
