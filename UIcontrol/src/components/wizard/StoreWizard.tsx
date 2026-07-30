@@ -323,7 +323,9 @@ export function StoreWizard({ onClose, onStarted }: Props) {
     setSearching(true)
     setCjError(null)
     try {
-      const r = await fetch(`/api/suppliers/cj/search?q=${encodeURIComponent(manualQuery.trim())}&limit=12`)
+      // Niche meesturen zodat de server resultaten kan markeren die duidelijk
+      // niet bij deze winkel horen (verkleedkleding voor mensen bijvoorbeeld).
+      const r = await fetch(`/api/suppliers/cj/search?q=${encodeURIComponent(manualQuery.trim())}&limit=12&niche=${encodeURIComponent(idea)}`)
       const data = await r.json() as { products?: ShortlistProduct[]; isMock?: boolean; error?: string }
       if (!r.ok) throw new Error(data.error ?? `${r.status}`)
       if (typeof data.isMock === 'boolean') setSupplierIsMock(data.isMock)
