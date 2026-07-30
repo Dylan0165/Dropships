@@ -2,6 +2,7 @@ import path from 'path'
 import fs from 'fs'
 import { ANIME_VERSION } from '../design/anime-presets.js'
 import { checkoutApiUrl as checkoutApiUrlFor } from '../checkout-gateway.js'
+import { companyContact, companyContactHtml } from '../company.js'
 import type { DesignDNA } from '../design/tokens.js'
 
 const TEMPLATE_NAMES = ['noir', 'blanc', 'bolt', 'dusk', 'grid'] as const
