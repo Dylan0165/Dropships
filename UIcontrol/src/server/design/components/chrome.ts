@@ -4,6 +4,7 @@
 
 import type { ComponentDef, ComponentProps, RenderResult } from './types.js'
 import { txt, j, am, arr } from './types.js'
+import { companyContact } from '../../company.js'
 
 const NAV_LINKS = `{[['Shop','#products'],['About','/about/'],['FAQ','/faq/'],['Contact','/contact/']].map(([l,h])=><a key={l} href={h} className="navl" style={{ fontSize:'.82rem', color:'var(--c-muted)', letterSpacing:'.04em' }}>{l}</a>)}`
 const BRAND = `<a href="/" style={{ fontFamily:'var(--f-head)', fontWeight:'var(--fw-head)', fontSize:'1.05rem', textTransform:'var(--tt-head)', letterSpacing:'.02em' }}>${'{'}BRAND${'}'}</a>`
