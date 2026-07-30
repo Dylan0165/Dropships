@@ -173,7 +173,11 @@ export function buildSelection(
     if (id === 'testimonials.quote-large' || id === 'testimonials.split-feature') {
       return { ...base, quote: content.reviews[0]?.text, author: content.reviews[0]?.name }
     }
-    if (id.startsWith('footer.')) return { ...base, tagline: content.footerTagline }
+    // Contactgegevens komen uit de centrale bedrijfsbron, nooit per winkel.
+    if (id.startsWith('footer.')) {
+      const c = companyContact()
+      return { ...base, tagline: content.footerTagline, email: c.email, hours: c.hours }
+    }
     if (id === 'nav.announcement-bar') return { ...base, announcement: 'Free EU shipping · 30-day returns' }
     return base
   }
