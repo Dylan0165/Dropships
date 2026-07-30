@@ -13,6 +13,7 @@ import { runAgent } from './pipeline/agent.js'
 import { sanitizeCopyDeep } from './design/sanitize.js'
 import { getSupplier } from './suppliers/index.js'
 import type { SupplierProduct } from './suppliers/types.js'
+import { costumeDisqualification } from './suppliers/product-relevance.js'
 
 export interface EditableProduct {
   id: string
