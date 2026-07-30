@@ -220,7 +220,7 @@ JSON formaat:
     return { kept: candidates, verdicts: hardVerdicts, skipped: 'geen scores in het antwoord' }
   }
 
-  const verdicts: RelevanceVerdict[] = []
+  const verdicts: RelevanceVerdict[] = [...hardVerdicts]
   const kept: SupplierProduct[] = []
   for (const p of candidates) {
     const s = byId.get(p.productId)
