@@ -47,12 +47,88 @@ const USD_TO_EUR = 0.92
 function compact(p: SupplierProduct) {
   return {
     id: p.productId,
-    title: p.title.slice(0, 110),
-    description: (p.description ?? '').slice(0, 160),
+    // 110 tekens was te kort. Leveranciers stapelen zoekwoorden vooraan en zetten
+    // wát het product écht is achteraan: "Dalmatian Dog Costume, 3-Piece … —
+    // Polka-Dot Outfit For Women". Op 110 tekens werd juist "Outfit For Women"
+    // afgekapt en zag de beoordelaar alleen nog "Dog Costume".
+    title: p.title.slice(0, 240),
+    description: (p.description ?? '').slice(0, 200),
     category: p.category ?? '',
     priceEur: Math.round(p.costPrice * USD_TO_EUR * 2.8 * 100) / 100,
     warehouse: p.warehouse ?? '',
   }
+}
+
+// ── Harde diskwalificatie: verkleedkleding voor mensen ────────────────────────
+//
+// Terugkerend patroon: een leverancier verkoopt een dalmatiër-pak voor
+// vólwassenen en propt "Dog" in de titel. Het woordfilter ziet "dog", de
+// semantische beoordelaar ziet "dog costume" en denkt: past prima bij een
+// hondenwinkel. Maar het is kleding voor de eigenaar, geen artikel voor het
+// dier — en al helemaal niet voor een winkel in halsbanden en riemen.
+//
+// Trefwoord-overlap met de niche mag hier niet tegen opwegen: een titel met
+// zowel "dog" als "costume for adults" valt af ondanks die "dog".
+
+const COSTUME_WORDS = [
+  'costume', 'cosplay', 'fancy dress', 'fancydress', 'halloween', 'carnival',
+  'carnaval', 'masquerade', 'dress-up', 'dress up', 'party accessory',
+  'theme part', 'mascot', 'onesie', 'kigurumi', 'purim', 'role play', 'roleplay',
+]
+
+/** Signalen dat een MENS het draagt in plaats van het huisdier/de gebruiker. */
+const HUMAN_WEAR_WORDS = [
+  'for adults', 'for adult', 'for women', 'for men', 'for ladies', 'for him', 'for her',
+  'womens', "women's", 'mens', "men's", 'adult size', 'unisex adult',
+  'outfit', 'skirt', 'dress', 'gloves', 'wig', 'headband', 'jumpsuit', 'bodysuit',
+  'apron', 'cape', 'cloak', 'tutu',
+]
+
+/** Niches die zelf over verkleden gaan — dan is een kostuum juist het product. */
+const COSTUME_NICHE_WORDS = [
+  ...COSTUME_WORDS, 'verkleed', 'verkleding', 'kostuum', 'feestkleding',
+  'party outfit', 'theatre', 'theater', 'stage', 'festival outfit',
+]
+
+export function nicheIsAboutCostumes(niche: string, extra = ''): boolean {
+  const t = `${niche} ${extra}`.toLowerCase()
+  return COSTUME_NICHE_WORDS.some(w => t.includes(w))
+}
+
+export interface Disqualification {
+  rejected: boolean
+  /** Nederlandse reden voor de operator. */
+  reason: string
+  /** Welke woorden het besluit droegen — maakt de log navolgbaar. */
+  signals: string[]
+}
+
+/**
+ * Deterministische poort vóór de LLM. Geen model nodig om te zien dat
+ * "Costume For Adults" geen hondenartikel is, en geen model dat er per ongeluk
+ * een 7 van kan maken.
+ */
+export function costumeDisqualification(
+  niche: string,
+  product: { title?: string; description?: string; category?: string },
+  opts: { personaText?: string } = {},
+): Disqualification {
+  if (nicheIsAboutCostumes(niche, opts.personaText ?? '')) {
+    return { rejected: false, reason: '', signals: [] }
+  }
+  const hay = `${product.title ?? ''} ${product.description ?? ''} ${product.category ?? ''}`.toLowerCase()
+  const costume = COSTUME_WORDS.filter(w => hay.includes(w))
+  if (costume.length === 0) return { rejected: false, reason: '', signals: [] }
+
+  const human = HUMAN_WEAR_WORDS.filter(w => hay.includes(w))
+  const signals = [...costume, ...human]
+  // Eén kostuumsignaal is al genoeg: de niche gaat niet over verkleden, dus een
+  // verkleedartikel hoort er niet in. Staat er óók een mens-signaal bij, dan is
+  // het zeker kleding voor de eigenaar.
+  const reason = human.length > 0
+    ? `Verkleedkleding voor mensen (${[...costume.slice(0, 2), ...human.slice(0, 2)].map(w => `"${w}"`).join(', ')}) — niet bedoeld voor deze niche, ondanks de woordovereenkomst.`
+    : `Verkleed-/kostuumartikel (${costume.slice(0, 3).map(w => `"${w}"`).join(', ')}) terwijl deze niche niet over verkleden gaat.`
+  return { rejected: true, reason, signals }
 }
 
 /**
