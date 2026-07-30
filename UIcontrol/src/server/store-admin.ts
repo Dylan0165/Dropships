@@ -382,7 +382,14 @@ export async function suggestProductsForStore(storeId: string, query?: string): 
   if (!store) return { ok: false, error: 'Store niet gevonden', query: '', results: [] }
   const q = (query ?? store.niche).trim()
   try {
-    const results = await getSupplier('cj').searchProducts(q, { maxResults: 12 })
+    const found = await getSupplier('cj').searchProducts(q, { maxResults: 12 })
+    // Producten bijzetten bij een LIVE winkel liep langs elke relevantiecontrole
+    // heen. Verkleedkleding voor mensen gaat er hier gewoon uit — dit is geen
+    // zoekscherm waar de operator bewust naar kostuums zoekt maar een
+    // "vul mijn winkel aan"-knop.
+    const results = found.filter(p => !costumeDisqualification(store.niche, p).rejected)
+    const geweerd = found.length - results.length
+    if (geweerd > 0) console.log(`[store-admin] ${geweerd} verkleed-/kostuumartikel(en) niet voorgesteld voor "${store.niche}"`)
     return { ok: true, query: q, results }
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : 'zoeken mislukt', query: q, results: [] }
