@@ -150,6 +150,30 @@ export async function scoreRelevance(
   const log = opts.onLog ?? ((m: string) => console.log(m))
   if (candidates.length === 0) return { kept: [], verdicts: [] }
 
+  // ── Poort 0: harde diskwalificatie ──────────────────────────────────────────
+  // Draait vóór de LLM. Deze producten worden niet voorgelegd: het model kan er
+  // dan ook geen 7 van maken, en het scheelt tokens. Ze staan wél in `verdicts`,
+  // zodat de wizard laat zien waarom ze weg zijn.
+  const personaText = `${persona.label ?? ''} ${(persona.interests ?? []).join(' ')} ${persona.problem ?? ''}`
+  const hardVerdicts: RelevanceVerdict[] = []
+  const survivors: SupplierProduct[] = []
+  for (const p of candidates) {
+    const dq = costumeDisqualification(niche, p, { personaText })
+    if (dq.rejected) {
+      hardVerdicts.push({ productId: p.productId, title: p.title, score: 1, reason: dq.reason, accepted: false })
+      log(`[relevance]   ✗  1/10  ${p.title.slice(0, 60)} — ${dq.reason}`)
+    } else {
+      survivors.push(p)
+    }
+  }
+  if (hardVerdicts.length > 0) {
+    log(`[relevance] ${hardVerdicts.length} product(en) hard afgewezen op verkleed-/kostuumsignalen vóór de LLM`)
+  }
+  if (survivors.length === 0) {
+    return { kept: [], verdicts: hardVerdicts }
+  }
+  candidates = survivors
+
   const priceHint = persona.priceRange
     ? `De doelgroep koopt in de prijsklasse EUR ${persona.priceRange.min}-${persona.priceRange.max}.`
     : ''
