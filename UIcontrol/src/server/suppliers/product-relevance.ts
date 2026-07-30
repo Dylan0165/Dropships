@@ -208,14 +208,16 @@ JSON formaat:
     )
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
-    log(`[relevance] beoordeling overgeslagen (${msg}) — alle ${candidates.length} kandidaten blijven staan`)
-    return { kept: candidates, verdicts: [], skipped: msg }
+    // De harde poort blijft óók gelden als de LLM uitvalt: verkleedkleding hoort
+    // er niet in, ook niet "voorlopig".
+    log(`[relevance] beoordeling overgeslagen (${msg}) — de overige ${candidates.length} kandidaten blijven staan`)
+    return { kept: candidates, verdicts: hardVerdicts, skipped: msg }
   }
 
   const byId = new Map((raw.scores ?? []).map(s => [String(s.id), s]))
   if (byId.size === 0) {
-    log(`[relevance] LLM gaf geen bruikbare scores — alle ${candidates.length} kandidaten blijven staan`)
-    return { kept: candidates, verdicts: [], skipped: 'geen scores in het antwoord' }
+    log(`[relevance] LLM gaf geen bruikbare scores — de overige ${candidates.length} kandidaten blijven staan`)
+    return { kept: candidates, verdicts: hardVerdicts, skipped: 'geen scores in het antwoord' }
   }
 
   const verdicts: RelevanceVerdict[] = []
