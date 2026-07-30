@@ -498,10 +498,14 @@ export default function CheckoutPage() {
         <p>Questions? Feel free to <a href="/contact/">get in touch</a>.</p>`,
     },
     {
+      // Contactgegevens komen uit ÉÉN centrale bron (server/company.ts), niet
+      // per winkel. Hier stond `support@<subdomein>.example` — een adres op een
+      // TLD die niet bestaat, dus onbereikbaar op elke gebouwde winkel.
       slug: 'contact', title: 'Contact',
       body: `<p>We're happy to help. Our support team responds within 24 hours on business days.</p>
-        <p><strong>Email:</strong> support@${vars.SUBDOMAIN || 'store'}.example</p>
-        <p><strong>Returns:</strong> see our <a href="/returns/">returns page</a>.</p>`,
+        ${companyContactHtml()}
+        <p><strong>Returns:</strong> see our <a href="/returns/">returns page</a>.</p>
+        <p style="opacity:.75">${esc(vars.BRAND_NAME)} is operated by ${esc(companyContact().name)}.</p>`,
     },
     {
       slug: 'faq', title: 'Frequently asked questions',
