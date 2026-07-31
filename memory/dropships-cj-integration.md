@@ -96,6 +96,15 @@ Faalt de producttype-generatie, dan valt hij terug op `buildShortlistSingleTerm`
 `adapter.searchProducts`). De response bevat `source: 'mcp' | 'rest' | 'mock'`.
 Handmatig "Zelf zoeken" in de UI gaat altijd via REST met het directe keyword.
 
+**Relevantie geldt op élk instroom-pad** (sinds 31 juli 2026). Het handmatige
+zoek-endpoint had helemaal geen controle, en zo belandde een dalmatiër-pak "For
+Adults" in een winkel met halsbanden en riemen. `costumeDisqualification()` in
+`product-relevance.ts` draait nu vóór de LLM en weegt zwaarder dan
+trefwoord-overlap: "dog" in de titel redt een verkleedpak niet. Handmatig zoeken
+markeert (de operator zoekt bewust); het assortiment en "winkel aanvullen"
+filteren weg. Titels gaan op 240 tekens naar de beoordelaar in plaats van 110 —
+keyword-stapelaars zetten het beslissende woord achteraan.
+
 Zoek-cache: identieke zoekterm+opties komen 10 minuten uit `searchCache`
 (`CJ_SEARCH_CACHE_MS`). Na een 429 loopt de tussenruimte tussen calls vanzelf op
 (×1,6 tot max 4s) en zakt terug na een minuut zonder rate limit.
