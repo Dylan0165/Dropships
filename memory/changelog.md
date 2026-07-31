@@ -2,6 +2,38 @@
 
 Nieuwste bovenaan. Zie `ai-must-read/release-and-changelog.md` voor het formaat.
 
+## 2026-07-31 — Verkleedkleding voor mensen in een hondenwinkel
+**Tag:** volgt hieronder
+
+- Een dalmatiër-pak "For Adults" en een "Polka-Dot Outfit For Women" stonden in
+  de productgrid van trailpaw.clynado.com (halsbanden/riemen). Vierde keer dat
+  keyword-gestapelde titels erdoorheen kwamen.
+- **Uitgesloten dat het vóór de fix gebouwd was**: de CJ-afbeelding staat onder
+  `product/2026/07/30/`, twee dagen ná de relevantie-fix. **Uitgesloten dat het
+  via het assortiment kwam**: dat pad zet `productType` op elk product en die
+  komt tot in `PRODUCTS` op de pagina — de live winkel heeft er nul.
+- Bleven over: het handmatige zoek-endpoint (`/api/suppliers/cj/search`, ook
+  achter de "Vervang"-knop) dat **helemaal geen relevantiecontrole** had, en het
+  één-zoekterm-pad waar `scoreRelevance` wél draait maar zonder kostuumbesef.
+- Twee aantoonbare gaten in de semantische laag zelf: `compact()` kapte titels af
+  op **110 tekens**, precies waar keyword-stapelaars het beslissende woord
+  neerzetten ("Polka-Dot Outfit For Women" viel eraf), en de prompt vroeg nergens
+  **wie het product draagt** — een "dog costume" past ogenschijnlijk prima bij
+  een hondenwinkel.
+- Nieuw: `costumeDisqualification()` draait vóór de LLM. Kostuum-/verkleedsignalen
+  wegen zwaarder dan trefwoord-overlap; afgewezen producten worden niet eens
+  voorgelegd. `nicheIsAboutCostumes()` zet de regel uit voor een verkleedwinkel.
+  Titels gaan nu op 240 tekens mee. Alle drie de instroom-paden gebruiken dezelfde
+  poort; handmatig zoeken markeert in plaats van te blokkeren.
+- **Contactgegevens gecentraliseerd** (`server/company.ts`): elke winkel toonde
+  `support@<subdomein>.example` op de contactpagina en `hello@example.com` in de
+  footer — allebei onbereikbaar. Nu één bron via `COMPANY_*`-env; niet-ingevulde
+  velden worden weggelaten in plaats van verzonnen. Merknaam-generatie ongemoeid.
+- **Geverifieerd:** `verify:costume` 22/22 met de exacte live titels,
+  `verify:quality` 34/34, het echte endpoint door de 2FA-gate, en een gebouwde
+  winkel met de Clynado-gegevens op de contactpagina. Zie
+  `logs/kostuumfilter-en-contact-2026-07-31.md`.
+
 ## 2026-07-29 — Elke hero toonde de kale leveranciersfoto
 **Tag:** volgt hieronder
 
