@@ -63,6 +63,9 @@ interface ShortlistProduct {
   productType?: string
   productTier?: 'entry' | 'mid' | 'premium'
   typeRole?: string
+  /** Server markeerde dit als niet-passend (bv. verkleedkleding voor mensen). */
+  disqualified?: boolean
+  disqualifiedReason?: string
 }
 
 /** Wat één producttype opleverde — maakt een korte lijst navolgbaar. */
