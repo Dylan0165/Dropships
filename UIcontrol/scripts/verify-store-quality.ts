@@ -178,6 +178,46 @@ const generiek = ['quality products', 'best price', 'wide range', 'one-stop']
 const alleCopy = [...bands, ...stories].join(' ').toLowerCase()
 check('geen generieke vulzinnen', !generiek.some(g => alleCopy.includes(g)), generiek.join(', '))
 
+// ═══ 6. CONTACTGEGEVENS UIT ÉÉN CENTRALE BRON ═══
+say('')
+say('═══ 6. CONTACTGEGEVENS — CENTRAAL, NIET PER WINKEL ═══')
+const { companyContact } = await import('../src/server/company.js')
+const cc = companyContact()
+say(`  centrale bron: ${cc.name} · ${cc.email} · ${cc.hours}${cc.phone ? ` · ${cc.phone}` : ' · (telefoon niet ingevuld)'}`)
+
+const contactOf = (dir: string) => fs.readFileSync(path.join(dir, 'app', 'contact', 'page.tsx'), 'utf-8')
+const twee = [build('q-contact-a', 'Alpha', 'dog collars'), build('q-contact-b', 'Beta', 'coffee gear')]
+const paginas = twee.map(t => contactOf(t.res.buildDir))
+
+check('geen .example-adres meer', paginas.every(p => !/\.example/.test(p)),
+  'was: support@<subdomein>.example — een TLD die niet bestaat')
+check('geen hello@example.com in de footer', twee.every(t => !/hello@example\.com/.test(t.page)),
+  'de footer-component had die placeholder als default')
+check('beide winkels tonen HETZELFDE e-mailadres', paginas.every(p => p.includes(cc.email)),
+  cc.email)
+check('het bedrijf wordt genoemd', paginas.every(p => p.includes(cc.name)), cc.name)
+check('de merknaam blijft van de winkel zelf', paginas[0].includes('Alpha') && paginas[1].includes('Beta'),
+  'Alpha / Beta — merknaam-generatie is niet aangeraakt')
+check('supporttijden staan erbij', paginas.every(p => p.includes(cc.hours)), cc.hours)
+
+// Optionele velden: alleen tonen als ze ingevuld zijn, nooit verzinnen
+const { missingCompanyFields } = await import('../src/server/company.js')
+const ontbreekt = missingCompanyFields()
+say(`  nog niet ingevuld (env): ${ontbreekt.join(', ') || 'niets'}`)
+check('lege velden worden weggelaten, niet verzonnen',
+  ontbreekt.includes('COMPANY_ADDRESS') ? !/Postal address/.test(paginas[0]) : /Postal address/.test(paginas[0]),
+  ontbreekt.includes('COMPANY_ADDRESS') ? 'geen adresblok zolang COMPANY_ADDRESS leeg is' : 'adresblok aanwezig')
+
+process.env.COMPANY_PHONE = '+31 20 123 4567'
+process.env.COMPANY_ADDRESS = 'Keizersgracht 1|1015 CJ Amsterdam|Nederland'
+process.env.COMPANY_VAT = 'NL000000000B01'
+const metAlles = build('q-contact-c', 'Gamma', 'plant care')
+const paginaC = contactOf(metAlles.res.buildDir)
+check('ingevulde env-waarden komen wél op de pagina',
+  paginaC.includes('+31 20 123 4567') && paginaC.includes('Keizersgracht 1') && paginaC.includes('NL000000000B01'),
+  'telefoon, adres en btw-nummer')
+delete process.env.COMPANY_PHONE; delete process.env.COMPANY_ADDRESS; delete process.env.COMPANY_VAT
+
 say('')
 say(`═══ RESULTAAT: ${pass} geslaagd, ${fail} gefaald ═══`)
 provider.close()
