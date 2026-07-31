@@ -1371,6 +1371,12 @@ function ProductCard({ p, selected, onToggle, disabled = false, onReplace }: {
             : <span className="text-emerald-500/70" title={`CJ pid ${p.productId}`}>CJ ✓</span>}
         </div>
 
+        {p.disqualified && (
+          <p className="text-[10px] text-red-300 leading-snug bg-red-900/25 border border-red-700/40 rounded px-1.5 py-1"
+             title={p.disqualifiedReason ?? ''}>
+            <b>Past niet bij deze niche.</b> {p.disqualifiedReason}
+          </p>
+        )}
         {p.relevanceReason && (
           <p className="text-[10px] text-zinc-400 leading-snug line-clamp-2" title={p.relevanceReason}>
             <span className="text-zinc-500">Relevantie:</span> {p.relevanceReason}
