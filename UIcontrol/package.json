@@ -22,6 +22,7 @@
     "verify:collection": "tsx scripts/verify-collection-render.ts",
     "verify:small": "tsx scripts/verify-small-assortment.ts",
     "verify:quality": "tsx scripts/verify-store-quality.ts",
+    "verify:costume": "tsx scripts/verify-costume-filter.ts",
     "audit:stores": "tsx scripts/audit-store-quality.ts"
   },
   "dependencies": {
