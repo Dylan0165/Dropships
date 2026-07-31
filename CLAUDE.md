@@ -172,6 +172,29 @@ Runner-label `dropships-vps`.
   `chooseProductComponent`/`fitsCollection` (selection.ts) toetsen de LLM-keuze aan de
   collectie-grootte: ≥3 types + ≥8 producten → `products.category-tabs`, ≥9 → catalogus-weergave,
   ≤5 → curated. Verificatie: `verify:assortment` (23), `verify:efficiency` (6), `verify:collection` (15).
+
+## Relevantie-poort — verkleedkleding (sinds 31 juli 2026)
+- **Harde diskwalificatie vóór de LLM**: `costumeDisqualification(niche, product)` in
+  `product-relevance.ts`. Signaalwoorden (costume/cosplay/halloween/carnival/party accessory/
+  mascot/onesie…) + mens-signalen (for adults|women|men, outfit, skirt, gloves, wig…) wegen
+  **zwaarder dan trefwoord-overlap**: een titel met zowel "dog" als "costume for adults" valt af.
+  `nicheIsAboutCostumes()` (kijkt ook naar de persona) zet de regel uit voor een verkleedwinkel.
+  Afgewezen producten worden **niet aan de LLM voorgelegd** en krijgen score 1 + reden.
+- `compact()` stuurde titels op **110 tekens** — precies waar keyword-stapelaars het beslissende
+  woord neerzetten ("…Polka-Dot Outfit For Women" viel eraf). Nu 240 tekens, beschrijving 200.
+- **Alle drie de instroom-paden** gaan door dezelfde poort: assortiment/één-zoekterm
+  (`scoreRelevance`), `/api/suppliers/cj/search` (handmatig zoeken + "Vervang" → **markeert**
+  met reden, blokkeert niet — bewuste operator-actie) en `suggestProductsForStore`
+  (live winkel aanvullen → filtert weg). Verificatie: `verify:costume` (22).
+
+## Bedrijfsgegevens — één bron voor alle winkels (sinds 31 juli 2026)
+- `server/company.ts` + `COMPANY_*` env (zie `.env.example`). Elke winkel houdt z'n eigen
+  merknaam; de contactgegevens zijn overal identiek. Was: `support@<subdomein>.example` op de
+  contactpagina en `hello@example.com` in `footer.contact-block` — allebei onbereikbaar.
+- **Niet-ingevulde velden worden weggelaten**, nooit opgevuld met iets verzonnens. Default:
+  Clynado / support@clynado.com / Mon-Fri 09:00-17:00 CET. Telefoon, adres, btw- en KvK-nummer
+  staan nog niet op de VPS — voor EU-verkoop op afstand zijn die verplicht.
+
 ## Component-bibliotheek — "combineren i.p.v. genereren" (sinds 26 juli 2026)
 - `server/design/components/`: **43 vooraf gebouwde componenten** over 10 categorieën
   (hero 8, products 6, testimonials 4, cta 4, content 6, badges 3, gallery 2, form 2, nav 4,
