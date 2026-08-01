@@ -204,6 +204,11 @@ Runner-label `dropships-vps`.
   Afgewezen producten worden **niet aan de LLM voorgelegd** en krijgen score 1 + reden.
 - `compact()` stuurde titels op **110 tekens** — precies waar keyword-stapelaars het beslissende
   woord neerzetten ("…Polka-Dot Outfit For Women" viel eraf). Nu 240 tekens, beschrijving 200.
+- Sinds 1 augustus 2026 staan er drie poorten achter elkaar in `hardDisqualification()`:
+  kostuum → **cadeau-framing** (`giftFramingDisqualification`: cadeau-taal ÉN een
+  gelegenheid/ontvanger, strenger afgebakend dan de kostuumregel omdat "beard gift set" een
+  echt product is) → **machinevertaling** (`machineTranslationDisqualification`:
+  groothandelsjargon, CJK-tekens, >6 komma-fragmenten, herhaalde woorden).
 - **Alle drie de instroom-paden** gaan door dezelfde poort: assortiment/één-zoekterm
   (`scoreRelevance`), `/api/suppliers/cj/search` (handmatig zoeken + "Vervang" → **markeert**
   met reden, blokkeert niet — bewuste operator-actie) en `suggestProductsForStore`
