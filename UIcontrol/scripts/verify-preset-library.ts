@@ -88,8 +88,29 @@ say('')
 say('═══ 2. MOCK-PRESETS BLIJVEN UIT DE ECHTE FLOW ═══')
 check('standaard-lijst laat mock weg', listPresets().length === 0, `${listPresets().length} presets zonder includeMock`)
 check('expliciet opvragen kan wel', listPresets({ includeMock: true }).length === 1, '1 met includeMock')
-const echt = savePreset({ ...saved, persona: saved.persona as Record<string, unknown>, niche: 'coffee brewing gear', products: dogProducts, types: saved.types, rationale: saved.rationale, keywords: ['coffee'], source: 'batch', isMock: false })
+const coffeeProducts = [
+  prod('c1', 'Gooseneck Pour Over Kettle 1L', 'pour over kettle', 18.4, 'premium'),
+  prod('c2', 'Manual Burr Coffee Grinder', 'hand grinder', 15.2, 'premium'),
+  prod('c3', 'Digital Coffee Scale 0.1g', 'coffee scale', 11.9),
+  prod('c4', 'Ceramic V60 Dripper', 'dripper', 6.3),
+  prod('c5', 'Handheld Milk Frother', 'milk frother', 4.2, 'entry'),
+  prod('c6', 'Airtight Bean Canister', 'storage canister', 7.1),
+  prod('c7', 'Stainless Coffee Tamper 51mm', 'tamper', 5.8, 'entry'),
+]
+const echt = savePreset({
+  niche: 'home coffee brewing gear',
+  persona: { label: 'Thuisbarista', interests: ['koffie'], problem: 'slechte koffie thuis', priceRange: { min: 20, max: 90 } },
+  products: coffeeProducts,
+  types: coffeeProducts.map((p, i) => ({ id: `ct${i}`, name: p.productType, searchTerm: p.productType, tier: p.productTier, role: 'kern' })),
+  rationale: 'Wie thuis handmatig koffie zet heeft een keten van gereedschap nodig: malen, wegen, water, filter. Los verkopen ze matig, samen vormen ze een compleet startpakket.',
+  problem: 'Thuis koffiezetten met supermarktgerei geeft inconsistent resultaat.',
+  keywords: ['coffee', 'brewing', 'pour over', 'espresso'],
+  source: 'batch', isMock: false,
+})
 check('echte preset verschijnt wel', listPresets().some(p => p.slug === echt.slug), echt.slug)
+check('geen kruisbesmetting tussen presets',
+  lexicalScore(ctx('dog collars'), echt) < 0.55,
+  `"dog collars" tegen de koffiepreset: ${Math.round(lexicalScore(ctx('dog collars'), echt) * 100)}%`)
 
 // ═══ 3. MATCHING (Taak B) ═══
 say('')
