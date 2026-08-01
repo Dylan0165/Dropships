@@ -131,6 +131,135 @@ export function costumeDisqualification(
   return { rejected: true, reason, signals }
 }
 
+// ── Cadeau-sfeer: een listing die alleen als cadeau verkocht wordt ────────────
+//
+// Sommige leveranciers verkopen een product niet op wát het is maar op het
+// moment waarop je het geeft: "Christmas Gift For Her, Birthday Gift Idea,
+// Anniversary Present". Zulke listings zijn zelden het artikel dat de bezoeker
+// van een niche-winkel zoekt, en ze slepen een sfeer mee (feestdagen, romantiek)
+// die niet bij de winkel past.
+//
+// Bewust STRENGER afgebakend dan de kostuumregel: een "beard gift set" is een
+// prima product in een baardwinkel. Er moet dus én cadeau-taal én een
+// ONTVANGER/GELEGENHEID in staan, en de niche mag zelf niet over cadeaus gaan.
+
+const GIFT_WORDS = ['gift', 'present', 'cadeau', 'giftbox', 'gift box', 'gift idea', 'souvenir']
+
+const GIFT_OCCASION_WORDS = [
+  'christmas', 'xmas', 'valentine', 'birthday', 'anniversary', 'mothers day',
+  "mother's day", 'fathers day', "father's day", 'graduation', 'wedding favor',
+  'wedding favour', 'easter', 'thanksgiving', 'new year gift', 'holiday gift',
+]
+
+const GIFT_RECIPIENT_WORDS = [
+  'for her', 'for him', 'for mom', 'for mum', 'for dad', 'for grandma', 'for grandpa',
+  'for girlfriend', 'for boyfriend', 'for wife', 'for husband', 'for teacher',
+  'for best friend', 'for bff', 'for couples',
+]
+
+const GIFT_NICHE_WORDS = [...GIFT_WORDS, 'cadeaus', 'gifting', 'geschenk', 'souvenirs', 'hamper']
+
+export function nicheIsAboutGifts(niche: string, extra = ''): boolean {
+  const t = `${niche} ${extra}`.toLowerCase()
+  return GIFT_NICHE_WORDS.some(w => t.includes(w))
+}
+
+/**
+ * Verkocht als cadeau-moment in plaats van als product. Zie de afweging
+ * hierboven: cadeau-taal alléén is niet genoeg.
+ */
+export function giftFramingDisqualification(
+  niche: string,
+  product: { title?: string; description?: string; category?: string },
+  opts: { personaText?: string } = {},
+): Disqualification {
+  if (nicheIsAboutGifts(niche, opts.personaText ?? '')) {
+    return { rejected: false, reason: '', signals: [] }
+  }
+  const hay = `${product.title ?? ''} ${product.description ?? ''} ${product.category ?? ''}`.toLowerCase()
+  const gift = GIFT_WORDS.filter(w => hay.includes(w))
+  if (gift.length === 0) return { rejected: false, reason: '', signals: [] }
+
+  const occasion = GIFT_OCCASION_WORDS.filter(w => hay.includes(w))
+  const recipient = GIFT_RECIPIENT_WORDS.filter(w => hay.includes(w))
+  if (occasion.length === 0 && recipient.length === 0) {
+    // Alleen "gift set" — dat kan een echt assortimentsproduct zijn.
+    return { rejected: false, reason: '', signals: gift }
+  }
+  const signals = [...gift.slice(0, 2), ...occasion.slice(0, 2), ...recipient.slice(0, 2)]
+  return {
+    rejected: true,
+    signals,
+    reason: `Verkocht als cadeau-moment in plaats van als product (${signals.map(w => `"${w}"`).join(', ')}) — die sfeer hoort niet bij deze niche.`,
+  }
+}
+
+// ── Machinevertaling / marktplaats-ruis in de titel ───────────────────────────
+//
+// CJ-titels komen vaak rechtstreeks uit een Chinese marktplaats door een
+// vertaalmachine. Herkenbaar aan groothandelsjargon ("Cross-border", "Foreign
+// Trade", "Explosion Models"), aan CJK-tekens die zijn blijven staan, en aan
+// eindeloze komma-lijsten met herhaalde woorden. Zulke titels komen letterlijk
+// zo op de winkel te staan; dat is meteen te zien.
+
+const MT_JARGON = [
+  'cross-border', 'cross border', 'foreign trade', 'explosion model', 'explosive model',
+  'hot style', 'hot sale explosion', 'amazon hot', 'aliexpress hot', 'ebay hot',
+  'source factory', 'factory direct supply', 'spot goods', 'in stock spot',
+  'new arrival hot', 'wish hot', 'tiktok hot sale', 'one piece dropshipping',
+  'oem odm', 'moq', 'wholesale price hot',
+]
+
+/** Titels waar de vertaalmachine doorheen schemert. */
+export function machineTranslationDisqualification(
+  product: { title?: string; description?: string },
+): Disqualification {
+  const title = product.title ?? ''
+  const lower = title.toLowerCase()
+  const signals: string[] = []
+
+  const jargon = MT_JARGON.filter(w => lower.includes(w))
+  signals.push(...jargon)
+
+  // Niet-Latijns schrift dat is blijven staan (CJK, Cyrillisch, Arabisch)
+  if (/[　-鿿가-힯Ѐ-ӿ؀-ۿ]/.test(title)) signals.push('niet-Latijns schrift')
+
+  // Komma-stapeling: >6 fragmenten is geen productnaam meer maar een zoekwoordenlijst
+  const parts = title.split(/[,;|]/).map(s => s.trim()).filter(Boolean)
+  if (parts.length > 6) signals.push(`${parts.length} komma-fragmenten`)
+
+  // Hetzelfde betekenisdragende woord 3+ keer
+  const words = lower.replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter(w => w.length > 3)
+  const counts = new Map<string, number>()
+  for (const w of words) counts.set(w, (counts.get(w) ?? 0) + 1)
+  const repeated = [...counts.entries()].filter(([, n]) => n >= 3).map(([w]) => w)
+  if (repeated.length > 0) signals.push(`herhaald woord "${repeated[0]}"`)
+
+  // Eén signaal kan toeval zijn (een lange, eerlijke titel met 7 komma's). Twee
+  // signalen samen is een patroon.
+  const rejected = signals.length >= 2 || jargon.length > 0
+  return {
+    rejected,
+    signals,
+    reason: rejected
+      ? `Titel komt onbewerkt uit een marktplaats-vertaling (${signals.slice(0, 3).join(', ')}) — zo op de winkel zetten is meteen zichtbaar.`
+      : '',
+  }
+}
+
+/** Alle deterministische poorten achter elkaar; eerste treffer wint. */
+export function hardDisqualification(
+  niche: string,
+  product: { title?: string; description?: string; category?: string },
+  opts: { personaText?: string } = {},
+): Disqualification {
+  const costume = costumeDisqualification(niche, product, opts)
+  if (costume.rejected) return costume
+  const gift = giftFramingDisqualification(niche, product, opts)
+  if (gift.rejected) return gift
+  return machineTranslationDisqualification(product)
+}
+
 /**
  * Beoordeelt alle kandidaten en geeft alleen de passende terug.
  *
