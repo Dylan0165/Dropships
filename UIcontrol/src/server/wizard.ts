@@ -342,6 +342,57 @@ function toShortlisted(
   }
 }
 
+/** Een opgeslagen preset terugvertalen naar het shortlist-formaat van de wizard. */
+function shortlistFromPreset(match: PresetMatch, supplierIsMock: boolean): ShortlistResult {
+  const p = match.preset
+  const shortlist: ShortlistedProduct[] = p.products.map(pp => ({
+    supplier: pp.supplier, productId: pp.productId, variantId: pp.variantId,
+    title: pp.title, image: pp.image, costPrice: pp.costPrice, currency: pp.currency,
+    warehouse: pp.warehouse, shippingDays: pp.shippingDays, rating: pp.rating,
+    inventory: pp.inventory, url: pp.url,
+    reason: pp.reason, suggestedPriceEur: pp.suggestedPriceEur,
+    marginEur: pp.marginEur, marginPct: pp.marginPct,
+    relevanceScore: pp.relevanceScore, relevanceReason: pp.relevanceReason,
+    productType: pp.productType, productTier: pp.productTier, typeRole: pp.typeRole,
+  }))
+  return {
+    candidates: shortlist.length,
+    shortlist,
+    supplierIsMock,
+    searchTermsTried: p.types.map(t => t.searchTerm),
+    searchTermUsed: null,
+    source: 'preset',
+    relevance: { evaluated: shortlist.length, rejected: 0, verdicts: [] },
+    assortment: {
+      types: p.types,
+      attempts: [],
+      distinctTypes: p.distinctTypes,
+      searchCalls: 0,
+    },
+    preset: {
+      slug: p.slug, niche: p.niche, rationale: p.rationale, problem: p.problem,
+      matchedHow: match.how, matchReason: match.reason,
+      createdAt: p.createdAt, source: p.source,
+    },
+  }
+}
+
+/**
+ * Onderbouwing bij een preset die uit een live wizard-run komt. Bewust
+ * deterministisch samengesteld uit wat er écht gemeten is — geen LLM-tekst die
+ * mooier klinkt dan de data rechtvaardigt.
+ */
+function rationaleFromRun(niche: string, persona: WizardPersona, shortlist: ShortlistedProduct[]): string {
+  const types = [...new Set(shortlist.map(s => s.productType).filter(Boolean))]
+  const prices = shortlist.map(s => s.suggestedPriceEur).sort((a, b) => a - b)
+  const eu = shortlist.filter(s => s.shippingDays && s.shippingDays.max <= 8).length
+  return `Samengesteld tijdens een live wizard-run voor "${niche}". ${shortlist.length} producten over ` +
+    `${types.length} producttypes (${types.slice(0, 6).join(', ')}${types.length > 6 ? '…' : ''}), ` +
+    `prijzen van EUR ${prices[0]?.toFixed(2)} tot EUR ${prices[prices.length - 1]?.toFixed(2)}, ` +
+    `${eu} van de ${shortlist.length} met snelle EU-levering. Doelgroep: ${persona.label}` +
+    (persona.problem ? ` — ${persona.problem}` : '') + '.'
+}
+
 /**
  * Stelt een COMPLEET assortiment samen: 10-15 producttypes bedenken, ze allemaal
  * doorzoeken en daar 7-15 verschillende producten uit kiezen.
