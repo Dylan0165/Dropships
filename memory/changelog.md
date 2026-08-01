@@ -2,6 +2,34 @@
 
 Nieuwste bovenaan. Zie `ai-must-read/release-and-changelog.md` voor het formaat.
 
+## 2026-08-01 — Presetbibliotheek: assortimenten offline voorbereiden
+**Tag:** volgt hieronder
+**Status: lokaal aantoonbaar, NIET op echte CJ-/DeepSeek-data bevestigd.**
+
+- Elke wizard-run stelde live een assortiment samen: onder tijdsdruk, tegen de
+  rate limit aan, met LLM-calls in het kritieke pad. Nu doet een offline
+  batch-proces dat werk vooraf en bewaart het als herbruikbare **preset**.
+- `research/batch-research.ts` loopt door de CJ-categorieën: viability-check →
+  nichebeschrijving → 10-15 producttypes → assortiment **zonder vroegtijdig
+  stoppen** → kwaliteitspoorten → preset óf een skip mét reden. Rustig
+  (2500ms tussen calls, harde call-begroting), hervatbaar (behandelde
+  categorieën worden overgeslagen) en eerlijk (onder 7 producten geen preset).
+- `research/preset-match.ts` zet de bibliotheek vóór de live-flow. Match → nul
+  CJ-calls. Geen match → live zoeken, en dát resultaat wordt zelf een preset.
+- Twee reparaties tijdens het bouwen: de semantische laag kwam nooit aan bod bij
+  **Nederlandse** invoer (alles scoort dan lexicaal nul, en de kandidatenlijst
+  filterde daarop), en overlap met alleen de producttypes kon al een
+  100%-match opleveren — een koffiepreset matchte zo op "dog collars".
+- `giftFramingDisqualification` en `machineTranslationDisqualification`
+  toegevoegd: die werden als bestaand genoemd maar stonden nog niet in de code.
+  Samen met de kostuum-poort nu in één `hardDisqualification()`.
+- Presets uit een mock-run dragen `is_mock` en worden **nooit** aan een echte
+  wizard-run geserveerd.
+- **Geverifieerd = lokaal, nagebootst**: `verify:presets` 30/30, `verify:batch`
+  13/13 (CJ in mock-modus, DeepSeek onderschept). Geen enkele bewering over
+  echte doorlooptijd, call-aantallen of rate limits. Het VPS-stappenplan staat
+  in `logs/preset-bibliotheek-2026-08-01.md`.
+
 ## 2026-07-31 — Verkleedkleding voor mensen in een hondenwinkel
 **Tag:** volgt hieronder
 
