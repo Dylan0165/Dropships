@@ -458,6 +458,39 @@ export async function buildShortlist(
   console.log(`[wizard] assortiment "${niche}": ${shortlist.length} producten, ${distinctTypes} distincte types, ` +
     `${result.searchCalls} zoekopdrachten → ${listCalls} CJ /product/list-calls`)
 
+  // ── De bibliotheek groeit mee ───────────────────────────────────────────────
+  // Dit werk is duur betaald in calls en wachttijd; het zou zonde zijn om het
+  // weg te gooien. Alleen bewaren als het de kwaliteitsdrempel haalt — anders
+  // zou een magere run een slechte preset worden die de volgende gebruiker krijgt.
+  if (shortlist.length >= (options.min ?? ASSORTMENT_MIN)) {
+    try {
+      savePreset({
+        niche,
+        persona: persona as unknown as Record<string, unknown>,
+        products: shortlist.map(s => ({
+          productId: s.productId, variantId: s.variantId, supplier: s.supplier,
+          title: s.title, image: s.image, costPrice: s.costPrice, currency: s.currency,
+          warehouse: s.warehouse, shippingDays: s.shippingDays, rating: s.rating,
+          inventory: s.inventory, url: s.url,
+          productType: s.productType ?? 'onbekend', productTier: s.productTier ?? 'mid',
+          typeRole: s.typeRole ?? '', relevanceScore: s.relevanceScore,
+          relevanceReason: s.relevanceReason, suggestedPriceEur: s.suggestedPriceEur,
+          marginEur: s.marginEur, marginPct: s.marginPct, reason: s.reason,
+        })),
+        types: result.types.map(t => ({ id: t.id, name: t.name, searchTerm: t.searchTerm, tier: t.tier, role: t.role })),
+        rationale: rationaleFromRun(niche, persona, shortlist),
+        problem: persona.problem,
+        keywords: [...new Set([...niche.toLowerCase().split(/\s+/), ...(persona.interests ?? []), ...result.types.map(t => t.name)])],
+        source: 'wizard-fallback',
+        isMock: adapter.isMock,
+      })
+      console.log(`[wizard] resultaat bewaard als preset voor hergebruik (${shortlist.length} producten)`)
+    } catch (err) {
+      // Een mislukte preset-opslag mag de wizard nooit breken.
+      console.warn('[wizard] preset opslaan mislukt:', err instanceof Error ? err.message : err)
+    }
+  }
+
   return {
     candidates: result.verdicts.length,
     shortlist,
