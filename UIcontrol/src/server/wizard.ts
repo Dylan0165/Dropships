@@ -143,7 +143,21 @@ export interface ShortlistResult {
   supplierIsMock: boolean
   searchTermsTried: string[]
   searchTermUsed: string | null
-  source: 'mcp' | 'rest' | 'mock'
+  source: 'mcp' | 'rest' | 'mock' | 'preset'
+  /**
+   * Gevuld als dit assortiment uit de presetbibliotheek komt in plaats van uit
+   * een live zoekronde. Dan zijn er nul CJ-calls gedaan.
+   */
+  preset?: {
+    slug: string
+    niche: string
+    rationale: string
+    problem?: string
+    matchedHow: 'lexicaal' | 'semantisch'
+    matchReason: string
+    createdAt: string
+    source: 'batch' | 'wizard-fallback'
+  }
   /**
    * Het assortiment: welke producttypes zijn bedacht, welke zijn doorzocht en
    * wat leverde elk op. Zonder dit is niet na te gaan of een korte lijst komt
