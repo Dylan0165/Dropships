@@ -117,7 +117,13 @@ export async function findPresetForNiche(
     }
   }
 
-  const candidates = ranked.filter(r => r.score >= CANDIDATE_MATCH_SCORE).slice(0, 10)
+  // Kandidaten voor de semantische laag. Let op de tweede regel: bij Nederlandse
+  // invoer ("hondenriemen") scoort ÁLLES lexicaal nul, en juist dan is de
+  // semantische laag nodig. Zonder deze terugval zou laag 2 precies in het geval
+  // waarvoor hij bestaat nooit aan bod komen. Het kost één kleine call met
+  // alleen labels erin.
+  const scored = ranked.filter(r => r.score >= CANDIDATE_MATCH_SCORE).slice(0, 10)
+  const candidates = scored.length > 0 ? scored : ranked.slice(0, 10)
   if (candidates.length === 0 || !opts.judge) {
     log(`[preset] geen match (beste: ${best ? `${best.preset.niche} ${Math.round(best.score * 100)}%` : 'geen'}) — live zoeken`)
     return null

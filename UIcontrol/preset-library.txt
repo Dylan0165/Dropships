@@ -13,20 +13,21 @@
 ═══ 2. MOCK-PRESETS BLIJVEN UIT DE ECHTE FLOW ═══
   ✓ standaard-lijst laat mock weg — 0 presets zonder includeMock
   ✓ expliciet opvragen kan wel — 1 met includeMock
-  ✓ echte preset verschijnt wel — coffee-brewing-gear
+  ✓ echte preset verschijnt wel — home-coffee-brewing-gear
+  ✓ geen kruisbesmetting tussen presets — "dog collars" tegen de koffiepreset: 0%
 
 ═══ 3. PRESET-MATCHING ═══
   lexicale scores tegen "dog collars and leashes":
     100%  "dog collars"
     100%  "dog collars and leashes"
-    100%  "dog walking gear"
+     73%  "dog walking gear"
       0%  "cat toys"
       0%  "koffiezetapparaten"
-    [preset] lexicale match: "coffee brewing gear" (100%)
-  ✗ FAIL directe lexicale match — coffee brewing gear (100%)
+    [preset] lexicale match: "dog collars and leashes" (100%)
+  ✓ directe lexicale match — dog collars and leashes (100%)
   ✓ geen match op een vreemde niche — valt terug op live zoeken
   ✓ Nederlands scoort lexicaal laag — 0% — daarom is er een semantische laag
-    [preset] geen match (beste: coffee brewing gear 0%) — live zoeken
+    [preset] geen match (beste: home coffee brewing gear 0%) — live zoeken
   ✗ FAIL semantische laag vangt Nederlands op — geen match
   ✓ LLM stuk → geen preset, dus live zoeken — vangnet blijft de live-flow
 
@@ -52,9 +53,9 @@
 
 ═══ 8. BIBLIOTHEEK: 2 presets (1 echt, 1 mock), 14 producten, 1 skips ═══
   ✓ statistiek klopt — {"total":2,"real":1,"mock":1,"batch":2,"fallback":0,"products":14,"skips":1,"avgProducts":7}
-  ✓ verwijderen werkt — coffee-brewing-gear
+  ✓ verwijderen werkt — home-coffee-brewing-gear
 
-═══ RESULTAAT: 27 geslaagd, 2 gefaald ═══
+═══ RESULTAAT: 29 geslaagd, 1 gefaald ═══
 
 NOGMAALS: alles hierboven draaide op nagebootste CJ- en LLM-antwoorden.
 Geen enkele bewering over echte catalogusdata, doorlooptijd of rate limits.
