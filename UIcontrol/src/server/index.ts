@@ -32,6 +32,7 @@ import { isMcpConfigured, listDiscoveryTools, CJ_MCP_DISCOVERY_TOOLS } from './s
 import { listOrders, fulfillOrder, getOrderTracking } from './fulfillment.js'
 import { generateQuestions, generateDirections, buildShortlist, proposeStructure } from './wizard.js'
 import { costumeDisqualification } from './suppliers/product-relevance.js'
+import { listPresets, getPreset, deletePreset, listSkips, presetStats } from './research/preset-store.js'
 import { getNicheSuggestions } from './niche-discovery.js'
 import { getPublicBaseUrl, setPublicBaseUrl, getMollieWebhookUrl, getStripeWebhookUrl } from './public-url.js'
 import type { WizardPersona } from './wizard.js'
