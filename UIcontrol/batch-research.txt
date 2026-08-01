@@ -1,0 +1,500 @@
+╔══════════════════════════════════════════════════════════════════════╗
+║  LOKAAL NAGEBOOTST — CJ in mock-modus, DeepSeek onderschept.         ║
+║  Bewijst dat de keten werkt en niet crasht. Niets over echte data,   ║
+║  doorlooptijd of rate limits — dat kan alleen op de VPS.             ║
+╚══════════════════════════════════════════════════════════════════════╝
+
+  ⚠ CJ draait in MOCK-modus. De presets uit deze run worden gemarkeerd als mock
+    en worden NOOIT aan een echte wizard-run geserveerd. Voor bruikbare presets
+    moet dit op de VPS draaien met een geldige CJ_API_KEY.
+  catalogus scannen (max 5 categorieën)…
+    categorie-boom: 5 hoofdcategorieën, 5 subcategorieën geselecteerd voor de scan
+    "Home & Garden › Home Organization": 1460 producten wereldwijd, waarvan 142 in DE
+    "Sports & Outdoors › Fitness Equipment": 1488 producten wereldwijd, waarvan 149 in DE
+    "Pet Supplies › Dog Accessories": 1516 producten wereldwijd, waarvan 156 in DE
+    "Consumer Electronics › Phone Accessories": 1544 producten wereldwijd, waarvan 163 in DE
+    "Beauty & Health › Skincare Tools": 12 producten wereldwijd, waarvan 1 in DE
+  5 categorieën gemeten
+  ── Home & Garden › Home Organization (1460 producten, mostly-cn)
+     niche: "home organization"
+     [types] 10 producttypes voor "home organization" (entry 3 / mid 4 / premium 3)
+     [types]   · home starter — zoekterm "home starter" [entry]
+     [types]   · home pro — zoekterm "home pro" [entry]
+     [types]   · home compact — zoekterm "home compact" [entry]
+     [types]   · home travel — zoekterm "home travel" [mid]
+     [types]   · home refill — zoekterm "home refill" [mid]
+     [types]   · home holder — zoekterm "home holder" [mid]
+     [types]   · home cleaner — zoekterm "home cleaner" [mid]
+     [types]   · home stand — zoekterm "home stand" [premium]
+     [types]   · home cover — zoekterm "home cover" [premium]
+     [types]   · home kit — zoekterm "home kit" [premium]
+     [assortiment] ronde 1: 10 producttype(s) doorzoeken
+     [assortiment]   · home starter [entry] — "home starter" → 8 kandidaat(en)
+     [assortiment]   · home pro [entry] — "home pro" → 8 kandidaat(en)
+     [assortiment]   · home compact [entry] — "home compact" → 8 kandidaat(en)
+     [assortiment]   · home travel [mid] — "home travel" → 8 kandidaat(en)
+     [assortiment]   · home refill [mid] — "home refill" → 8 kandidaat(en)
+     [assortiment]   · home holder [mid] — "home holder" → 8 kandidaat(en)
+     [assortiment]   · home cleaner [mid] — "home cleaner" → 8 kandidaat(en)
+     [assortiment]   · home stand [premium] — "home stand" → 8 kandidaat(en)
+     [assortiment]   · home cover [premium] — "home cover" → 8 kandidaat(en)
+     [assortiment]   · home kit [premium] — "home kit" → 8 kandidaat(en)
+     [relevance] "home organization": 72/72 kandidaten gehouden (drempel 6)
+     [relevance]   ✓  9/10  home starter — variant 1 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  home starter — variant 2 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  home starter — variant 3 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  home starter — variant 4 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  home starter — variant 5 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  home starter — variant 6 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  home starter — variant 7 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  home starter — variant 8 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  home pro — variant 1 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  home pro — variant 2 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  home pro — variant 3 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  home pro — variant 7 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  home pro — variant 8 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  home pro — variant 6 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  home pro — variant 4 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  home pro — variant 5 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  home compact — variant 1 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  home compact — variant 2 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  home compact — variant 3 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  home compact — variant 4 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  home compact — variant 5 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  home compact — variant 6 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  home compact — variant 7 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  home compact — variant 8 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  home travel — variant 1 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  home travel — variant 2 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  home travel — variant 3 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  home travel — variant 4 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  home travel — variant 5 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  home travel — variant 6 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  home travel — variant 7 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  home travel — variant 8 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  home refill — variant 1 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  home refill — variant 2 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  home refill — variant 6 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  home refill — variant 7 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  home refill — variant 8 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  home refill — variant 5 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  home refill — variant 3 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  home refill — variant 4 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  home cleaner — variant 4 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  home cleaner — variant 5 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  home cleaner — variant 6 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  home cleaner — variant 7 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  home cleaner — variant 8 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  home cleaner — variant 3 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  home cleaner — variant 1 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  home cleaner — variant 2 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  home stand — variant 1 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  home stand — variant 2 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  home stand — variant 6 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  home stand — variant 7 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  home stand — variant 8 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  home stand — variant 5 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  home stand — variant 3 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  home stand — variant 4 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  home cover — variant 1 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  home cover — variant 2 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  home cover — variant 3 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  home cover — variant 4 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  home cover — variant 5 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  home cover — variant 6 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  home cover — variant 7 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  home cover — variant 8 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  home kit — variant 1 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  home kit — variant 2 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  home kit — variant 6 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  home kit — variant 7 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  home kit — variant 8 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  home kit — variant 5 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  home kit — variant 3 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  home kit — variant 4 (mock) — Kernproduct voor deze niche.
+     [assortiment] resultaat: 10 producten over 10 distincte types, 10 zoekopdrachten, 10 types geprobeerd
+     [assortiment]   ✓ home starter            9/10  home starter — variant 1 (mock)
+     [assortiment]   ✓ home pro                9/10  home pro — variant 1 (mock)
+     [assortiment]   ✓ home compact            9/10  home compact — variant 1 (mock)
+     [assortiment]   ✓ home travel             9/10  home travel — variant 1 (mock)
+     [assortiment]   ✓ home refill             9/10  home refill — variant 1 (mock)
+     [assortiment]   ✓ home holder             9/10  home holder — variant 2 (mock)
+     [assortiment]   ✓ home cleaner            9/10  home cleaner — variant 4 (mock)
+     [assortiment]   ✓ home stand              9/10  home stand — variant 1 (mock)
+     [assortiment]   ✓ home cover              9/10  home cover — variant 1 (mock)
+     [assortiment]   ✓ home kit                9/10  home kit — variant 1 (mock)
+     → PRESET "home-organization": 10 producten, 10 types, gem. score 9
+  ── Sports & Outdoors › Fitness Equipment (1488 producten, mostly-cn)
+     niche: "fitness equipment"
+     [types] 10 producttypes voor "fitness equipment" (entry 3 / mid 4 / premium 3)
+     [types]   · fitness starter — zoekterm "fitness starter" [entry]
+     [types]   · fitness pro — zoekterm "fitness pro" [entry]
+     [types]   · fitness compact — zoekterm "fitness compact" [entry]
+     [types]   · fitness travel — zoekterm "fitness travel" [mid]
+     [types]   · fitness refill — zoekterm "fitness refill" [mid]
+     [types]   · fitness holder — zoekterm "fitness holder" [mid]
+     [types]   · fitness cleaner — zoekterm "fitness cleaner" [mid]
+     [types]   · fitness stand — zoekterm "fitness stand" [premium]
+     [types]   · fitness cover — zoekterm "fitness cover" [premium]
+     [types]   · fitness kit — zoekterm "fitness kit" [premium]
+     [assortiment] ronde 1: 10 producttype(s) doorzoeken
+     [assortiment]   · fitness starter [entry] — "fitness starter" → 8 kandidaat(en)
+     [assortiment]   · fitness pro [entry] — "fitness pro" → 8 kandidaat(en)
+     [assortiment]   · fitness compact [entry] — "fitness compact" → 8 kandidaat(en)
+     [assortiment]   · fitness travel [mid] — "fitness travel" → 8 kandidaat(en)
+     [assortiment]   · fitness refill [mid] — "fitness refill" → 8 kandidaat(en)
+     [assortiment]   · fitness holder [mid] — "fitness holder" → 8 kandidaat(en)
+     [assortiment]   · fitness cleaner [mid] — "fitness cleaner" → 8 kandidaat(en)
+     [assortiment]   · fitness stand [premium] — "fitness stand" → 8 kandidaat(en)
+     [assortiment]   · fitness cover [premium] — "fitness cover" → 8 kandidaat(en)
+     [assortiment]   · fitness kit [premium] — "fitness kit" → 8 kandidaat(en)
+     [relevance] "fitness equipment": 72/72 kandidaten gehouden (drempel 6)
+     [relevance]   ✓  9/10  fitness starter — variant 2 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  fitness starter — variant 3 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  fitness starter — variant 4 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  fitness starter — variant 5 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  fitness starter — variant 6 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  fitness starter — variant 7 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  fitness starter — variant 8 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  fitness starter — variant 1 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  fitness pro — variant 1 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  fitness pro — variant 2 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  fitness pro — variant 3 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  fitness pro — variant 4 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  fitness pro — variant 8 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  fitness pro — variant 7 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  fitness pro — variant 5 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  fitness pro — variant 6 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  fitness compact — variant 2 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  fitness compact — variant 3 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  fitness compact — variant 4 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  fitness compact — variant 5 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  fitness compact — variant 6 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  fitness compact — variant 7 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  fitness compact — variant 8 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  fitness compact — variant 1 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  fitness travel — variant 1 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  fitness travel — variant 2 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  fitness travel — variant 3 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  fitness travel — variant 4 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  fitness travel — variant 5 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  fitness travel — variant 6 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  fitness travel — variant 7 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  fitness travel — variant 8 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  fitness refill — variant 1 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  fitness refill — variant 2 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  fitness refill — variant 3 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  fitness refill — variant 7 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  fitness refill — variant 8 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  fitness refill — variant 6 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  fitness refill — variant 4 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  fitness refill — variant 5 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  fitness cleaner — variant 1 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  fitness cleaner — variant 5 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  fitness cleaner — variant 6 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  fitness cleaner — variant 7 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  fitness cleaner — variant 8 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  fitness cleaner — variant 4 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  fitness cleaner — variant 2 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  fitness cleaner — variant 3 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  fitness stand — variant 1 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  fitness stand — variant 2 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  fitness stand — variant 3 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  fitness stand — variant 7 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  fitness stand — variant 8 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  fitness stand — variant 6 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  fitness stand — variant 4 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  fitness stand — variant 5 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  fitness cover — variant 2 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  fitness cover — variant 3 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  fitness cover — variant 4 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  fitness cover — variant 5 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  fitness cover — variant 6 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  fitness cover — variant 7 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  fitness cover — variant 8 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  fitness cover — variant 1 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  fitness kit — variant 1 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  fitness kit — variant 2 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  fitness kit — variant 3 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  fitness kit — variant 7 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  fitness kit — variant 8 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  fitness kit — variant 6 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  fitness kit — variant 4 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  fitness kit — variant 5 (mock) — Kernproduct voor deze niche.
+     [assortiment] resultaat: 10 producten over 10 distincte types, 10 zoekopdrachten, 10 types geprobeerd
+     [assortiment]   ✓ fitness starter         9/10  fitness starter — variant 2 (mock)
+     [assortiment]   ✓ fitness pro             9/10  fitness pro — variant 1 (mock)
+     [assortiment]   ✓ fitness compact         9/10  fitness compact — variant 2 (mock)
+     [assortiment]   ✓ fitness travel          9/10  fitness travel — variant 1 (mock)
+     [assortiment]   ✓ fitness refill          9/10  fitness refill — variant 1 (mock)
+     [assortiment]   ✓ fitness holder          9/10  fitness holder — variant 2 (mock)
+     [assortiment]   ✓ fitness cleaner         9/10  fitness cleaner — variant 1 (mock)
+     [assortiment]   ✓ fitness stand           9/10  fitness stand — variant 1 (mock)
+     [assortiment]   ✓ fitness cover           9/10  fitness cover — variant 2 (mock)
+     [assortiment]   ✓ fitness kit             9/10  fitness kit — variant 1 (mock)
+     → PRESET "fitness-equipment": 10 producten, 10 types, gem. score 9
+  ── Pet Supplies › Dog Accessories (1516 producten, mostly-cn)
+     niche: "dog accessories"
+     [types] 10 producttypes voor "dog accessories" (entry 3 / mid 4 / premium 3)
+     [types]   · dog starter — zoekterm "dog starter" [entry]
+     [types]   · dog pro — zoekterm "dog pro" [entry]
+     [types]   · dog compact — zoekterm "dog compact" [entry]
+     [types]   · dog travel — zoekterm "dog travel" [mid]
+     [types]   · dog refill — zoekterm "dog refill" [mid]
+     [types]   · dog holder — zoekterm "dog holder" [mid]
+     [types]   · dog cleaner — zoekterm "dog cleaner" [mid]
+     [types]   · dog stand — zoekterm "dog stand" [premium]
+     [types]   · dog cover — zoekterm "dog cover" [premium]
+     [types]   · dog kit — zoekterm "dog kit" [premium]
+     [assortiment] ronde 1: 10 producttype(s) doorzoeken
+     [assortiment]   · dog starter [entry] — "dog starter" → 8 kandidaat(en)
+     [assortiment]   · dog pro [entry] — "dog pro" → 8 kandidaat(en)
+     [assortiment]   · dog compact [entry] — "dog compact" → 8 kandidaat(en)
+     [assortiment]   · dog travel [mid] — "dog travel" → 8 kandidaat(en)
+     [assortiment]   · dog refill [mid] — "dog refill" → 8 kandidaat(en)
+     [assortiment]   · dog holder [mid] — "dog holder" → 8 kandidaat(en)
+     [assortiment]   · dog cleaner [mid] — "dog cleaner" → 8 kandidaat(en)
+     [assortiment]   · dog stand [premium] — "dog stand" → 8 kandidaat(en)
+     [assortiment]   · dog cover [premium] — "dog cover" → 8 kandidaat(en)
+     [assortiment]   · dog kit [premium] — "dog kit" → 8 kandidaat(en)
+     [relevance] "dog accessories": 72/72 kandidaten gehouden (drempel 6)
+     [relevance]   ✓  9/10  dog starter — variant 2 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  dog starter — variant 3 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  dog starter — variant 4 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  dog starter — variant 5 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  dog starter — variant 6 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  dog starter — variant 7 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  dog starter — variant 8 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  dog starter — variant 1 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  dog pro — variant 1 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  dog pro — variant 2 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  dog pro — variant 3 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  dog pro — variant 4 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  dog pro — variant 8 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  dog pro — variant 7 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  dog pro — variant 5 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  dog pro — variant 6 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  dog compact — variant 2 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  dog compact — variant 3 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  dog compact — variant 4 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  dog compact — variant 5 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  dog compact — variant 6 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  dog compact — variant 7 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  dog compact — variant 8 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  dog compact — variant 1 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  dog travel — variant 1 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  dog travel — variant 2 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  dog travel — variant 3 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  dog travel — variant 4 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  dog travel — variant 5 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  dog travel — variant 6 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  dog travel — variant 7 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  dog travel — variant 8 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  dog refill — variant 1 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  dog refill — variant 2 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  dog refill — variant 3 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  dog refill — variant 7 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  dog refill — variant 8 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  dog refill — variant 6 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  dog refill — variant 4 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  dog refill — variant 5 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  dog cleaner — variant 1 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  dog cleaner — variant 5 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  dog cleaner — variant 6 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  dog cleaner — variant 7 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  dog cleaner — variant 8 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  dog cleaner — variant 4 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  dog cleaner — variant 2 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  dog cleaner — variant 3 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  dog stand — variant 1 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  dog stand — variant 2 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  dog stand — variant 3 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  dog stand — variant 7 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  dog stand — variant 8 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  dog stand — variant 6 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  dog stand — variant 4 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  dog stand — variant 5 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  dog cover — variant 2 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  dog cover — variant 3 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  dog cover — variant 4 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  dog cover — variant 5 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  dog cover — variant 6 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  dog cover — variant 7 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  dog cover — variant 8 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  dog cover — variant 1 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  dog kit — variant 1 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  dog kit — variant 2 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  dog kit — variant 3 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  dog kit — variant 7 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  dog kit — variant 8 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  dog kit — variant 6 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  dog kit — variant 4 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  dog kit — variant 5 (mock) — Kernproduct voor deze niche.
+     [assortiment] resultaat: 10 producten over 10 distincte types, 10 zoekopdrachten, 10 types geprobeerd
+     [assortiment]   ✓ dog starter             9/10  dog starter — variant 2 (mock)
+     [assortiment]   ✓ dog pro                 9/10  dog pro — variant 1 (mock)
+     [assortiment]   ✓ dog compact             9/10  dog compact — variant 2 (mock)
+     [assortiment]   ✓ dog travel              9/10  dog travel — variant 1 (mock)
+     [assortiment]   ✓ dog refill              9/10  dog refill — variant 1 (mock)
+     [assortiment]   ✓ dog holder              9/10  dog holder — variant 2 (mock)
+     [assortiment]   ✓ dog cleaner             9/10  dog cleaner — variant 1 (mock)
+     [assortiment]   ✓ dog stand               9/10  dog stand — variant 1 (mock)
+     [assortiment]   ✓ dog cover               9/10  dog cover — variant 2 (mock)
+     [assortiment]   ✓ dog kit                 9/10  dog kit — variant 1 (mock)
+     → PRESET "dog-accessories": 10 producten, 10 types, gem. score 9
+  ── Consumer Electronics › Phone Accessories (1544 producten, mostly-cn)
+     niche: "phone accessories"
+     [types] 10 producttypes voor "phone accessories" (entry 3 / mid 4 / premium 3)
+     [types]   · phone starter — zoekterm "phone starter" [entry]
+     [types]   · phone pro — zoekterm "phone pro" [entry]
+     [types]   · phone compact — zoekterm "phone compact" [entry]
+     [types]   · phone travel — zoekterm "phone travel" [mid]
+     [types]   · phone refill — zoekterm "phone refill" [mid]
+     [types]   · phone holder — zoekterm "phone holder" [mid]
+     [types]   · phone cleaner — zoekterm "phone cleaner" [mid]
+     [types]   · phone stand — zoekterm "phone stand" [premium]
+     [types]   · phone cover — zoekterm "phone cover" [premium]
+     [types]   · phone kit — zoekterm "phone kit" [premium]
+     [assortiment] ronde 1: 10 producttype(s) doorzoeken
+     [assortiment]   · phone starter [entry] — "phone starter" → 8 kandidaat(en)
+     [assortiment]   · phone pro [entry] — "phone pro" → 8 kandidaat(en)
+     [assortiment]   · phone compact [entry] — "phone compact" → 8 kandidaat(en)
+     [assortiment]   · phone travel [mid] — "phone travel" → 8 kandidaat(en)
+     [assortiment]   · phone refill [mid] — "phone refill" → 8 kandidaat(en)
+     [assortiment]   · phone holder [mid] — "phone holder" → 8 kandidaat(en)
+     [assortiment]   · phone cleaner [mid] — "phone cleaner" → 8 kandidaat(en)
+     [assortiment]   · phone stand [premium] — "phone stand" → 8 kandidaat(en)
+     [assortiment]   · phone cover [premium] — "phone cover" → 8 kandidaat(en)
+     [assortiment]   · phone kit [premium] — "phone kit" → 8 kandidaat(en)
+     [relevance] "phone accessories": 72/72 kandidaten gehouden (drempel 6)
+     [relevance]   ✓  9/10  phone starter — variant 1 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  phone starter — variant 2 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  phone starter — variant 3 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  phone starter — variant 4 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  phone starter — variant 8 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  phone starter — variant 7 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  phone starter — variant 5 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  phone starter — variant 6 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  phone pro — variant 4 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  phone pro — variant 5 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  phone pro — variant 6 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  phone pro — variant 7 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  phone pro — variant 8 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  phone pro — variant 3 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  phone pro — variant 1 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  phone pro — variant 2 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  phone compact — variant 1 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  phone compact — variant 2 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  phone compact — variant 3 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  phone compact — variant 4 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  phone compact — variant 8 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  phone compact — variant 7 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  phone compact — variant 5 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  phone compact — variant 6 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  phone travel — variant 1 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  phone travel — variant 2 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  phone travel — variant 3 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  phone travel — variant 7 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  phone travel — variant 8 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  phone travel — variant 6 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  phone travel — variant 4 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  phone travel — variant 5 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  phone refill — variant 3 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  phone refill — variant 4 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  phone refill — variant 5 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  phone refill — variant 6 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  phone refill — variant 7 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  phone refill — variant 8 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  phone refill — variant 2 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  phone refill — variant 1 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  phone cleaner — variant 1 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  phone cleaner — variant 2 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  phone cleaner — variant 3 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  phone cleaner — variant 4 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  phone cleaner — variant 5 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  phone cleaner — variant 6 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  phone cleaner — variant 7 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  phone cleaner — variant 8 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  phone stand — variant 3 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  phone stand — variant 4 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  phone stand — variant 5 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  phone stand — variant 6 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  phone stand — variant 7 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  phone stand — variant 8 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  phone stand — variant 2 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  phone stand — variant 1 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  phone cover — variant 1 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  phone cover — variant 2 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  phone cover — variant 3 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  phone cover — variant 4 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  phone cover — variant 8 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  phone cover — variant 7 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  phone cover — variant 5 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  phone cover — variant 6 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  phone kit — variant 3 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  phone kit — variant 4 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  phone kit — variant 5 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  phone kit — variant 6 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  phone kit — variant 7 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  phone kit — variant 8 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  phone kit — variant 2 (mock) — Kernproduct voor deze niche.
+     [relevance]   ✓  9/10  phone kit — variant 1 (mock) — Kernproduct voor deze niche.
+     [assortiment] resultaat: 10 producten over 10 distincte types, 10 zoekopdrachten, 10 types geprobeerd
+     [assortiment]   ✓ phone starter           9/10  phone starter — variant 1 (mock)
+     [assortiment]   ✓ phone pro               9/10  phone pro — variant 4 (mock)
+     [assortiment]   ✓ phone compact           9/10  phone compact — variant 1 (mock)
+     [assortiment]   ✓ phone travel            9/10  phone travel — variant 1 (mock)
+     [assortiment]   ✓ phone refill            9/10  phone refill — variant 3 (mock)
+     [assortiment]   ✓ phone holder            9/10  phone holder — variant 4 (mock)
+     [assortiment]   ✓ phone cleaner           9/10  phone cleaner — variant 1 (mock)
+     [assortiment]   ✓ phone stand             9/10  phone stand — variant 3 (mock)
+     [assortiment]   ✓ phone cover             9/10  phone cover — variant 1 (mock)
+     [assortiment]   ✓ phone kit               9/10  phone kit — variant 3 (mock)
+     → PRESET "phone-accessories": 10 producten, 10 types, gem. score 9
+  klaar: 4 presets, 1 overgeslagen, 0 mislukt, 0 CJ-calls in 0s (MOCK)
+
+═══ UITKOMST ═══
+  ✓ run afgerond zonder crash — 5 categorieën behandeld
+  ✓ presets aangemaakt — 4 presets
+  ✓ run is als mock gemarkeerd — isMock = true
+  ✓ alle presets dragen het mock-label — 4 presets, allemaal is_mock = 1
+  ✓ mock-presets zijn onzichtbaar voor de echte flow — listPresets() zonder includeMock geeft er nul
+
+  aangemaakte presets:
+    phone-accessories
+      10 producten · 10 types · gem. score 9
+      waarom: Deze producten horen bij elkaar omdat ze hetzelfde moment bedienen: iemand die met phone accessories…
+    dog-accessories
+      10 producten · 10 types · gem. score 9
+      waarom: Deze producten horen bij elkaar omdat ze hetzelfde moment bedienen: iemand die met dog accessories b…
+    fitness-equipment
+      10 producten · 10 types · gem. score 9
+      waarom: Deze producten horen bij elkaar omdat ze hetzelfde moment bedienen: iemand die met fitness equipment…
+    home-organization
+      10 producten · 10 types · gem. score 9
+      waarom: Deze producten horen bij elkaar omdat ze hetzelfde moment bedienen: iemand die met home organization…
+  ✓ elke preset haalt de drempel van 7 — 10, 10, 10, 10
+  ✓ elke preset heeft een onderbouwing (Taak C) — geen preset zonder "waarom dit assortiment"
+  ✓ elke preset heeft een klantprobleem — problem gevuld
+  ✓ producten hebben een producttype — categorie-indeling blijft werken
+  ✓ producten hebben een prijs en marge — prijszetting uit de gedeelde pricing-module
+
+  overgeslagen categorieën (met reden):
+    Skincare Tools           0 gevonden — te weinig aanbod: 12 producten wereldwijd (drempel 25)
+  ✓ overslaan gebeurt met een reden — 1 skips
+
+═══ DE BIBLIOTHEEK GEBRUIKEN ═══
+  [preset] lexicale match: "phone accessories" (100%)
+  ✓ een aangemaakte preset is terug te vinden — phone accessories via lexicaal
+  ✓ teruggevonden preset bevat de producten — 10 producten, 0 CJ-calls nodig
+
+  bibliotheek: 4 presets (0 echt, 4 mock), 40 producten, gemiddeld 10 per preset, 1 skips
+
+═══ LOKALE MEETWAARDEN (NIET REPRESENTATIEF VOOR PRODUCTIE) ═══
+  duur van deze run          : 0s met tussenruimte 0ms en mock-data
+  CJ /product/list-calls     : 0 (mock — er ging niets over het netwerk)
+  LLM-calls (onderschept)    : 16
+  → Op de VPS staat de tussenruimte standaard op 2500ms en zijn de calls echt.
+    Wat een run daar kost aan tijd en calls is HIER NIET GEMETEN.
+
+═══ RESULTAAT: 13 geslaagd, 0 gefaald ═══
