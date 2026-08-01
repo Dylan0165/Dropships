@@ -92,14 +92,17 @@ function cj(): CJAdapter {
 }
 
 /** Level-2 categorieën round-robin over de level-1 takken → diverse selectie. */
-function selectCategories(tree: Awaited<ReturnType<CJAdapter['getCategoryTree']>>): Array<{ id: string; name: string; parentName: string }> {
+export function selectCategories(
+  tree: Awaited<ReturnType<CJAdapter['getCategoryTree']>>,
+  max = MAX_CATEGORIES,
+): Array<{ id: string; name: string; parentName: string }> {
   const buckets = tree.map(l1 => l1.children.map(l2 => ({ id: l2.id, name: l2.name, parentName: l1.name })))
   const out: Array<{ id: string; name: string; parentName: string }> = []
-  for (let i = 0; out.length < MAX_CATEGORIES; i++) {
+  for (let i = 0; out.length < max; i++) {
     let added = false
     for (const bucket of buckets) {
       if (bucket[i]) { out.push(bucket[i]); added = true }
-      if (out.length >= MAX_CATEGORIES) break
+      if (out.length >= max) break
     }
     if (!added) break
   }
