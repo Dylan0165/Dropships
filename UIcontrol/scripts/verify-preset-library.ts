@@ -129,8 +129,10 @@ check('geen match op een vreemde niche', miss === null, 'valt terug op live zoek
 const nlLexicaal = lexicalScore(ctx('hondenriemen en halsbanden'), saved)
 check('Nederlands scoort lexicaal laag', nlLexicaal < 0.3, `${Math.round(nlLexicaal * 100)}% — daarom is er een semantische laag`)
 const nlJudge = async (_s: string, u: string) => {
-  const idx = u.split('\n').findIndex(l => /dog collars and leashes/.test(l))
-  const nummer = Number(u.split('\n')[idx]?.trim().split('.')[0])
+  // Zoekt de regel "N. dog collars and leashes — …" en geeft dat nummer terug,
+  // net zoals het echte model dat zou doen.
+  const regel = u.split('\n').find(l => /^\s*\d+\.\s+dog collars and leashes/i.test(l))
+  const nummer = regel ? Number(regel.trim().split('.')[0]) : null
   return { match: nummer, reden: 'Hondenriemen en halsbanden is precies dit assortiment.' }
 }
 const nlHit = await findPresetForNiche(ctx('hondenriemen en halsbanden', ['honden']), { allowMock: true, judge: nlJudge, onLog: m => say(`    ${m}`) })
