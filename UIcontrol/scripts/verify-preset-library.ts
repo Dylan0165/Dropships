@@ -115,7 +115,6 @@ check('geen kruisbesmetting tussen presets',
 // ═══ 3. MATCHING (Taak B) ═══
 say('')
 say('═══ 3. PRESET-MATCHING ═══')
-const ctx = (niche: string, interests: string[] = []) => ({ niche, interests, personaLabel: '', problem: '' })
 say(`  lexicale scores tegen "dog collars and leashes":`)
 for (const q of ['dog collars', 'dog collars and leashes', 'dog walking gear', 'cat toys', 'koffiezetapparaten']) {
   say(`    ${String(Math.round(lexicalScore(ctx(q), saved) * 100)).padStart(3)}%  "${q}"`)
