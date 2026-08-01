@@ -16,6 +16,8 @@ import { generateProductTypes, type TypeJudge } from './suppliers/product-types.
 import {
   buildAssortment, ASSORTMENT_MIN, ASSORTMENT_MAX, type AssortmentPick,
 } from './suppliers/assortment.js'
+import { findPresetForNiche, type PresetMatch } from './research/preset-match.js'
+import { savePreset, markPresetUsed } from './research/preset-store.js'
 
 const LLM_BASE = process.env.LLM_BASE_URL ?? 'https://api.deepseek.com/v1'
 const USD_TO_EUR = 0.92
