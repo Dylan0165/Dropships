@@ -23,6 +23,8 @@
     "verify:small": "tsx scripts/verify-small-assortment.ts",
     "verify:quality": "tsx scripts/verify-store-quality.ts",
     "verify:costume": "tsx scripts/verify-costume-filter.ts",
+    "verify:presets": "tsx scripts/verify-preset-library.ts",
+    "research:batch": "tsx scripts/research-batch.ts",
     "audit:stores": "tsx scripts/audit-store-quality.ts"
   },
   "dependencies": {
