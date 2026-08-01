@@ -173,7 +173,29 @@ Runner-label `dropships-vps`.
   collectie-grootte: ≥3 types + ≥8 producten → `products.category-tabs`, ≥9 → catalogus-weergave,
   ≤5 → curated. Verificatie: `verify:assortment` (23), `verify:efficiency` (6), `verify:collection` (15).
 
-## Relevantie-poort — verkleedkleding (sinds 31 juli 2026)
+## Presetbibliotheek — assortimenten offline voorbereiden (sinds 1 augustus 2026)
+- **Probleem:** elke wizard-run stelde live een assortiment samen — tijdsdruk, rate limits,
+  LLM-calls in het kritieke pad.
+- `research/batch-research.ts` (`npm run research:batch -- --categories=N`): loopt offline door
+  de CJ-categorieën, per categorie viability-check (≥25 producten) → nichebeschrijving (LLM,
+  deterministische terugval) → producttypes → `buildAssortment` **zonder `minResults`** (alle
+  warehouse-passes, ook de alt-term) → `hardDisqualification` → preset óf skip mét reden.
+  Rustig: `setBaseSpacing(2500)` + `--max-calls`. Hervatbaar: `alreadyHandled()` (30 dagen).
+  **Onder 7 producten geen preset** — niets opvullen.
+- `research/preset-store.ts`: tabellen `niche_presets` + `preset_skips`. Elke preset heeft een
+  verplichte `rationale` ("waarom dit assortiment") + `problem`. **`is_mock`-presets worden
+  nooit aan een echte run geserveerd** — anders vergiftigt een lokale test productie.
+- `research/preset-match.ts`: laag 1 lexicaal (brede overlap telt max 0,45; de **niche-naam**
+  moet meedoen om boven 0,55 te komen), laag 2 semantisch via één kleine LLM-call op alleen de
+  labels — nodig omdat wizard-invoer Nederlands is en presets Engels (lexicaal = 0%).
+- `buildShortlist` kijkt eerst in de bibliotheek (match → **0 CJ-calls**), anders live-flow; dat
+  resultaat wordt zelf een preset (`source: 'wizard-fallback'`). De bibliotheek groeit dus mee.
+- Inspectie: `npm run research:batch -- --list|--skips`, `GET /api/research/presets(/:slug)`,
+  `/api/research/skips`, `DELETE /api/research/presets/:slug`.
+- Verificatie: `verify:presets` (30), `verify:batch` (13) — **beide met nagebootste CJ/LLM;
+  nog niet op de VPS met echte keys bevestigd.**
+
+## Relevantie-poort — verkleedkleding, cadeau-framing, machinevertaling (sinds 31 juli 2026)
 - **Harde diskwalificatie vóór de LLM**: `costumeDisqualification(niche, product)` in
   `product-relevance.ts`. Signaalwoorden (costume/cosplay/halloween/carnival/party accessory/
   mascot/onesie…) + mens-signalen (for adults|women|men, outfit, skirt, gloves, wig…) wegen
