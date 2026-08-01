@@ -352,10 +352,32 @@ function toShortlisted(
 export async function buildShortlist(
   niche: string,
   persona: WizardPersona,
-  options: { maxResults?: number; min?: number; max?: number; broaden?: boolean } = {},
+  options: { maxResults?: number; min?: number; max?: number; broaden?: boolean; skipPreset?: boolean } = {},
 ): Promise<ShortlistResult> {
   const adapter = getSupplier('cj')
   const judge: TypeJudge = (system, user) => chatJson(system, user, { maxTokens: 3072, temperature: 0.3 })
+
+  // ── Laag 1: de presetbibliotheek ────────────────────────────────────────────
+  // Offline voorbereid werk hoeft niet live opnieuw. Geen CJ-calls, geen
+  // wachttijd, geen rate-limit-risico. Bij "niche verbreden" slaan we hem over:
+  // de gebruiker vroeg expliciet om iets anders dan wat er lag.
+  if (!options.skipPreset && !options.broaden) {
+    const match = await findPresetForNiche(
+      { niche, personaLabel: persona.label, interests: persona.interests, problem: persona.problem },
+      {
+        // Mock-presets nooit serveren aan een echte leverancier — en andersom
+        // heeft een mock-run niets aan echte presets met echte CJ-id's.
+        allowMock: adapter.isMock,
+        judge: (system, user) => chatJson(system, user, { maxTokens: 512, temperature: 0.1 }),
+        onLog: m => console.log(m),
+      },
+    )
+    if (match) {
+      markPresetUsed(match.preset.slug)
+      console.log(`[wizard] preset "${match.preset.slug}" gebruikt (${match.how}) — 0 CJ-calls`)
+      return shortlistFromPreset(match, adapter.isMock)
+    }
+  }
 
   const gen = await generateProductTypes(niche, persona, judge, { broaden: options.broaden })
   // Eén type = de generatie is mislukt → oude gedrag, inclusief MCP.
