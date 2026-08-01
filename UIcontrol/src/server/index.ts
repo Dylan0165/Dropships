@@ -1182,6 +1182,44 @@ app.get('/api/wizard/niches', (req, res) => {
   }
 })
 
+// ═══════ Presetbibliotheek (offline batch-onderzoek) ═══════
+// Inspectie-endpoints; het zware werk draait als los proces
+// (`npm run research:batch`) en niet in de webserver.
+
+app.get('/api/research/presets', (req, res) => {
+  try {
+    const includeMock = req.query.mock === '1'
+    res.json({
+      stats: presetStats(),
+      presets: listPresets({ includeMock, limit: Math.min(parseInt(String(req.query.limit ?? '100'), 10) || 100, 500) })
+        .map(p => ({
+          slug: p.slug, niche: p.niche, productCount: p.productCount, distinctTypes: p.distinctTypes,
+          avgScore: p.avgScore, rationale: p.rationale, problem: p.problem, source: p.source,
+          category: p.categoryName ? `${p.parentName} › ${p.categoryName}` : null,
+          shippingProfile: p.shippingProfile, isMock: p.isMock,
+          createdAt: p.createdAt, usedCount: p.usedCount,
+          types: p.types.map(t => t.name),
+        })),
+    })
+  } catch (err) {
+    res.status(500).json({ error: err instanceof Error ? err.message : 'presets ophalen mislukt' })
+  }
+})
+
+app.get('/api/research/presets/:slug', (req, res) => {
+  const preset = getPreset(req.params.slug)
+  if (!preset) { res.status(404).json({ error: 'preset niet gevonden' }); return }
+  res.json(preset)
+})
+
+app.delete('/api/research/presets/:slug', (req, res) => {
+  res.json({ ok: deletePreset(req.params.slug) })
+})
+
+app.get('/api/research/skips', (_req, res) => {
+  res.json({ skips: listSkips() })
+})
+
 app.post('/api/wizard/questions', async (req, res) => {
   const { idea } = req.body as { idea?: string }
   if (!idea?.trim()) { res.status(400).json({ error: 'idea is verplicht' }); return }
