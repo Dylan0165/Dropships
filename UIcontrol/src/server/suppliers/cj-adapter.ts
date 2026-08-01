@@ -121,10 +121,11 @@ function widenSpacing(): void {
 }
 
 function currentSpacing(): number {
-  if (spacingMs > REQUEST_SPACING_MS && Date.now() - lastRateLimitAt > SPACING_DECAY_AFTER_MS) {
-    spacingMs = Math.max(REQUEST_SPACING_MS, Math.round(spacingMs / 1.6))
+  const floor = baseSpacing()
+  if (spacingMs > floor && Date.now() - lastRateLimitAt > SPACING_DECAY_AFTER_MS) {
+    spacingMs = Math.max(floor, Math.round(spacingMs / 1.6))
   }
-  return spacingMs
+  return Math.max(spacingMs, floor)
 }
 
 /** Zichtbaar in de status-endpoint; ook handig in tests. */
