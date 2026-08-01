@@ -132,6 +132,27 @@ export function currentRequestSpacingMs(): number {
   return spacingMs
 }
 
+/**
+ * Zet de basis-tussenruimte tijdelijk hoger. Bedoeld voor het offline
+ * batch-onderzoek: dat raakt véél meer calls dan één wizard-run, en daar telt
+ * volhoudbaarheid zwaarder dan snelheid. `restoreBaseSpacing()` zet hem terug.
+ *
+ * De adaptieve verhoging na een 429 blijft er los bovenop staan.
+ */
+let overriddenBase: number | null = null
+export function setBaseSpacing(ms: number): void {
+  overriddenBase = Math.max(REQUEST_SPACING_MS, Math.round(ms))
+  spacingMs = Math.max(spacingMs, overriddenBase)
+  console.log(`[cj] tussenruimte tussen calls tijdelijk op ${overriddenBase}ms gezet (batch-modus)`)
+}
+export function restoreBaseSpacing(): void {
+  overriddenBase = null
+  spacingMs = REQUEST_SPACING_MS
+}
+function baseSpacing(): number {
+  return overriddenBase ?? REQUEST_SPACING_MS
+}
+
 // ── Runtime-status (voor UI-feedback tijdens retries) ─────────────────────────
 
 export interface CjRetryStatus {
