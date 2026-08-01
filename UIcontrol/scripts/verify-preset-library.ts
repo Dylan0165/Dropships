@@ -86,6 +86,7 @@ check('als mock gemarkeerd', saved.isMock, 'is_mock = 1')
 // ═══ 2. MOCK-SCHEIDING ═══
 say('')
 say('═══ 2. MOCK-PRESETS BLIJVEN UIT DE ECHTE FLOW ═══')
+const ctx = (niche: string, interests: string[] = []) => ({ niche, interests, personaLabel: '', problem: '' })
 check('standaard-lijst laat mock weg', listPresets().length === 0, `${listPresets().length} presets zonder includeMock`)
 check('expliciet opvragen kan wel', listPresets({ includeMock: true }).length === 1, '1 met includeMock')
 const coffeeProducts = [
