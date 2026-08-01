@@ -55,18 +55,24 @@ function presetTokens(p: NichePreset): string[] {
   ].join(' ')))]
 }
 
-/** 0..1 — aandeel van de zoekwoorden dat de preset dekt, met bonus op de niche-naam. */
+/**
+ * 0..1 — hoe goed dekt deze preset de zoekwoorden?
+ *
+ * Twee delen, en de verhouding is het punt: overlap met de producttypes alléén
+ * mag NOOIT genoeg zijn voor een directe match. Een koffiewinkel die toevallig
+ * "travel bowl" in het assortiment heeft, is geen hondenwinkel. Alleen als de
+ * NICHE-NAAM zelf meedoet komt een preset boven de directe drempel uit; anders
+ * blijft hij hooguit kandidaat en beslist de semantische laag.
+ */
 export function lexicalScore(ctx: MatchContext, preset: NichePreset): number {
   const q = queryTokens(ctx)
   if (q.length === 0) return 0
-  const p = new Set(presetTokens(preset))
-  const overlap = q.filter(t => p.has(t)).length
-  const base = overlap / q.length
-  // Woorden uit de niche-naam zelf wegen dubbel: "dog" in de titel van de preset
-  // zegt meer dan "dog" ergens in een producttype.
-  const nicheSet = new Set(tokens(preset.niche))
-  const strong = q.filter(t => nicheSet.has(t)).length
-  return Math.min(1, base + (strong / q.length) * 0.35)
+  const wide = new Set(presetTokens(preset))
+  const narrow = new Set(tokens(preset.niche))
+  const broad = q.filter(t => wide.has(t)).length / q.length
+  const onName = q.filter(t => narrow.has(t)).length / q.length
+  // Maximaal 0.45 uit brede overlap → onder DIRECT_MATCH_SCORE (0.55).
+  return Math.min(1, broad * 0.45 + onName * 0.55)
 }
 
 export interface PresetMatch {

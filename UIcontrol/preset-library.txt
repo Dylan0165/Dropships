@@ -1,0 +1,60 @@
+╔══════════════════════════════════════════════════════════════════╗
+║  LOKAAL NAGEBOOTST — nog niet op de VPS met echte keys bevestigd ║
+╚══════════════════════════════════════════════════════════════════╝
+
+═══ 1. PRESET OPSLAAN (Taak C — onderbouwing verplicht) ═══
+  ✓ preset opgeslagen — dog-collars-and-leashes
+  ✓ onderbouwing aanwezig — 181 tekens
+  ✓ klantprobleem vastgelegd — Goedkope riemen en halsbanden gaan snel stuk bij dagelijks gebruik.
+  ✓ producttypes geteld — 7 distincte types
+  ✓ gemiddelde score bewaard — 9
+  ✓ als mock gemarkeerd — is_mock = 1
+
+═══ 2. MOCK-PRESETS BLIJVEN UIT DE ECHTE FLOW ═══
+  ✓ standaard-lijst laat mock weg — 0 presets zonder includeMock
+  ✓ expliciet opvragen kan wel — 1 met includeMock
+  ✓ echte preset verschijnt wel — coffee-brewing-gear
+
+═══ 3. PRESET-MATCHING ═══
+  lexicale scores tegen "dog collars and leashes":
+    100%  "dog collars"
+    100%  "dog collars and leashes"
+    100%  "dog walking gear"
+      0%  "cat toys"
+      0%  "koffiezetapparaten"
+    [preset] lexicale match: "coffee brewing gear" (100%)
+  ✗ FAIL directe lexicale match — coffee brewing gear (100%)
+  ✓ geen match op een vreemde niche — valt terug op live zoeken
+  ✓ Nederlands scoort lexicaal laag — 0% — daarom is er een semantische laag
+    [preset] geen match (beste: coffee brewing gear 0%) — live zoeken
+  ✗ FAIL semantische laag vangt Nederlands op — geen match
+  ✓ LLM stuk → geen preset, dus live zoeken — vangnet blijft de live-flow
+
+  ✓ gebruik wordt geteld — 2×
+
+═══ 5. TE MAGERE CATEGORIE → GEEN PRESET ═══
+  ✓ skip vastgelegd met reden — slechts 3 passende producten (drempel 7) — niets opgevuld
+  ✓ behandelde categorie wordt overgeslagen — geen eindeloze herhaling in een volgende run
+  ✓ onbekende categorie niet — die wordt wel geprobeerd
+
+═══ 6. KWALITEITSPOORTEN OP PRESET-PRODUCTEN ═══
+  ✓ cadeau-framing afgewezen — Verkocht als cadeau-moment in plaats van als product ("gift", "present
+  ✓ gewone "gift set" blijft — geen gelegenheid/ontvanger in de titel
+  ✓ cadeau-niche houdt cadeaus — niche gaat er zelf over
+  ✓ machinevertaling afgewezen — cross-border, foreign trade, explosion model, hot style, spot goods
+  ✓ nette titel blijft — Engraved Leather Dog Collar
+  ✓ gecombineerde poort werkt — kostuum → cadeau → machinevertaling, eerste treffer wint
+
+═══ 7. BATCH ZONDER LLM — DETERMINISTISCHE NICHEBESCHRIJVING ═══
+  ✓ niche afgeleid — dog accessories
+  ✓ onderbouwing noemt de echte cijfers — Afgeleid zonder LLM: categorie "Pet Supplies › Dog Accessories" heeft 420 produc
+  ✓ prijsklasse afgeleid van de inkoopprijs — EUR 11-34
+
+═══ 8. BIBLIOTHEEK: 2 presets (1 echt, 1 mock), 14 producten, 1 skips ═══
+  ✓ statistiek klopt — {"total":2,"real":1,"mock":1,"batch":2,"fallback":0,"products":14,"skips":1,"avgProducts":7}
+  ✓ verwijderen werkt — coffee-brewing-gear
+
+═══ RESULTAAT: 27 geslaagd, 2 gefaald ═══
+
+NOGMAALS: alles hierboven draaide op nagebootste CJ- en LLM-antwoorden.
+Geen enkele bewering over echte catalogusdata, doorlooptijd of rate limits.
