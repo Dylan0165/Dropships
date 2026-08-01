@@ -287,7 +287,7 @@ export async function scoreRelevance(
   const hardVerdicts: RelevanceVerdict[] = []
   const survivors: SupplierProduct[] = []
   for (const p of candidates) {
-    const dq = costumeDisqualification(niche, p, { personaText })
+    const dq = hardDisqualification(niche, p, { personaText })
     if (dq.rejected) {
       hardVerdicts.push({ productId: p.productId, title: p.title, score: 1, reason: dq.reason, accepted: false })
       log(`[relevance]   ✗  1/10  ${p.title.slice(0, 60)} — ${dq.reason}`)
@@ -296,7 +296,7 @@ export async function scoreRelevance(
     }
   }
   if (hardVerdicts.length > 0) {
-    log(`[relevance] ${hardVerdicts.length} product(en) hard afgewezen op verkleed-/kostuumsignalen vóór de LLM`)
+    log(`[relevance] ${hardVerdicts.length} product(en) hard afgewezen (verkleedkleding / cadeau-framing / machinevertaling) vóór de LLM`)
   }
   if (survivors.length === 0) {
     return { kept: [], verdicts: hardVerdicts }
