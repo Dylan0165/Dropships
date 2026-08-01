@@ -131,10 +131,13 @@ function deriveShippingProfile(totalAll: number, totalEU: number): ShippingProfi
 }
 
 /** Volledige catalogus-scan. Duurt ~1-2 min door de 1 req/s CJ rate limit. */
-export async function scanCatalog(onLog: (m: string) => void = m => console.log(`[niche-scan] ${m}`)): Promise<CategoryStats[]> {
+export async function scanCatalog(
+  onLog: (m: string) => void = m => console.log(`[niche-scan] ${m}`),
+  opts: { maxCategories?: number } = {},
+): Promise<CategoryStats[]> {
   const adapter = cj()
   const tree = await adapter.getCategoryTree()
-  const selected = selectCategories(tree)
+  const selected = selectCategories(tree, opts.maxCategories ?? MAX_CATEGORIES)
   onLog(`categorie-boom: ${tree.length} hoofdcategorieën, ${selected.length} subcategorieën geselecteerd voor de scan`)
 
   const stats: CategoryStats[] = []
