@@ -447,6 +447,13 @@ zoekwoorden in de titel, dus woordovereenkomst met de niche zegt niets.
 - Een artikel voor het dier/de gebruiker zelf is wél kandidaat.
 Deze regel weegt ZWAARDER dan trefwoord-overlap met de niche-naam.
 
+NOEM JE ZELF EEN MISMATCH? DAN IS HET GEEN VOLDOENDE. Als je in je motivatie
+schrijft dat iets "voor heren" is terwijl de niche over dameskleding gaat, of
+"hondenspeelgoed" terwijl de winkel over katten gaat, dan is dat per definitie
+een 1-2 — niet een 6 of 7 met een kanttekening. Verkeerd geslacht, verkeerde
+diersoort of verkeerde leeftijdsgroep is een harde uitsluiting, geen minpuntje
+dat je kunt wegstrepen tegen een goede prijs of mooie foto's.
+
 Producten:
 ${JSON.stringify(candidates.map(compact))}
 
