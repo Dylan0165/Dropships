@@ -247,6 +247,112 @@ export function machineTranslationDisqualification(
   }
 }
 
+// ── Doelgroep-mismatch: verkeerd geslacht, verkeerde diersoort ────────────────
+//
+// Hetzelfde patroon als de kostuum-bug, twee keer opnieuw opgedoken op de VPS:
+// woordoverlap met de niche wint het van een harde eigenschap die niet klopt.
+//
+//   niche "women's baseball caps" → "Twee sportieve baseballcaps voor HEREN"
+//   niche "interactive cat toys"  → "Hondenspeelgoed voetbal met riemen"
+//
+// In beide gevallen benoemde de beoordelaar de mismatch zélf in zijn motivatie
+// en gaf hem alsnog een voldoende. Zo'n eigenschap hoort niet afgewogen te
+// worden — een herenpet is geen dameswinkel-artikel, hoeveel andere woorden er
+// ook matchen.
+//
+// De regel triggert ALLEEN bij een expliciete tegenstrijdigheid:
+//   • de niche noemt een doelgroep, én
+//   • het product noemt een ANDERE doelgroep, én
+//   • het product noemt de gevraagde doelgroep NIET (dus "men's and women's"
+//     of "unisex" gaat gewoon door).
+// Een titel zonder enige vermelding ("Baseball Cap Cotton") is unisex en gaat
+// altijd door naar de gewone beoordeling.
+
+interface AudienceAxis {
+  /** Naam van de as, voor de logregel. */
+  label: string
+  /** Groepen: sleutel → woorden die die groep aanduiden. */
+  groups: Record<string, string[]>
+}
+
+const AUDIENCE_AXES: AudienceAxis[] = [
+  {
+    label: 'doelgroep',
+    groups: {
+      // Let op: matching gaat via woordgrenzen, dus "men" matcht niet in "women".
+      mannen: ['men', 'man', 'mens', 'male', 'males', 'herren', 'heren', 'homme', 'hommes',
+        'boys', 'boy', 'gentlemen', 'for him', 'voor heren', 'voor mannen'],
+      vrouwen: ['women', 'woman', 'womens', 'female', 'females', 'damen', 'dames', 'femme',
+        'femmes', 'girls', 'girl', 'ladies', 'lady', 'for her', 'voor dames', 'voor vrouwen'],
+      kinderen: ['kids', 'kid', 'children', 'child', 'toddler', 'baby', 'babies', 'infant',
+        'kinderen', 'kinder', 'peuter'],
+    },
+  },
+  {
+    label: 'diersoort',
+    groups: {
+      hond: ['dog', 'dogs', 'puppy', 'puppies', 'canine', 'hond', 'honden', 'hunde', 'chien'],
+      kat: ['cat', 'cats', 'kitten', 'kittens', 'feline', 'kat', 'katten', 'katze', 'chat'],
+      vogel: ['bird', 'birds', 'parrot', 'parakeet', 'vogel', 'vogels'],
+      vis: ['fish', 'aquarium', 'goldfish', 'vissen'],
+      knaagdier: ['rabbit', 'rabbits', 'bunny', 'hamster', 'guinea pig', 'konijn', 'cavia'],
+      paard: ['horse', 'horses', 'equestrian', 'pony', 'paard', 'paarden'],
+      reptiel: ['reptile', 'turtle', 'tortoise', 'gecko', 'snake', 'schildpad'],
+    },
+  },
+]
+
+/** Woordgrens-match, zodat "men" niet in "women" of "moment" aanslaat. */
+function mentionsWord(haystack: string, word: string): boolean {
+  const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  return new RegExp(`(^|[^a-z0-9])${escaped}($|[^a-z0-9])`, 'i').test(haystack)
+}
+
+function groupsPresent(text: string, axis: AudienceAxis): Set<string> {
+  const found = new Set<string>()
+  for (const [group, words] of Object.entries(axis.groups)) {
+    if (words.some(w => mentionsWord(text, w))) found.add(group)
+  }
+  return found
+}
+
+/**
+ * Expliciete doelgroep- of diersoort-mismatch. Draait vóór de LLM: dit is geen
+ * afweging maar een feit.
+ */
+export function audienceMismatchDisqualification(
+  niche: string,
+  product: { title?: string; description?: string; category?: string },
+  opts: { personaText?: string } = {},
+): Disqualification {
+  // De niche is leidend; de persona mag hem aanvullen (bv. label "Vrouwen 25-40").
+  const nicheText = `${niche} ${opts.personaText ?? ''}`.toLowerCase()
+  const productText = `${product.title ?? ''} ${product.description ?? ''} ${product.category ?? ''}`.toLowerCase()
+
+  for (const axis of AUDIENCE_AXES) {
+    const wanted = groupsPresent(nicheText, axis)
+    // Niche zegt niets over deze as (of noemt er meerdere, bv. "voor hond én
+    // kat") → geen regel om tegen te toetsen.
+    if (wanted.size !== 1) continue
+    const target = [...wanted][0]
+
+    const declared = groupsPresent(productText, axis)
+    if (declared.size === 0) continue          // unisex / niet vermeld → gewoon door
+    if (declared.has(target)) continue         // noemt óók de gevraagde groep → door
+
+    const conflicting = [...declared]
+    const woorden = axis.groups[conflicting[0]].filter(w => mentionsWord(productText, w)).slice(0, 2)
+    return {
+      rejected: true,
+      signals: [`${axis.label}: ${conflicting.join('/')} i.p.v. ${target}`, ...woorden],
+      reason: axis.label === 'diersoort'
+        ? `Product voor een andere diersoort (${conflicting.join('/')}${woorden.length ? `: "${woorden.join('", "')}"` : ''}) terwijl de niche over ${target} gaat.`
+        : `Product voor een andere doelgroep (${conflicting.join('/')}${woorden.length ? `: "${woorden.join('", "')}"` : ''}) terwijl de niche zich op ${target} richt.`,
+    }
+  }
+  return { rejected: false, reason: '', signals: [] }
+}
+
 /** Alle deterministische poorten achter elkaar; eerste treffer wint. */
 export function hardDisqualification(
   niche: string,
@@ -255,6 +361,8 @@ export function hardDisqualification(
 ): Disqualification {
   const costume = costumeDisqualification(niche, product, opts)
   if (costume.rejected) return costume
+  const audience = audienceMismatchDisqualification(niche, product, opts)
+  if (audience.rejected) return audience
   const gift = giftFramingDisqualification(niche, product, opts)
   if (gift.rejected) return gift
   return machineTranslationDisqualification(product)
