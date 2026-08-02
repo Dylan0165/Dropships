@@ -404,7 +404,7 @@ export async function scoreRelevance(
     }
   }
   if (hardVerdicts.length > 0) {
-    log(`[relevance] ${hardVerdicts.length} product(en) hard afgewezen (verkleedkleding / cadeau-framing / machinevertaling) vóór de LLM`)
+    log(`[relevance] ${hardVerdicts.length} product(en) hard afgewezen (verkleedkleding / doelgroep / cadeau-framing / machinevertaling) vóór de LLM`)
   }
   if (survivors.length === 0) {
     return { kept: [], verdicts: hardVerdicts }
