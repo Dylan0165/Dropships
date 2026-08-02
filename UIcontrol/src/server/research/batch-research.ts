@@ -184,6 +184,12 @@ Maak hier één scherpe winkel van. Geen brede "alles voor X"-winkel maar een
 afgebakende niche met een herkenbare koper.
 
 - "niche": ENGELS, 2-5 woorden, wat de winkel verkoopt ("dog collars and leashes").
+  Een doelgroep mag hierin ("women's baseball caps") als de categorie dat vraagt.
+- "searchNiche": hetzelfde, maar ZONDER doelgroep-bepaling — alleen waar het
+  product IS ("baseball caps"). Hiermee wordt er bij de leverancier gezocht.
+  Leveranciers zetten zelden "women's" in de productnaam, dus zoeken mét die
+  bepaling laat het grootste deel van de catalogus links liggen. De doelgroep
+  wordt later alsnog streng getoetst; de zoekterm moet juist breed zijn.
 - "problem": Nederlands, één zin: welk probleem lost deze winkel op?
 - "rationale": Nederlands, 2-3 zinnen: waarom vormen deze producten samen een
   logische winkel, en voor wie? Dit is de onderbouwing die een mens leest.
