@@ -105,7 +105,20 @@ async function chatJson<T>(system: string, user: string, maxTokens = 2048, tempe
 // ── Categorie → nichebeschrijving ─────────────────────────────────────────────
 
 export interface CategoryBrief {
+  /** Het winkel-label: mag een doelgroep bevatten ("women's baseball caps"). */
   niche: string
+  /**
+   * Waarmee er bij de leverancier GEZOCHT wordt — het kale productzelfstandig
+   * naamwoord, zonder doelgroep-bepaling ("baseball caps").
+   *
+   * Waarom die splitsing: de eerste VPS-run zocht letterlijk op "women's
+   * baseball cap". CJ matcht op de productnaam, en de meeste petten in de
+   * catalogus vermelden helemaal geen doelgroep — die vielen dus buiten de
+   * zoekopdracht nog vóór er iets beoordeeld kon worden. De doelgroep hoort
+   * thuis in de BEOORDELING (en sinds 1 augustus 2026 in de harde poort), niet
+   * in de zoekterm. Breed zoeken, streng poorten.
+   */
+  searchNiche: string
   problem: string
   rationale: string
   keywords: string[]
