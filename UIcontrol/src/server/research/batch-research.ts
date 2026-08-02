@@ -133,11 +133,29 @@ export interface CategoryBrief {
   }
 }
 
+/**
+ * Haalt de doelgroep-bepaling uit een niche-label weg, zodat er breed gezocht
+ * kan worden. "women's baseball caps" → "baseball caps".
+ *
+ * Deterministisch en klein: dit is een vangnet voor als de LLM zelf geen
+ * `searchNiche` teruggeeft, geen vervanging van zijn oordeel.
+ */
+export function stripAudienceQualifier(niche: string): string {
+  const stripped = niche
+    .replace(/\b(women|woman|women's|womens|ladies|lady|female|girls?|men|man|men's|mens|male|boys?|kids?|children|childrens|children's|unisex|adults?)\b['’]?s?\s+/gi, '')
+    .replace(/\bfor (women|men|kids|children|adults|her|him|boys|girls)\b/gi, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim()
+  // Nooit alles wegstrippen: dan blijft er geen zoekterm over.
+  return stripped.length >= 3 ? stripped : niche
+}
+
 /** Deterministische terugval als er geen LLM is — bewust mager en herkenbaar. */
 export function fallbackBrief(cat: CategoryStats): CategoryBrief {
   const price = Math.max(15, Math.round(cat.avgCostUsd * 0.92 * 2.8))
   return {
     niche: cat.name.toLowerCase(),
+    searchNiche: stripAudienceQualifier(cat.name.toLowerCase()),
     problem: `Kopers zoeken betrouwbare ${cat.name.toLowerCase()} zonder wekenlange levertijd.`,
     rationale: `Afgeleid zonder LLM: categorie "${cat.parentName} › ${cat.name}" heeft ${cat.totalAll} producten wereldwijd, waarvan ${cat.totalEU} snel leverbaar uit de EU.`,
     keywords: cat.name.toLowerCase().split(/\s+/).filter(w => w.length > 2),
