@@ -198,7 +198,7 @@ afgebakende niche met een herkenbare koper.
   (verkoop ≈ 2.8× inkoop in euro's).
 
 JSON:
-{"niche":"...","problem":"...","rationale":"...","keywords":["..."],
+{"niche":"...","searchNiche":"...","problem":"...","rationale":"...","keywords":["..."],
  "persona":{"label":"...","ageRange":"25-45","interests":["..."],"buyingMotivation":"...","problem":"...","priceRange":{"min":20,"max":60},"tone":"..."}}`,
       1536, 0.6,
     )
@@ -206,6 +206,9 @@ JSON:
       return {
         brief: {
           niche: String(raw.niche).trim(),
+          // Geeft de LLM geen aparte zoek-niche terug, dan halen we de
+          // doelgroep-bepaling er zelf uit. Breed zoeken, streng poorten.
+          searchNiche: String(raw.searchNiche ?? '').trim() || stripAudienceQualifier(String(raw.niche).trim()),
           problem: String(raw.problem ?? '').trim(),
           rationale: String(raw.rationale ?? '').trim(),
           keywords: Array.isArray(raw.keywords) ? raw.keywords.map(String).slice(0, 8) : [],
@@ -275,10 +278,14 @@ export async function runBatchResearch(opts: BatchOptions = {}): Promise<BatchRe
         log(`── ${cat.parentName} › ${cat.name} (${cat.totalAll} producten, ${cat.shippingProfile})`)
         const { brief, viaLlm } = await describeCategory(cat)
         log(`   niche: "${brief.niche}"${viaLlm ? '' : ' (deterministisch afgeleid — geen LLM)'}`)
+        if (brief.searchNiche !== brief.niche) log(`   zoeken op: "${brief.searchNiche}" (doelgroep-bepaling eruit voor een bredere kandidatenpool)`)
 
         let types: ProductType[] = []
         try {
-          const gen = await generateProductTypes(brief.niche, brief.persona, judge, { onLog: m => log(`   ${m}`) })
+          // Zoeken op de BREDE niche (zonder doelgroep-bepaling); de doelgroep
+          // wordt hierna alsnog streng getoetst in de harde poort en door de
+          // beoordelaar. Zoek breed, poort streng.
+          const gen = await generateProductTypes(brief.searchNiche, brief.persona, judge, { onLog: m => log(`   ${m}`) })
           types = gen.types
         } catch (err) {
           log(`   producttypes mislukt: ${err instanceof Error ? err.message : err}`)

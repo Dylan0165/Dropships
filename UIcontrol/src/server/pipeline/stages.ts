@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { runAgent } from './agent.js'
 import { runReviewer, type ReviewerOutputSchema } from './reviewer.js'
 import { buildStore } from './store-builder.js'
+import { generateMarketingContentDetached } from '../marketing-agent.js'
 import { deployStore, healthCheck, buildSubdomain } from './deployer.js'
 import { validateAndBuild } from '../store-platform/build-validator.js'
 import { saveStageOutput, claimPort, upsertStore, updateStoreHealth } from '../db.js'
@@ -309,6 +310,24 @@ export const STAGE_RUNNERS: Record<Stage, (ctx: StageContext) => Promise<StageOu
       product_count: products.length,
     }
     saveStageOutput(ctx.runId, 'store-build', output)
+
+    // ── Marketing-concepten (los van de winkel zelf) ─────────────────────────
+    // Alles wat de marketing-agent nodig heeft staat hier klaar. Losgekoppeld
+    // afgevuurd: het draait door terwijl build-validate en deploy hun gang gaan,
+    // en een mislukte caption mag NOOIT een winkel tegenhouden. De storeId is
+    // dezelfde deterministische die de deploy-stage straks claimt.
+    generateMarketingContentDetached({
+      storeId: `store-${ctx.runId}`,
+      brandName: build.brandName,
+      niche: ctx.niche,
+      tone: brand.tone_of_voice as string | undefined,
+      storyAngle: build.brief?.story_angle,
+      usps: build.brief?.usps?.map(u => ({ title: u.title, desc: u.desc })),
+      products: products.map(p => ({
+        title: p.title, price: p.price, productType: p.productType, description: p.description,
+      })),
+    }, m => ctx.onLog(`[marketing] ${m}`))
+
     return { ok: true, output, meta: { briefSource: build.briefSource ?? 'llm' } }
   },
 

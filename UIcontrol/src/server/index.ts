@@ -32,6 +32,10 @@ import { isMcpConfigured, listDiscoveryTools, CJ_MCP_DISCOVERY_TOOLS } from './s
 import { listOrders, fulfillOrder, getOrderTracking } from './fulfillment.js'
 import { generateQuestions, generateDirections, buildShortlist, proposeStructure } from './wizard.js'
 import { costumeDisqualification } from './suppliers/product-relevance.js'
+import {
+  generateMarketingContent, generateMarketingContentDetached,
+  listMarketingContent, updateMarketingItem,
+} from './marketing-agent.js'
 import { listPresets, getPreset, deletePreset, listSkips, presetStats } from './research/preset-store.js'
 import { getNicheSuggestions } from './niche-discovery.js'
 import { getPublicBaseUrl, setPublicBaseUrl, getMollieWebhookUrl, getStripeWebhookUrl } from './public-url.js'
@@ -513,8 +517,69 @@ app.put('/api/stores/:storeId/cms-data', async (req, res) => {
 app.post('/api/stores/:storeId/rebuild', async (req, res) => {
   try {
     const r = await fetch(`${PLATFORM_URL}/api/stores/${req.params.storeId}/rebuild`, { method: 'POST' })
-    res.status(r.status).json(await r.json())
+    const body = await r.json()
+    // Herbouwde winkel = mogelijk andere teksten/producten, dus nieuwe concepten.
+    // Losgekoppeld: de rebuild-melding hoeft hier niet op te wachten, en een
+    // mislukte caption mag een geslaagde rebuild niet als fout laten ogen.
+    if (r.ok) refreshMarketingForStore(req.params.storeId)
+    res.status(r.status).json(body)
   } catch (err) { res.status(500).json({ error: String(err) }) }
+})
+
+// ═══════ Marketing-concepten per winkel ═══════
+// Genereren gebeurt automatisch na een store-build/rebuild; dit zijn de
+// endpoints om het te bekijken, bij te werken en handmatig opnieuw te draaien.
+// Er wordt NIETS gepost — alles blijft concept tot de operator het zelf plaatst.
+
+function refreshMarketingForStore(storeId: string): void {
+  const store = mergedStore(storeId)
+  if (!store) { console.warn(`[marketing] store ${storeId} niet gevonden — geen content gegenereerd`); return }
+  generateMarketingContentDetached({
+    storeId,
+    brandName: store.brandName,
+    niche: store.niche,
+    products: marketingProducts(store.products),
+  })
+}
+
+/** Editable-producten → wat de marketing-agent nodig heeft, zonder lege titels. */
+function marketingProducts(list: Array<{ title?: string; price?: number; productType?: unknown }>) {
+  return list
+    .filter((p): p is { title: string; price?: number; productType?: unknown } => !!p.title)
+    .map(p => ({ title: p.title, price: p.price, productType: p.productType ? String(p.productType) : undefined }))
+}
+
+app.get('/api/stores/:storeId/marketing', (req, res) => {
+  try {
+    res.json({ items: listMarketingContent(req.params.storeId) })
+  } catch (err) {
+    res.status(500).json({ error: err instanceof Error ? err.message : 'marketing-content ophalen mislukt' })
+  }
+})
+
+app.post('/api/stores/:storeId/marketing/generate', async (req, res) => {
+  const store = mergedStore(req.params.storeId)
+  if (!store) { res.status(404).json({ error: 'Store niet gevonden' }); return }
+  try {
+    const result = await generateMarketingContent({
+      storeId: req.params.storeId,
+      brandName: store.brandName,
+      niche: store.niche,
+      products: marketingProducts(store.products),
+    })
+    res.status(result.ok ? 200 : 502).json(result)
+  } catch (err) {
+    res.status(500).json({ error: err instanceof Error ? err.message : 'genereren mislukt' })
+  }
+})
+
+app.patch('/api/marketing/:id', (req, res) => {
+  const { contentText, hashtags, status } = req.body as {
+    contentText?: string; hashtags?: string[]; status?: 'draft' | 'edited' | 'used'
+  }
+  const item = updateMarketingItem(req.params.id, { contentText, hashtags, status })
+  if (!item) { res.status(404).json({ error: 'Content niet gevonden' }); return }
+  res.json(item)
 })
 
 app.get('/api/server-mode', (_req, res) => {
