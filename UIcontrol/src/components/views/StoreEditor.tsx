@@ -1,11 +1,12 @@
 'use client'
 /**
  * StoreEditor — Slide-over CMS panel voor het aanpassen van een store.
- * Tabs: Content | Producten | Beheer | Design | Deploy
+ * Tabs: Content | Producten | Beheer | Marketing | Design | Deploy
  */
 import { useState, useEffect } from 'react'
 import { X, Save, RefreshCw, ExternalLink, AlertCircle, CheckCircle2 } from 'lucide-react'
 import StoreManagePanel from './StoreManagePanel'
+import { MarketingPanel } from './MarketingPanel'
 
 const STORE_HOST = (import.meta.env.VITE_STORE_SERVER_HOST as string) ?? '192.168.121.11'
 
@@ -44,7 +45,7 @@ interface StoreEditorProps {
 const LAYOUT_NAMES = ['NOIR — Dark editorial', 'BLANC — White luxury', 'BOLT — Brand color bold', 'DUSK — Warm organic', 'GRID — Tech dark']
 
 export default function StoreEditor({ storeId, subdomain, niche, onClose, onSaved }: StoreEditorProps) {
-  const [tab, setTab] = useState<'content' | 'products' | 'manage' | 'design' | 'deploy'>('content')
+  const [tab, setTab] = useState<'content' | 'products' | 'manage' | 'marketing' | 'design' | 'deploy'>('content')
   const [data, setData] = useState<StoreData | null>(null)
   const [overrides, setOverrides] = useState<Partial<StoreData & { layout?: number }>>({})
   const [loading, setLoading] = useState(true)
@@ -129,6 +130,7 @@ export default function StoreEditor({ storeId, subdomain, niche, onClose, onSave
     { id: 'content', label: 'Content' },
     { id: 'products', label: 'Producten' },
     { id: 'manage', label: 'Beheer' },
+    { id: 'marketing', label: 'Marketing' },
     { id: 'design', label: 'Design' },
     { id: 'deploy', label: 'Deploy' },
   ] as const
@@ -193,6 +195,10 @@ export default function StoreEditor({ storeId, subdomain, niche, onClose, onSave
                 setOverrides(d.overrides as Partial<StoreData & { layout?: number }> ?? {})
               }).catch(() => { /* de panelen tonen hun eigen fout */ })
             }} />
+          )}
+
+          {!loading && data && tab === 'marketing' && (
+            <MarketingPanel storeId={storeId} />
           )}
 
           {!loading && data && tab === 'products' && (
