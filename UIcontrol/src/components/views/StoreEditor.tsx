@@ -197,7 +197,10 @@ export default function StoreEditor({ storeId, subdomain, niche, onClose, onSave
             }} />
           )}
 
-          {!loading && data && tab === 'marketing' && (
+          {/* Marketing hangt niet aan de CMS-data: het paneel haalt z'n eigen
+              content op. Zonder die ontkoppeling zou het leeg blijven zodra de
+              store-platform-service even niet bereikbaar is. */}
+          {tab === 'marketing' && (
             <MarketingPanel storeId={storeId} />
           )}
 
