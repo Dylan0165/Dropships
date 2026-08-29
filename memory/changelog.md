@@ -2,6 +2,29 @@
 
 Nieuwste bovenaan. Zie `ai-must-read/release-and-changelog.md` voor het formaat.
 
+## 2026-08-02 — Marketing-agent fase 1: concept-social-content
+**Tag:** volgt hieronder
+
+- Na elke store-build (en na een rebuild via het beheerscherm) genereert
+  `server/marketing-agent.ts` concept-content: 4 TikTok- en 4 Instagram-captions
+  met hashtags, plus per product een "wat te filmen"-suggestie. **Er wordt niets
+  gepost** — alles is `draft` tot de operator het zelf plaatst.
+- Geen nieuwe abonnementen: DeepSeek + dezelfde SQLite (`marketing_content`).
+- Twee poorten: de bestaande emoji-filter (`sanitizeCopyDeep`) en een nieuwe
+  deterministische claim-check die verzonnen sociale bewijskracht weigert
+  ("10.000+ klanten", "4.9/5", "#1", "klinisch bewezen"). Prijzen en maten
+  blijven gewoon toegestaan.
+- Losgekoppeld afgevuurd vanuit de store-build-stage: draait parallel aan
+  build-validate en deploy, en kan een winkel nooit tegenhouden.
+- Nieuw tabblad **Marketing** in de store-editor achter de bestaande 2FA:
+  bewerken, kopiëren, en markeren als gebruikt. Hergenereren spaart wat al
+  geplaatst is. Het tabblad hangt bewust niet aan de CMS-data van de
+  store-platform-service, zodat het blijft werken als die even niet draait.
+- **Geverifieerd:** `verify:marketing` 25/25 (LLM lokaal onderschept — de
+  kwaliteit van echte captions is nog niet beoordeeld) plus een end-to-end-test
+  tegen een draaiende server met de echte 2FA-gate en de gebouwde UI.
+  Site-build-logica: 0 wijzigingen. Zie `logs/marketing-agent-2026-08-02.md`.
+
 ## 2026-08-01 — Presetbibliotheek: assortimenten offline voorbereiden
 **Tag:** volgt hieronder
 **Status: lokaal aantoonbaar, NIET op echte CJ-/DeepSeek-data bevestigd.**

@@ -173,6 +173,23 @@ Runner-label `dropships-vps`.
   collectie-grootte: ≥3 types + ≥8 producten → `products.category-tabs`, ≥9 → catalogus-weergave,
   ≤5 → curated. Verificatie: `verify:assortment` (23), `verify:efficiency` (6), `verify:collection` (15).
 
+## Marketing-agent — concept-social-content (sinds 2 augustus 2026)
+- `server/marketing-agent.ts`: na de store-build (en na een rebuild) genereert DeepSeek
+  4 TikTok- + 4 Instagram-captions met hashtags en per product een "wat te filmen"-suggestie.
+  **Er wordt NIETS gepost** — alles is `draft` tot de operator het zelf plaatst.
+- Aanroep aan het eind van de `store-build`-stage via `generateMarketingContentDetached`
+  (losgekoppeld: draait parallel aan build-validate/deploy en kan een winkel nooit tegenhouden).
+  De `storeId` is dezelfde deterministische `store-<runId>` die deploy claimt.
+- Twee poorten: `sanitizeCopyDeep` (bestaande emoji-filter) + `checkClaims` (nieuw,
+  deterministisch): weigert verzonnen klantaantallen, sterren, "#1", "klinisch bewezen".
+  Prijzen/maten/levertijden blijven toegestaan — dat zijn gegevens, geen claims.
+- Tabel `marketing_content` in dezelfde SQLite. Status `draft → edited → used`;
+  hergenereren vervangt alleen concepten, `used` blijft staan.
+- Tabblad **Marketing** in de store-editor (achter 2FA): bewerken, kopiëren, gebruikt-markeren.
+  Hangt bewust niet aan `/cms-data`, zodat het werkt als store-platform even plat ligt.
+- Endpoints: `GET /api/stores/:id/marketing`, `POST /api/stores/:id/marketing/generate`,
+  `PATCH /api/marketing/:id`. Verificatie: `verify:marketing` (25) — **LLM lokaal onderschept.**
+
 ## Presetbibliotheek — assortimenten offline voorbereiden (sinds 1 augustus 2026)
 - **Probleem:** elke wizard-run stelde live een assortiment samen — tijdsdruk, rate limits,
   LLM-calls in het kritieke pad.
