@@ -127,7 +127,9 @@ const CLAIM_PATTERNS: Array<{ re: RegExp; why: string }> = [
   },
   { re: /\b(thousands|millions|duizenden|miljoenen)\s+of\s+\w+/i, why: 'verzonnen aantal' },
   {
-    re: /\b(#\s?1|number one|nummer 1|best[-\s]?selling|award[-\s]?winning|bekroond)\b/i,
+    // `\b#` werkt niet: voor een '#' staat meestal een spatie, en dan is er geen
+    // woordgrens. Daarom expliciet op begin-of-niet-woordteken matchen.
+    re: /(^|[^a-z0-9])#\s?1(?![0-9])|\b(number one|nummer 1|best[-\s]?selling|award[-\s]?winning|bekroond)\b/i,
     why: 'onbewijsbare marktpositie',
   },
   {
@@ -160,7 +162,8 @@ export function normalizeHashtags(tags: unknown): string[] {
       .replace(/^#+/, '')
     if (!clean) continue
     const tag = `#${clean}`
-    if (!out.includes(tag)) out.push(tag)
+    // Hoofdletterongevoelig ontdubbelen: #HomeGym en #homegym zijn dezelfde tag.
+    if (!out.some(t => t.toLowerCase() === tag.toLowerCase())) out.push(tag)
   }
   return out.slice(0, 12)
 }
