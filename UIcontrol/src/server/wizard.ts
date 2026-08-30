@@ -460,6 +460,9 @@ export async function buildShortlist(
     types: gen.types,
     min: options.min ?? ASSORTMENT_MIN,
     max: options.max ?? ASSORTMENT_MAX,
+    // De wizard verbreedt de niche niet, maar de persona bevat vaak de
+    // doelgroep ("Vrouwen 25-40") — die telt hier net zo goed mee.
+    audienceContext: `${niche} ${persona.label ?? ''} ${(persona.interests ?? []).join(' ')}`,
     judge,
     // Klein aantal per type + "genoeg is genoeg": zo kost één producttype in de
     // praktijk één CJ-call in plaats van acht.

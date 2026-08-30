@@ -298,6 +298,11 @@ export async function runBatchResearch(opts: BatchOptions = {}): Promise<BatchRe
           continue
         }
 
+        // De doelgroep-context komt uit de CJ-categorie en het ONVERBREDE
+        // niche-label. Die twee zijn feiten uit de taxonomie; `searchNiche` is
+        // bewust neutraal gemaakt en mag daarom niet de basis van de poort zijn.
+        const audienceContext = `${cat.parentName} ${cat.name} ${brief.niche}`
+
         // Grondig zoeken: geen `minResults`, dus álle warehouse-passes per term.
         const result = await buildAssortment({
           niche: brief.niche,
@@ -305,6 +310,7 @@ export async function runBatchResearch(opts: BatchOptions = {}): Promise<BatchRe
           types,
           min, max,
           perTypeCandidates: perType,
+          audienceContext,
           judge,
           search: (term, maxResults) => adapter.searchProducts(term, { maxResults }),
           onLog: m => log(`   ${m}`),
@@ -315,7 +321,7 @@ export async function runBatchResearch(opts: BatchOptions = {}): Promise<BatchRe
         const personaText = `${brief.persona.label} ${brief.persona.interests.join(' ')} ${brief.persona.problem}`
         const clean: AssortmentPick[] = []
         for (const pick of result.picks) {
-          const dq = hardDisqualification(brief.niche, pick.product, { personaText })
+          const dq = hardDisqualification(brief.niche, pick.product, { personaText, audienceContext })
           if (dq.rejected) { log(`   ✗ alsnog geweerd: ${pick.product.title.slice(0, 50)} — ${dq.reason}`); continue }
           clean.push(pick)
         }

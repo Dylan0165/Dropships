@@ -226,6 +226,14 @@ Runner-label `dropships-vps`.
   gelegenheid/ontvanger, strenger afgebakend dan de kostuumregel omdat "beard gift set" een
   echt product is) → **machinevertaling** (`machineTranslationDisqualification`:
   groothandelsjargon, CJK-tekens, >6 komma-fragmenten, herhaalde woorden).
+- **Doelgroep/diersoort-mismatch** (`audienceMismatchDisqualification`): een product dat
+  expliciet een ANDERE doelgroep of diersoort noemt dan de niche valt af, ongeacht
+  woordoverlap. Triggert alleen bij een expliciete tegenstrijdigheid — een titel zonder
+  doelgroep is unisex en gaat gewoon door.
+  **`DisqualifyOptions.audienceContext`** is hierbij essentieel: het batch-onderzoek
+  verbreedt de niche om te kunnen zoeken ("women's baseball caps" → "baseball caps") en
+  haalt daarmee het woord weg waarop de regel toetst. De context draagt de CJ-categorie
+  (`parentName + name`) + het onverbrede niche-label mee. Zoek breed, toets streng.
 - **Alle drie de instroom-paden** gaan door dezelfde poort: assortiment/één-zoekterm
   (`scoreRelevance`), `/api/suppliers/cj/search` (handmatig zoeken + "Vervang" → **markeert**
   met reden, blokkeert niet — bewuste operator-actie) en `suggestProductsForStore`

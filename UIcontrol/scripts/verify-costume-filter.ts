@@ -14,6 +14,7 @@ process.env.STORES_WORKSPACE = path.join(TMP, 'stores')
 
 import {
   scoreRelevance, costumeDisqualification, nicheIsAboutCostumes, RELEVANCE_THRESHOLD,
+  audienceMismatchDisqualification, hardDisqualification,
 } from '../src/server/suppliers/product-relevance.js'
 import { isRelevantToQuery } from '../src/server/suppliers/cj-adapter.js'
 import type { SupplierProduct } from '../src/server/suppliers/types.js'
@@ -131,6 +132,77 @@ check('het echte product blijft wél staan', r2.kept.some(k => k.productId === E
 // ═══ 6. DREMPEL ONGEWIJZIGD ═══
 say('')
 check('drempel blijft 6', RELEVANCE_THRESHOLD === 6, `${RELEVANCE_THRESHOLD}`)
+
+// ═══ 7. DOELGROEP-MISMATCH ONDANKS EEN VERBREDE NICHE ═══
+//
+// Precies het scenario uit de VPS-run van 1 augustus: categorie
+// "Women's Clothing › Accessories", maar de niche is bewust verbreed naar
+// "hat and gloves sets" om meer kandidaten te vinden. Zonder de
+// categorie-context heeft de harde poort dan niets om op te toetsen — en toen
+// kwam "Men's Hat And Gloves Set" er met 7/10 doorheen, mét als motivatie
+// "doelgroep is dames".
+say('')
+say('═══ 7. VERBREDE NICHE + CATEGORIE-CONTEXT (VPS-scenario) ═══')
+
+const HEREN = p("Men's Hat And Gloves Set Winter Warm Knitted Two-Piece", 6.4)
+const NEUTRAAL = p('Knitted Beanie And Gloves Set Winter Warm Two-Piece', 6.1)
+const DAMES = p("Women's Wool Beret And Gloves Set Winter", 7.2)
+
+const BREED = 'hat and gloves sets'
+const CATEGORIE = "Women's Clothing Accessories women's hat and gloves sets"
+
+say(`  niche zoals hij naar de zoekopdracht gaat : "${BREED}"`)
+say(`  oorspronkelijke categorie-context         : "${CATEGORIE}"`)
+say('')
+check('ZONDER categorie-context glipt het herenproduct erdoor',
+  !audienceMismatchDisqualification(BREED, HEREN).rejected,
+  'dit is exact de bug: de verbreding haalde het woord weg waar de regel op toetst')
+
+const metContext = audienceMismatchDisqualification(BREED, HEREN, { audienceContext: CATEGORIE })
+check('MET categorie-context wordt hij hard geweigerd', metContext.rejected, metContext.reason)
+say(`         signalen: ${metContext.signals.join(', ')}`)
+
+check('neutraal product blijft gewoon door',
+  !audienceMismatchDisqualification(BREED, NEUTRAAL, { audienceContext: CATEGORIE }).rejected,
+  'geen doelgroep in de titel = unisex, dus geen reden om te weigeren')
+check('damesproduct blijft door',
+  !audienceMismatchDisqualification(BREED, DAMES, { audienceContext: CATEGORIE }).rejected,
+  DAMES.title)
+check('ook via de gecombineerde poort',
+  hardDisqualification(BREED, HEREN, { audienceContext: CATEGORIE }).rejected
+  && !hardDisqualification(BREED, NEUTRAAL, { audienceContext: CATEGORIE }).rejected,
+  'hardDisqualification geeft de context door aan alle drie de poorten')
+
+// De hele keten: een goedgelovige beoordelaar die 7/10 geeft mag niet winnen.
+const goedgelovig = async (_s: string, u: string) => {
+  const ids = [...u.matchAll(/"id":"([^"]+)"/g)].map(m => m[1])
+  return { scores: ids.map(id => ({ id, score: 7, reason: 'Past bij de categorie; doelgroep is dames.' })) }
+}
+const keten = await scoreRelevance(
+  BREED,
+  { label: "Women's Accessories koper", interests: ['mode'], priceRange: { min: 15, max: 45 } },
+  [HEREN, NEUTRAAL, DAMES],
+  goedgelovig,
+  { onLog: () => { /* stil */ }, audienceContext: CATEGORIE },
+)
+say('')
+say('  door de hele keten (beoordelaar geeft expres 7/10):')
+for (const v of [...keten.verdicts].sort((a, b) => a.score - b.score)) {
+  say(`    ${v.accepted ? '✓' : '✗'} ${String(v.score).padStart(2)}/10  ${v.title.slice(0, 50).padEnd(50)} ${v.reason.slice(0, 60)}`)
+}
+check('herenproduct haalt de collectie niet, ondanks 7/10 van het model',
+  !keten.kept.some(k => k.productId === HEREN.productId),
+  `${keten.kept.length} producten gehouden`)
+check('de andere twee blijven wel', keten.kept.length === 2, keten.kept.map(k => k.title.slice(0, 28)).join(' · '))
+
+// Diersoort op dezelfde manier: categorie zegt kat, niche is verbreed
+say('')
+const KATCAT = 'Pet Supplies Cat Toys interactive cat toys'
+const HOND = p('Dog Toys Soccer Ball With Straps For Tug Of War, Puppy Toy', 8.1)
+check('diersoort werkt via dezelfde context',
+  !audienceMismatchDisqualification('interactive toys', HOND).rejected
+  && audienceMismatchDisqualification('interactive toys', HOND, { audienceContext: KATCAT }).rejected,
+  audienceMismatchDisqualification('interactive toys', HOND, { audienceContext: KATCAT }).reason)
 
 say('')
 say(`═══ RESULTAAT: ${pass} geslaagd, ${fail} gefaald ═══`)

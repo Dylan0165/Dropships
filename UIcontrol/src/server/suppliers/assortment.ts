@@ -74,6 +74,12 @@ export interface AssortmentOptions {
   perTypeCandidates?: number
   /** Vooraf bepaalde types (test/hergebruik); leeg = via de LLM. */
   types?: ProductType[]
+  /**
+   * Oorspronkelijke doelgroep-context, los van `niche`. Het batch-onderzoek
+   * verbreedt de niche om te kunnen zoeken; de harde poorten moeten wél blijven
+   * weten dat het bijvoorbeeld om een dames-categorie gaat.
+   */
+  audienceContext?: string
   onLog?: (m: string) => void
 }
 
@@ -163,7 +169,7 @@ export async function buildAssortment(opts: AssortmentOptions): Promise<Assortme
     // omgezet in plaats van de types op elkaar te forceren.
     const relevanceJudge: RelevanceJudge = async (system, user) =>
       (await opts.judge(system, user)) as Awaited<ReturnType<RelevanceJudge>>
-    const rel = await scoreRelevance(opts.niche, opts.persona, flat, relevanceJudge, { onLog: log })
+    const rel = await scoreRelevance(opts.niche, opts.persona, flat, relevanceJudge, { onLog: log, audienceContext: opts.audienceContext })
     verdicts.push(...rel.verdicts)
     if (rel.skipped) relevanceSkipped = rel.skipped
     const byId = new Map(rel.verdicts.map(v => [v.productId, v]))

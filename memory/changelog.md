@@ -2,6 +2,26 @@
 
 Nieuwste bovenaan. Zie `ai-must-read/release-and-changelog.md` voor het formaat.
 
+## 2026-08-02 — Niche-verbreding ondermijnde de doelgroep-poort
+**Tag:** volgt hieronder
+
+- Het batch-onderzoek verbreedt de niche bewust ("women's baseball caps" →
+  "baseball caps") om meer kandidaten te vinden. Daarmee verdween precies het
+  woord waarop de doelgroep-poort toetst. Bewijs uit een VPS-run: **"Men's Hat
+  And Gloves Set" geaccepteerd met 7/10** in categorie Women's Clothing, met als
+  motivatie "doelgroep is dames" — de beoordelaar zag het zelf, de harde poort
+  had niets om tegen te toetsen, en het product belandde in de preset.
+- Fix: `DisqualifyOptions.audienceContext` draagt de **oorspronkelijke** context
+  mee — de CJ-categorie (`parentName + name`) plus het onverbrede niche-label.
+  Dat zijn feiten uit de taxonomie, niet iets wat de LLM kan wegpoetsen.
+  Doorgegeven via `scoreRelevance` → `buildAssortment` → batch én wizard, en de
+  beoordelaar krijgt de regel er ook in tekst bij.
+- Zoeken mag dus breed blijven; toetsen gebeurt op de echte doelgroep.
+- **Geverifieerd:** `verify:costume` 30/30 met het exacte VPS-scenario —
+  zonder context glipt het herenproduct erdoor (de bug gereproduceerd), mét
+  context wordt hij 1/10 ondanks een 7/10 van het model. Neutrale ("unisex")
+  titels blijven gewoon door; dezelfde context werkt voor diersoort.
+
 ## 2026-08-02 — Marketing-agent fase 1: concept-social-content
 **Tag:** volgt hieronder
 

@@ -95,6 +95,18 @@ export function nicheIsAboutCostumes(niche: string, extra = ''): boolean {
   return COSTUME_NICHE_WORDS.some(w => t.includes(w))
 }
 
+/** Context die elke harde poort mag gebruiken. */
+export interface DisqualifyOptions {
+  /** Persona-tekst (label, interesses, probleem). */
+  personaText?: string
+  /**
+   * Oorspronkelijke doelgroep-context die NIET verbreed is — de CJ-categorie
+   * ("Women's Clothing › Accessories") en het onverbrede niche-label. Nodig
+   * omdat de zoek-niche bewust neutraal gemaakt wordt.
+   */
+  audienceContext?: string
+}
+
 export interface Disqualification {
   rejected: boolean
   /** Nederlandse reden voor de operator. */
@@ -111,9 +123,9 @@ export interface Disqualification {
 export function costumeDisqualification(
   niche: string,
   product: { title?: string; description?: string; category?: string },
-  opts: { personaText?: string } = {},
+  opts: DisqualifyOptions = {},
 ): Disqualification {
-  if (nicheIsAboutCostumes(niche, opts.personaText ?? '')) {
+  if (nicheIsAboutCostumes(niche, `${opts.personaText ?? ''} ${opts.audienceContext ?? ''}`)) {
     return { rejected: false, reason: '', signals: [] }
   }
   const hay = `${product.title ?? ''} ${product.description ?? ''} ${product.category ?? ''}`.toLowerCase()
@@ -171,9 +183,9 @@ export function nicheIsAboutGifts(niche: string, extra = ''): boolean {
 export function giftFramingDisqualification(
   niche: string,
   product: { title?: string; description?: string; category?: string },
-  opts: { personaText?: string } = {},
+  opts: DisqualifyOptions = {},
 ): Disqualification {
-  if (nicheIsAboutGifts(niche, opts.personaText ?? '')) {
+  if (nicheIsAboutGifts(niche, `${opts.personaText ?? ''} ${opts.audienceContext ?? ''}`)) {
     return { rejected: false, reason: '', signals: [] }
   }
   const hay = `${product.title ?? ''} ${product.description ?? ''} ${product.category ?? ''}`.toLowerCase()
@@ -323,10 +335,21 @@ function groupsPresent(text: string, axis: AudienceAxis): Set<string> {
 export function audienceMismatchDisqualification(
   niche: string,
   product: { title?: string; description?: string; category?: string },
-  opts: { personaText?: string } = {},
+  opts: DisqualifyOptions = {},
 ): Disqualification {
-  // De niche is leidend; de persona mag hem aanvullen (bv. label "Vrouwen 25-40").
-  const nicheText = `${niche} ${opts.personaText ?? ''}`.toLowerCase()
+  // Drie bronnen, en die derde is er niet voor niets.
+  //
+  // De niche-tekst alleen is niet betrouwbaar: het offline batch-onderzoek
+  // VERBREEDT de niche bewust ("women's baseball caps" → "baseball caps") om
+  // meer kandidaten te vinden, en haalt daarmee precies het woord weg waar deze
+  // regel op toetst. Een echte VPS-run liet zien wat dat oplevert: "Men's Hat
+  // And Gloves Set" kwam er met 7/10 doorheen in een categorie Women's Clothing,
+  // met als motivatie "doelgroep is dames" — de beoordelaar zag het, de harde
+  // poort had niets om op te toetsen.
+  //
+  // `audienceContext` draagt daarom de OORSPRONKELIJKE context mee (de
+  // CJ-categorie, het niet-verbrede niche-label). Zoeken mag breed, toetsen niet.
+  const nicheText = `${niche} ${opts.personaText ?? ''} ${opts.audienceContext ?? ''}`.toLowerCase()
   const productText = `${product.title ?? ''} ${product.description ?? ''} ${product.category ?? ''}`.toLowerCase()
 
   for (const axis of AUDIENCE_AXES) {
@@ -357,7 +380,7 @@ export function audienceMismatchDisqualification(
 export function hardDisqualification(
   niche: string,
   product: { title?: string; description?: string; category?: string },
-  opts: { personaText?: string } = {},
+  opts: DisqualifyOptions = {},
 ): Disqualification {
   const costume = costumeDisqualification(niche, product, opts)
   if (costume.rejected) return costume
@@ -381,7 +404,7 @@ export async function scoreRelevance(
   persona: RelevanceContext,
   candidates: SupplierProduct[],
   judge: RelevanceJudge,
-  opts: { threshold?: number; onLog?: (m: string) => void } = {},
+  opts: { threshold?: number; onLog?: (m: string) => void; audienceContext?: string } = {},
 ): Promise<RelevanceResult> {
   const threshold = opts.threshold ?? RELEVANCE_THRESHOLD
   const log = opts.onLog ?? ((m: string) => console.log(m))
@@ -395,7 +418,7 @@ export async function scoreRelevance(
   const hardVerdicts: RelevanceVerdict[] = []
   const survivors: SupplierProduct[] = []
   for (const p of candidates) {
-    const dq = hardDisqualification(niche, p, { personaText })
+    const dq = hardDisqualification(niche, p, { personaText, audienceContext: opts.audienceContext })
     if (dq.rejected) {
       hardVerdicts.push({ productId: p.productId, title: p.title, score: 1, reason: dq.reason, accepted: false })
       log(`[relevance]   ✗  1/10  ${p.title.slice(0, 60)} — ${dq.reason}`)
@@ -420,7 +443,8 @@ export async function scoreRelevance(
     raw = await judge(
       'Je beoordeelt of producten passen bij een webshop-niche. Je bent streng: een product dat toevallig een woord deelt met de niche past nog niet.',
       `Niche: "${niche}"
-Doelgroep: ${JSON.stringify({ label: persona.label, interests: persona.interests, problem: persona.problem })}
+${opts.audienceContext ? `Oorspronkelijke categorie/doelgroep: "${opts.audienceContext}" — de niche hierboven is bewust breed gemaakt om te kunnen zoeken; de doelgroep hier is leidend.
+` : ''}Doelgroep: ${JSON.stringify({ label: persona.label, interests: persona.interests, problem: persona.problem })}
 ${priceHint}
 
 Geef ELK product hieronder een score van 1 tot 10 voor hoe goed het bij deze niche past.
