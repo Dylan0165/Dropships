@@ -80,6 +80,7 @@ async function callLLM(
   userPrompt: string,
   timeoutMs: number,
   temperature: number,
+  maxTokens: number = 8000,
 ): Promise<{ content: string; reasoningOnly: boolean; inputTokens: number; outputTokens: number }> {
   const { baseUrl, apiKey } = llmConfig()
   const headers: Record<string, string> = { 'Content-Type': 'application/json' }
@@ -100,7 +101,7 @@ async function callLLM(
           { role: 'user',   content: userPrompt },
         ],
         temperature,
-        max_tokens: 8000,
+        max_tokens: maxTokens,
         ...(model.startsWith('deepseek') ? { response_format: { type: 'json_object' } } : {}),
       }),
     })
@@ -155,6 +156,22 @@ export interface RunAgentConfig<T> {
    * (brand, content, store-build) → variatie tussen stores. Default 0.4.
    */
   temperature?: number
+  /**
+   * Antwoordbudget in tokens. `deepseek-reasoner` splitst dit budget tussen
+   * redeneren en antwoorden; met de oude vaste 8000 verdween het JSON-antwoord
+   * geregeld in het denken (zie `reasoningOnly`). Stages met een grote
+   * JSON-uitvoer (store-build) zetten dit hoger.
+   */
+  maxTokens?: number
+  /**
+   * Model voor de pogingen NÁ een `reasoningOnly`-antwoord. Het reasoner-model
+   * verbruikte zijn budget aan denken en leverde nooit JSON; opnieuw proberen
+   * met hetzelfde model herhaalt dat. Een executor-model zonder aparte
+   * reasoning-stroom antwoordt binnen hetzelfde budget wél.
+   */
+  fallbackModel?: string
+  /** Budget zodra `fallbackModel` in gebruik is (default: max(maxTokens, 16000)). */
+  fallbackMaxTokens?: number
   onLog?: (level: 'info' | 'warn' | 'error', msg: string) => void
 }
 
@@ -165,6 +182,12 @@ export async function runAgent<T>(cfg: RunAgentConfig<T>): Promise<AgentResult &
   const timeoutMs = cfg.timeoutMs ?? 120_000
   const maxRetries = cfg.retries ?? 3
   const log = cfg.onLog ?? (() => { /* no-op */ })
+
+  // Actief model/budget: start met de configuratie van de stage, en schakel
+  // definitief over zodra het reasoner-model zijn budget in het denken opmaakte.
+  let activeModel = cfg.model
+  let activeMaxTokens = cfg.maxTokens ?? 8000
+  let switchedModel = false
 
   const skill = loadSkillPrompt(cfg.skillName)
   const systemPrompt = `${skill}
@@ -205,12 +228,24 @@ Stuur nu uitsluitend valide JSON volgens schema.`
       }
 
       const { content, reasoningOnly, inputTokens, outputTokens } =
-        await callLLM(cfg.model, systemPrompt, promptForAttempt, timeoutMs, cfg.temperature ?? 0.4)
+        await callLLM(activeModel, systemPrompt, promptForAttempt, timeoutMs, cfg.temperature ?? 0.4, activeMaxTokens)
 
       totalInTok += inputTokens
       totalOutTok += outputTokens
-      totalCost += computeCost(cfg.model, inputTokens, outputTokens)
+      totalCost += computeCost(activeModel, inputTokens, outputTokens)
       lastRaw = content
+
+      // Reasoning-only: het budget ging op aan denken en er kwam geen JSON meer.
+      // Opnieuw proberen met hetzelfde model herhaalt dat vrijwel zeker, dus
+      // schakelen we naar het executor-model (en een ruimer budget).
+      if (reasoningOnly && cfg.fallbackModel && !switchedModel) {
+        switchedModel = true
+        activeModel = cfg.fallbackModel
+        activeMaxTokens = cfg.fallbackMaxTokens ?? Math.max(activeMaxTokens, 16_000)
+        log('warn',
+          `${cfg.agentName}: alleen redenering terug (${outputTokens} output-tokens) — ` +
+          `verdere pogingen met ${activeModel} en max_tokens ${activeMaxTokens}`)
+      }
 
       const jsonText = extractJson(content)
       if (!jsonText) {

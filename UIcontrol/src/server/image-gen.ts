@@ -309,6 +309,52 @@ export async function generateHeroImage(params: {
   }
 }
 
+/**
+ * Eén productfoto op basis van de ECHTE producttitel.
+ *
+ * `generateStoreImages()` is gebouwd rond één `productName` en levert drie shots
+ * van hetzelfde onderwerp — bruikbaar voor een one-product-store, niet voor een
+ * collectie van tien verschillende producten. Deze functie doet één product.
+ *
+ * **Geeft `null` terug zodra er iets misgaat.** Dat is de belangrijkste
+ * eigenschap: `saveImage()` valt in mock-modus terug op een placehold.co-URL, en
+ * een paarse placeholder op een echte winkel is erger dan de leveranciersfoto die
+ * er al staat. De aanroeper laat bij `null` de bestaande afbeelding staan.
+ */
+export async function generateProductImageFor(params: {
+  storeId: string
+  productName: string
+  productType?: string
+  niche: string
+  /** Index in de collectie — bepaalt de bestandsnaam. */
+  index: number
+}): Promise<{ path: string } | null> {
+  if (!hasImageProvider()) return null
+
+  const subject = [params.productName, params.productType ? `(${params.productType})` : '']
+    .filter(Boolean).join(' ')
+  const prompt = [
+    `Clean e-commerce product photograph of ${subject} for a ${params.niche} shop.`,
+    'Centred on a simple neutral background with a soft natural shadow,',
+    'accurate shape and colour, sharp detail, generous margin around the object,',
+    'no text, no logo, no watermark, no collage, no hands, no people.',
+  ].join(' ')
+
+  try {
+    const url = await generateImage(prompt, { aspectRatio: '1:1' })
+    if (!url) return null
+    const dest = imagePath(params.storeId, 'products', `product-${params.index + 1}.webp`)
+    const saved = await saveImage(url, dest, `product-${params.index + 1}`)
+    // Zie de doc-comment: een remote URL betekent "download mislukt of mock" en
+    // dan is er geen bruikbaar bestand om de winkel in te kopiëren.
+    if (/^https?:/i.test(saved)) return null
+    return fs.existsSync(saved) ? { path: saved } : null
+  } catch (err) {
+    console.warn('[image-gen] productfoto mislukt:', err instanceof Error ? err.message : err)
+    return null
+  }
+}
+
 /** Full store image set */
 export async function generateStoreImages(params: {
   storeId: string

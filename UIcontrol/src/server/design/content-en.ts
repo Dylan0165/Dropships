@@ -16,68 +16,62 @@ function rngFrom(seed: number): () => number {
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296
   }
 }
-function shuffle<T>(arr: T[], rng: () => number): T[] {
-  const a = [...arr]
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(rng() * (i + 1))
-    ;[a[i], a[j]] = [a[j], a[i]]
-  }
-  return a
-}
 function pick<T>(rng: () => number, arr: readonly T[]): T {
   return arr[Math.floor(rng() * arr.length) % arr.length]
 }
 
-// ── Reviews (Engels, internationale namen) ────────────────────────────────────
-
-const REVIEWER_NAMES = [
-  'Emma R.', 'James T.', 'Sofia L.', 'Liam K.', 'Nora B.', 'Lucas M.', 'Mia V.',
-  'Noah P.', 'Olivia S.', 'Daniel H.', 'Ava C.', 'Leo W.', 'Isla F.', 'Max D.',
-  'Chloe N.', 'Ethan G.', 'Zoe A.', 'Adam J.', 'Freya O.', 'Sam B.',
-]
-
-const REVIEW_TEMPLATES = [
-  'Exactly as described — the quality genuinely surprised me.',
-  'Fast delivery and the packaging felt really premium.',
-  'Been using it every day since it arrived. Highly recommend.',
-  'Better than I expected for the price. Will order again.',
-  'Shipping was quick and it works perfectly. Five stars.',
-  'Great value and it looks even better in person.',
-  'Customer service answered within a day — smooth experience.',
-  'My second purchase from them. Consistent quality every time.',
-  'Solid build and does exactly what it promises.',
-  'Arrived earlier than expected and the finish is beautiful.',
-]
+// ── Reviews ───────────────────────────────────────────────────────────────────
+// Hier stond tot 8 augustus 2026 `generateReviews()`: een seed-gebaseerde
+// generator die drie reviews met verzonnen namen ("Emma R.", "James T.") en
+// templated teksten op de winkel zette, met 5 sterren in 72% van de gevallen.
+// Dat is niet "sociale bewijs" maar verzonnen sociaal bewijs — een misleidende
+// handelspraktijk tegenover EU-consumenten, en precies het detail waardoor een
+// bezoeker de winkel als nep aanvoelt.
+//
+// De winkel toont daarom ALLEEN nog reviews die echt zijn aangeleverd (door de
+// operator of uit een echte reviewbron). Zonder echte reviews verdwijnt de
+// testimonials-sectie volledig — zie buildSelection/renderStorePage.
 
 export interface GeneratedReview { name: string; stars: number; text: string }
 
-export function generateReviews(seed: number, count = 3): GeneratedReview[] {
-  const rng = rngFrom(seed ^ 0x1234)
-  const names = shuffle(REVIEWER_NAMES, rng).slice(0, count)
-  const texts = shuffle(REVIEW_TEMPLATES, rng).slice(0, count)
-  return names.map((name, i) => ({
-    name,
-    text: texts[i],
-    stars: rng() < 0.72 ? 5 : 4,
-  }))
+/**
+ * Filtert aangeleverde reviews op bruikbaarheid. Gooit niets weg wat echt is,
+ * maar verzint ook niets: een lege of onbruikbare lijst blijft leeg.
+ */
+export function realReviews(input: unknown): GeneratedReview[] {
+  if (!Array.isArray(input)) return []
+  return input
+    .map(r => {
+      const o = (r ?? {}) as Record<string, unknown>
+      const name = String(o.name ?? '').trim().slice(0, 40)
+      const text = String(o.text ?? '').trim().slice(0, 400)
+      const stars = Number(o.stars)
+      return { name, text, stars: Number.isFinite(stars) ? Math.min(5, Math.max(1, Math.round(stars))) : 5 }
+    })
+    .filter(r => r.name.length > 1 && r.text.length >= 12)
+    .slice(0, 12)
 }
 
 // ── Product badges (Engels), toon-afhankelijk ─────────────────────────────────
+// Alleen labels die de operator kan waarmaken: nieuwheid en beschikbaarheid.
+// "Bestseller", "Editor's pick", "Fan favourite", "Limited edition" en
+// "Restocked" zijn claims over populariteit of schaarste en zijn verwijderd —
+// dezelfde regel die checkClaims in marketing-agent.ts al handhaaft.
 
 const BADGE_POOLS: Record<VisualTone, string[]> = {
-  minimal: ['Bestseller', 'New', 'Essential', ''],
-  playful: ['Fan favourite', 'New drop', 'Hot', 'Limited'],
-  premium: ['Signature', 'New', 'Editor’s pick', 'Limited edition'],
-  urban:   ['Bestseller', 'Drop', 'Hyped', 'Restocked'],
-  organic: ['Bestseller', 'New in', 'Small batch', ''],
-  tech:    ['Bestseller', 'New', 'Upgraded', 'Pro'],
+  minimal: ['New', 'New in', 'Just landed', ''],
+  playful: ['New in', 'Just landed', 'Now available', ''],
+  premium: ['New', 'Newly added', 'Now available', ''],
+  urban:   ['New', 'Just landed', 'Now available', ''],
+  organic: ['New in', 'New season', 'Just landed', ''],
+  tech:    ['New', 'Newly added', 'Now available', ''],
 }
 
 export function badgeFor(tone: VisualTone, index: number, seed: number): string {
   const pool = BADGE_POOLS[tone]
   const rng = rngFrom(seed ^ (index * 977))
   // eerste product krijgt vaker een badge
-  if (index === 0) return pool.find(Boolean) ?? 'Bestseller'
+  if (index === 0) return pool.find(Boolean) ?? 'New'
   return rng() < 0.5 ? pick(rng, pool) : ''
 }
 

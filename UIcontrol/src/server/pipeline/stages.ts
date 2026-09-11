@@ -1,4 +1,6 @@
 import { z } from 'zod'
+import fs from 'fs'
+import path from 'path'
 import { runAgent } from './agent.js'
 import { runReviewer, type ReviewerOutputSchema } from './reviewer.js'
 import { buildStore } from './store-builder.js'
@@ -82,6 +84,55 @@ export interface StageOutput {
   tokensOut?: number
   costUsd?: number
   meta?: Record<string, unknown>
+}
+
+// ─── Store-review hulpmiddelen ───────────────────────────────────────────────
+
+/**
+ * Steekproef van de zichtbare copy uit de JSX (teksten tussen `>` en `<`).
+ *
+ * De reviewer moet de winkel beoordelen zoals hij er staat, niet zoals hij
+ * bedoeld was. De volledige page.tsx meesturen is te groot (de assemblage is
+ * tienduizenden tekens), vandaar een ontdubbelde steekproef van de leesbare
+ * tekst. Expressies (`{...}`) vallen af: dat is code, geen copy.
+ */
+export function visibleTextSample(jsx: string, maxChars = 4000): string {
+  const runs = [...jsx.matchAll(/>([^<>{}]{3,140})</g)]
+    .map(m => m[1].replace(/\s+/g, ' ').trim())
+    .filter(t => /[a-zA-Z]{2}/.test(t))
+    .filter(t => !/^&[a-z0-9]+;$/i.test(t))
+  const seen = new Set<string>()
+  const out: string[] = []
+  for (const r of runs) {
+    const key = r.toLowerCase()
+    if (seen.has(key)) continue
+    seen.add(key)
+    out.push(r)
+    if (out.join(' | ').length >= maxChars) break
+  }
+  return out.join(' | ').slice(0, maxChars)
+}
+
+/**
+ * Leest wat er FEITELIJK in de gegenereerde winkel staat: het design-DNA dat de
+ * renderer heeft weggeschreven, de gebruikte componenten en een steekproef van
+ * de zichtbare tekst. Alles optioneel — een ontbrekend bestand maakt de review
+ * minder onderbouwd, maar mag hem nooit laten crashen.
+ */
+export function readStoreArtifacts(buildDir: string | undefined): {
+  design: Record<string, unknown> | null
+  textSample: string
+} {
+  if (!buildDir) return { design: null, textSample: '' }
+  let design: Record<string, unknown> | null = null
+  let textSample = ''
+  try {
+    design = JSON.parse(fs.readFileSync(path.join(buildDir, 'design-dna.json'), 'utf-8')) as Record<string, unknown>
+  } catch { /* geen DNA = minder onderbouwing, geen fout */ }
+  try {
+    textSample = visibleTextSample(fs.readFileSync(path.join(buildDir, 'app', 'page.tsx'), 'utf-8'))
+  } catch { /* idem */ }
+  return { design, textSample }
 }
 
 // Executor stages: simply call runAgent with appropriate schema + skill
@@ -329,6 +380,77 @@ export const STAGE_RUNNERS: Record<Stage, (ctx: StageContext) => Promise<StageOu
     }, m => ctx.onLog(`[marketing] ${m}`))
 
     return { ok: true, output, meta: { briefSource: build.briefSource ?? 'llm' } }
+  },
+
+  'store-review': async (ctx) => {
+    const buildOut = ctx.previous.store_build as Record<string, unknown> | undefined
+    if (!buildOut) return { ok: false, error: 'store-review: geen store-build output om te keuren' }
+
+    const { design, textSample } = readStoreArtifacts(buildOut.build_dir as string | undefined)
+    const brief = (buildOut.brief ?? {}) as Record<string, unknown>
+    ctx.onLog(`store-review: "${brief.brand_name ?? buildOut.brand_name}" — ${buildOut.product_count ?? '?'} producten, brief_source ${buildOut.brief_source ?? 'llm'}`)
+
+    const componentsMeta = (design?.components ?? {}) as Record<string, unknown>
+    const r = await runReviewer({
+      runId: ctx.runId, stage: 'store-review',
+      agentName: 'store-reviewer', skillName: 'store-reviewer',
+      input: {
+        niche: ctx.niche,
+        store: {
+          brand_name: brief.brand_name ?? buildOut.brand_name,
+          subdomain: buildOut.subdomain,
+          slogan: brief.slogan,
+          hero_headline: brief.hero_headline,
+          hero_subheadline: brief.hero_subheadline,
+          hero_cta: brief.hero_cta,
+          colors: brief.colors,
+          usps: brief.usps,
+          footer_tagline: brief.footer_tagline,
+          story_angle: brief.story_angle,
+          product_count: buildOut.product_count,
+          brief_source: buildOut.brief_source ?? 'llm',
+          brief_error: buildOut.brief_error,
+        },
+        design: design ? {
+          tone: design.tone,
+          palette: design.palette,
+          typography: design.typography,
+          signature: design.signature,
+          plan_warnings: design.planWarnings,
+          used_components: componentsMeta.used,
+          renderer: componentsMeta.renderer,
+          hero: componentsMeta.hero,
+          css_conflicts: componentsMeta.cssConflicts,
+          uniqueness: design.uniqueness,
+        } : null,
+        rendered_text: textSample,
+      },
+      onLog: (lvl, m) => ctx.onLog(`[${lvl}] ${m}`),
+    })
+
+    // Een infrastructuurfout (LLM plat, timeout) mag een winkel niet tegenhouden:
+    // de review is een poort op KWALITEIT, geen voorwaarde voor bestaan. Alleen
+    // een geslaagde review met een expliciet REJECTED-verdict stopt de run.
+    if (!r.ok || !r.verdict) {
+      const reden = r.error ?? 'onbekende fout'
+      ctx.onLog(`⚠ store-review kon niet uitgevoerd worden (${reden}) — winkel gaat door naar build-validate`)
+      saveStageOutput(ctx.runId, 'store-review', { skipped: true, error: reden })
+      return {
+        ok: true, output: { skipped: true, error: reden },
+        verdict: 'APPROVED', reason: `review overgeslagen: ${reden}`,
+        tokensIn: r.inputTokens, tokensOut: r.outputTokens, costUsd: r.costUsd,
+      }
+    }
+
+    saveStageOutput(ctx.runId, 'store-review', r.output as Record<string, unknown>)
+    ctx.onLog(`store-review: ${r.verdict.verdict}${r.verdict.score !== undefined ? ` (${r.verdict.score}/100)` : ''} — ${r.verdict.reason}`)
+    for (const s of r.verdict.suggestions ?? []) ctx.onLog(`store-review suggestie: ${s}`)
+
+    return {
+      ok: true, output: r.output as Record<string, unknown>,
+      verdict: r.verdict.verdict, reason: r.verdict.reason,
+      tokensIn: r.inputTokens, tokensOut: r.outputTokens, costUsd: r.costUsd,
+    }
   },
 
   'build-validate': async (ctx) => {

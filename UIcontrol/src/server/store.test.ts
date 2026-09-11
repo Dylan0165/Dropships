@@ -72,7 +72,11 @@ describe('store', () => {
     expect(ids).toContain('brand-agent')
     expect(ids).toContain('store-builder')
     expect(ids).toContain('store-reviewer')
-    expect(ids).toContain('growth-agent')
-    expect(ids).toContain('security-agent')
+    // growth-agent en security-agent zijn bewust uit de standaard pipeline
+    // gehaald (zie constants/pipeline.ts): ze blijven in de agent-registry voor
+    // on-demand gebruik, maar horen niet in de pipeline-weergave. Deze test
+    // eiste ze tot 8 augustus 2026 wél en faalde daardoor altijd.
+    expect(ids).not.toContain('growth-agent')
+    expect(ids).not.toContain('security-agent')
   })
 })

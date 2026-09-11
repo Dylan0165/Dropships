@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Store deployment platform.
  *
  * Two modes:
@@ -34,7 +34,7 @@ import { selectLayout, recordLayout, fitProducts } from './design/layout.js'
 import type { RenderProduct } from './design/render-page.js'
 import { buildStorePage } from './design/build-page.js'
 import {
-  generateReviews, generateStory, generateCtaBand,
+  realReviews, generateStory, generateCtaBand,
   buildNavLinks, buildFooterLinks, heroLabel, badgeFor,
 } from './design/content-en.js'
 import { validateAndBuild } from './store-platform/build-validator.js'
@@ -169,7 +169,10 @@ async function writeNextScaffold(targetDir: string, data: StoreData): Promise<vo
     // (vaak Nederlandse) wizard-input.
     story:           generateStory({ brandName: data.brand_name, niche: data.niche, tone: dna.tone, seed: dna.seed }),
     ctaBand:         generateCtaBand(dna.seed),
-    reviews:         generateReviews(dna.seed),
+    // Alleen ECHTE reviews. De CMS-rebuild had geen reviewbron, dus dit is
+    // normaal leeg en de testimonials-sectie verdwijnt — beter dan verzonnen
+    // namen en sterren op een winkel die aan consumenten verkoopt.
+    reviews:         realReviews((data as unknown as Record<string, unknown>).reviews),
     navLinks:        buildNavLinks(),
     footerLinks:     buildFooterLinks(),
   }

@@ -1,6 +1,6 @@
 import db, { savePipelineState, loadPipelineState, getStageOutput } from '../db.js'
-import { STAGES, initialState } from './types.js'
-import type { Stage, PipelineState, StageStatus, WizardConfig } from './types.js'
+import { STAGES, initialState, emptyStageState } from './types.js'
+import type { Stage, PipelineState, StageStatus, StageState, WizardConfig } from './types.js'
 import { STAGE_RUNNERS } from './stages.js'
 import { emit } from './events.js'
 
@@ -17,6 +17,22 @@ function persist(state: PipelineState): void {
 
 function updateStage(state: PipelineState, stage: Stage, patch: Partial<typeof state.stages[Stage]>): void {
   state.stages[stage] = { ...state.stages[stage], ...patch }
+}
+
+/**
+ * Vult stages aan die in een gepersisteerde run ontbreken.
+ *
+ * Een run die vóór de introductie van een nieuwe stage is gestart (bijvoorbeeld
+ * `store-review`, toegevoegd op 8 augustus 2026) heeft die sleutel niet in
+ * `state.stages`. Zonder deze aanvulling leest de engine `state.stages[stage].status`
+ * op `undefined` en valt hij om bij het hervatten — de duurste plek om te vallen,
+ * want dan staat er al een half gebouwde winkel.
+ */
+function ensureStages(state: PipelineState): void {
+  if (!state.stages) state.stages = {} as Record<Stage, StageState>
+  for (const s of STAGES) {
+    if (!state.stages[s]) state.stages[s] = emptyStageState()
+  }
 }
 
 // ─── Public API ──────────────────────────────────────────────────────────────
@@ -112,6 +128,9 @@ async function drive(
   cancelToken: { cancelled: boolean },
   pauseSignal: { paused: boolean },
 ): Promise<void> {
+  // Oude runs (van vóór een nieuwe stage) aanvullen vóór er iets gelezen wordt.
+  ensureStages(state)
+
   // Resume from first non-approved stage
   const startIdx = STAGES.findIndex(s =>
     state.stages[s].status !== 'approved' && state.stages[s].status !== 'skipped',

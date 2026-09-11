@@ -12,9 +12,9 @@ import { buildStorePage } from '../design/build-page.js'
 import { ComponentSelectionSchema } from '../design/components/selection.js'
 import { catalogForPrompt } from '../design/components/registry.js'
 import { sanitizeCopyDeep } from '../design/sanitize.js'
-import { generateHeroImage, hasImageProvider } from '../image-gen.js'
+import { generateHeroImage, generateProductImageFor, hasImageProvider } from '../image-gen.js'
 import {
-  generateReviews, generateStory, generateCtaBand,
+  realReviews, generateStory, generateCtaBand,
   buildNavLinks, buildFooterLinks, heroLabel, badgeFor,
 } from '../design/content-en.js'
 
@@ -94,6 +94,11 @@ export interface StoreBuildInput {
    * productfoto op een sfeerlaag — zie design/hero-visual.ts.
    */
   heroImage?: string | null
+  /**
+   * ECHTE reviews (operator of reviewbron). Ontbreekt dit, dan toont de winkel
+   * géén testimonials: verzonnen reviews zijn verboden — zie design/content-en.ts.
+   */
+  reviews?: unknown
   onLog?: (msg: string) => void
 }
 
@@ -123,6 +128,94 @@ function ensureWorkspace(): string {
 function slugify(s: string): string {
   return s.toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '')
     .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40)
+}
+
+// ─── Beeldmateriaal ───────────────────────────────────────────────────────────
+// De winkel toont standaard de leveranciersfoto (CJ packshot). Die is waar — het
+// is het product dat verzonden wordt — maar ziet er vaak identiek uit op elke
+// winkel. De beeldpijplijn vult daarom alleen de GATEN:
+//   • de hero krijgt een sfeerbeeld (generateHeroImage, altijd al gewired);
+//   • producten ZONDER afbeelding krijgen er één gegenereerd.
+// Een bestaande leveranciersfoto wordt NIET vervangen: een model dat het product
+// opnieuw tekent levert een ander product dan de klant ontvangt. Wil de operator
+// dat toch (bijvoorbeeld bij structureel slechte packshots), dan kan dat met
+// IMAGE_REPLACE_SUPPLIER_PHOTOS=1.
+
+/** Hoeveel productfoto's we per winkel maximaal genereren (kostenbeheersing). */
+const IMAGE_MAX_PRODUCT_SHOTS = parseInt(process.env.IMAGE_MAX_PRODUCT_SHOTS ?? '4', 10)
+const IMAGE_REPLACE_SUPPLIER = process.env.IMAGE_REPLACE_SUPPLIER_PHOTOS === '1'
+
+function hasUsableImage(src: unknown): boolean {
+  return typeof src === 'string' && src.trim().length > 3
+}
+
+/**
+ * Vult ontbrekende productafbeeldingen aan. Faalt stil: zonder beeldprovider of
+ * bij een providerfout blijft de bestaande situatie staan (lege kaart of
+ * leveranciersfoto) — nooit een placeholder-URL van een mock-provider.
+ */
+async function fillMissingProductImages(
+  input: StoreBuildInput,
+  log: (m: string) => void,
+): Promise<StoreBuildInput['products']> {
+  const candidates = input.products
+    .map((p, index) => ({ p, index }))
+    .filter(({ p }) => IMAGE_REPLACE_SUPPLIER || !hasUsableImage(p.image))
+
+  if (candidates.length === 0) {
+    log('[beelden] elk product heeft al een afbeelding — niets gegenereerd')
+    return input.products
+  }
+  if (!hasImageProvider()) {
+    log(`[beelden] ${candidates.length} product(en) zonder afbeelding — geen beeldprovider ` +
+      `(OPENAI_API_KEY of REPLICATE_API_TOKEN), de kaart blijft leeg`)
+    return input.products
+  }
+
+  const budget = Number.isFinite(IMAGE_MAX_PRODUCT_SHOTS) && IMAGE_MAX_PRODUCT_SHOTS > 0
+    ? IMAGE_MAX_PRODUCT_SHOTS : 4
+  const targets = candidates.slice(0, budget)
+  log(`[beelden] ${targets.length} van ${candidates.length} product(en) krijgen een gegenereerde foto (max ${budget})`)
+
+  const out = [...input.products]
+  const storeId = `store-${input.runId}`
+  let done = 0
+  for (const { p, index } of targets) {
+    const shot = await generateProductImageFor({
+      storeId, productName: p.title, productType: p.productType, niche: input.niche, index,
+    })
+    if (!shot) {
+      log(`[beelden] "${p.title}" — generatie mislukt, bestaande afbeelding blijft`)
+      continue
+    }
+    out[index] = { ...p, image: shot.path }
+    done++
+  }
+  log(`[beelden] ${done}/${targets.length} productfoto('s) gegenereerd`)
+  return out
+}
+
+/**
+ * Zet een lokaal bestandspad om in een pad binnen de winkel.
+ *
+ * Beeldgeneratie schrijft naar `data/images/<storeId>/...`; dát bestand moet de
+ * winkel in, want een absoluut pad van de dev-machine bestaat op de VPS niet.
+ * HTTP-URL's en al-klare `/img/`-paden laten we ongemoeid.
+ */
+function materializeProductImage(src: unknown, buildDir: string, index: number): string {
+  if (typeof src !== 'string' || !src) return ''
+  if (/^https?:\/\//i.test(src) || src.startsWith('/img/') || src.startsWith('data:')) return src
+  try {
+    if (!fs.existsSync(src)) return ''
+    const imgDir = path.join(buildDir, 'public', 'img')
+    fs.mkdirSync(imgDir, { recursive: true })
+    const ext = path.extname(src) || '.webp'
+    const name = `product-${index + 1}${ext}`
+    fs.copyFileSync(src, path.join(imgDir, name))
+    return `/img/${name}`
+  } catch {
+    return ''
+  }
 }
 
 /**
@@ -188,6 +281,12 @@ export async function generateBrief(input: StoreBuildInput): Promise<{
     outputSchema: StoreBriefSchema,
     timeoutMs: 240_000,
     retries: 3,
+    // 8000 was te krap: deepseek-reasoner verdeelt dit budget tussen denken en
+    // antwoorden, en de brief is groot (design-plan + componentkeuze). Ging het
+    // budget op aan denken, dan kwam er nooit JSON terug en viel de run terug op
+    // fallbackBrief(). hoger budget + modelwissel na een reasoning-only antwoord.
+    maxTokens: 16_000,
+    fallbackModel: process.env.LLM_MODEL_STORE_FALLBACK ?? 'deepseek-chat',
     // Creatieve stap → hogere temperature voor meer variatie tussen stores
     temperature: 0.9,
     onLog: input.onLog ? (lvl, m) => input.onLog!(`[${lvl}] ${m}`) : undefined,
@@ -302,7 +401,7 @@ export function renderStore(input: StoreBuildInput, briefRaw: StoreBrief): Store
     title:          p.title,
     price:          p.price,
     compareAtPrice: p.compareAtPrice,
-    image:          p.image ?? '',
+    image:          materializeProductImage(p.image, buildDir, i),
     badge:          p.badge,
     description:    p.description ?? '',
     bullets:        p.bullets ?? [],
@@ -333,7 +432,7 @@ export function renderStore(input: StoreBuildInput, briefRaw: StoreBrief): Store
     footerTagline:   brief.footer_tagline,
     story:           generateStory({ brandName, niche: input.niche, storyAngle: brief.story_angle, tone: dna.tone, seed: dna.seed }),
     ctaBand:         generateCtaBand(dna.seed),
-    reviews:         generateReviews(dna.seed),
+    reviews:         realReviews(input.reviews),
     navLinks:        buildNavLinks(),
     footerLinks:     buildFooterLinks(),
   }
@@ -431,12 +530,17 @@ export async function buildStore(input: StoreBuildInput): Promise<StoreBuildOutp
 
   // Sfeerbeeld voor de hero — alleen als er een beeldprovider geconfigureerd is.
   // Zonder key gebeurt hier niets en presenteert de renderer de productfoto op
-  // een sfeerlaag; dat is de terugval, niet een gebroken hero.
-  const withHero = { ...input, heroImage: await maybeHeroImage(input, log) }
+  // een sfeerlaag; dat is de terugval, niet een gebroken hero. Daarna de gaten in
+  // de productfoto's (zie fillMissingProductImages).
+  const withImages: StoreBuildInput = {
+    ...input,
+    heroImage: await maybeHeroImage(input, log),
+    products: await fillMissingProductImages(input, log),
+  }
 
   if (result.brief) {
     log(`Brief OK — brand="${result.brief.brand_name}", rendering ${selectTemplate(input.niche)} template...`)
-    return { ...renderStore(withHero, result.brief), briefSource: 'llm' }
+    return { ...renderStore(withImages, result.brief), briefSource: 'llm' }
   }
 
   // ── De LLM-brief is niet gelukt ─────────────────────────────────────────────
@@ -460,7 +564,7 @@ export async function buildStore(input: StoreBuildInput): Promise<StoreBuildOutp
   }
 
   log('→ terugval: brief samengesteld uit de brand-stage; design-DNA en componentkeuze komen uit code')
-  const rendered = renderStore(withHero, fallbackBrief(input))
+  const rendered = renderStore(withImages, fallbackBrief(input))
   return { ...rendered, briefSource: 'fallback', briefError: reden }
 }
 

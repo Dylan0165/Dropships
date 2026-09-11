@@ -8,6 +8,10 @@ export const STAGES = [
   'brand-creation',
   'content-generation',
   'store-build',
+  // Kwaliteitspoort op wat er FEITELIJK gegenereerd is, vóór er build-tijd en een
+  // deploy aan besteed worden. Stond sinds de v3-herziening alleen nog als skill
+  // en registry-entry in de repo, maar werd nooit aangeroepen.
+  'store-review',
   'build-validate',
   'deploy',
   'health-check',

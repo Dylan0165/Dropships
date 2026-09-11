@@ -27,7 +27,7 @@ const defs: ComponentDef[] = [
     render: (ctx, p): RenderResult => ({
       jsx: sect(`${title(ctx, p.title, 'People who bought this')}
         <div${am(ctx.anim, 'grid')} className="grid3" style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(240px,1fr))', gap:'1.4rem' }}>
-          {${arr(p.items, [{ name: 'Nora K.', stars: 5, text: 'Arrived in three days and works exactly as shown.' }, { name: 'Bram V.', stars: 5, text: 'Second order already. Good stuff.' }, { name: 'Alice M.', stars: 4, text: 'Solid quality, packaging could be smaller.' }])}.map((r:any,i:number)=>(
+          {${arr(p.items, [])}.map((r:any,i:number)=>(
             <div key={i} style={{ display:'flex', gap:'.9rem', alignItems:'flex-start' }}>
               <span aria-hidden="true" style={{ flex:'0 0 42px', width:42, height:42, borderRadius:'50%', background:'var(--c-accent)', color:'var(--c-primary-text)', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:800, fontSize:'.9rem' }}>{String(r.name||'?').charAt(0)}</span>
               <div>
@@ -51,9 +51,9 @@ const defs: ComponentDef[] = [
         </div>
         <div style={{ display:'flex', flexDirection:'column', justifyContent:'center', padding:'clamp(2.5rem,6vw,5rem)' }}>
           <span style={{ color:'var(--c-accent)', fontSize:'2.6rem', lineHeight:1, marginBottom:'.6rem' }}>&#8220;</span>
-          <p${am(ctx.anim, 'words')} style={{ fontFamily:'var(--f-head)', fontSize:'clamp(1.25rem,2.4vw,1.75rem)', lineHeight:1.45, margin:'0 0 1.4rem' }}>${txt(p.quote, 'I kept looking for a reason to send it back. There wasn\'t one.')}</p>
-          <span style={{ fontWeight:700 }}>${txt(p.author, 'Marte D.')}</span>
-          <span style={{ color:'var(--c-muted)', fontSize:'.85rem' }}>${txt(p.role, 'Verified buyer')}</span>
+          <p${am(ctx.anim, 'words')} style={{ fontFamily:'var(--f-head)', fontSize:'clamp(1.25rem,2.4vw,1.75rem)', lineHeight:1.45, margin:'0 0 1.4rem' }}>${txt(p.quote, '')}</p>
+          <span style={{ fontWeight:700 }}>${txt(p.author, '')}</span>
+          <span style={{ color:'var(--c-muted)', fontSize:'.85rem' }}>${txt(p.role, '')}</span>
         </div>
       </section>`,
     }),
@@ -73,8 +73,8 @@ const defs: ComponentDef[] = [
           ))}
         </div>
         <blockquote style={{ margin:0, textAlign:'center', maxWidth:'46ch', marginInline:'auto' }}>
-          <p style={{ fontStyle:'italic', lineHeight:1.7, margin:'0 0 .5rem' }}>&#8220;${txt(p.quote, 'Wish I had swapped sooner.')}&#8221;</p>
-          <cite style={{ fontSize:'.82rem', color:'var(--c-muted)', fontStyle:'normal', fontWeight:600 }}>${txt(p.author, 'Ines P.')}</cite>
+          <p style={{ fontStyle:'italic', lineHeight:1.7, margin:'0 0 .5rem' }}>&#8220;${txt(p.quote, '')}&#8221;</p>
+          <cite style={{ fontSize:'.82rem', color:'var(--c-muted)', fontStyle:'normal', fontWeight:600 }}>${txt(p.author, '')}</cite>
         </blockquote>`, 'var(--c-bg)'),
     }),
   },
@@ -85,7 +85,7 @@ const defs: ComponentDef[] = [
     render: (ctx, p): RenderResult => ({
       jsx: sect(`${title(ctx, p.title, 'Why people stay')}
         <div className="grid3" style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(180px,1fr))', gap:'1.5rem', textAlign:'center' }}>
-          {${arr(p.items, [{ value: 2400, suffix: '+', label: 'orders shipped' }, { value: 96, suffix: '%', label: 'would order again' }, { value: 4, suffix: '.8', label: 'average rating' }])}.map((s:any,i:number)=>(
+          {${arr(p.items, [{ value: 0, suffix: '', label: '' }])}.filter((s:any)=>s.label).map((s:any,i:number)=>(
             <div key={i}>
               <div style={{ fontFamily:'var(--f-head)', fontSize:'clamp(2rem,5vw,3.2rem)', fontWeight:800, color:'var(--c-accent)', lineHeight:1 }}>
                 <span${am(ctx.anim, 'count')} data-am-to={String(s.value)} data-am-suffix={String(s.suffix||'')}>{String(s.value)+String(s.suffix||'')}</span>
@@ -103,7 +103,7 @@ const defs: ComponentDef[] = [
     render: (ctx, p): RenderResult => ({
       jsx: sect(`${title(ctx, p.title, 'Recent reviews', 'left')}
         <div style={{ display:'grid', gap:'0', maxWidth:'720px' }}>
-          {${arr(p.items, [{ name: 'Tom H.', stars: 5, date: 'Last week', text: 'Ordered Tuesday, on my doorstep Thursday. No complaints.' }, { name: 'Lena S.', stars: 5, date: 'Two weeks ago', text: 'Bought one, then a second as a gift. That says enough.' }, { name: 'Ravi N.', stars: 4, date: 'Last month', text: 'Does what it promises. Instructions could be clearer.' }])}.map((r:any,i:number)=>(
+          {${arr(p.items, [])}.map((r:any,i:number)=>(
             <Reveal key={i} v="left" delay={i*90}>
               <div style={{ display:'grid', gridTemplateColumns:'auto 1fr', gap:'1.2rem', paddingBottom:'1.8rem' }}>
                 <div style={{ display:'flex', flexDirection:'column', alignItems:'center' }}>

@@ -17,7 +17,7 @@ const defs: ComponentDef[] = [
     render: (ctx, p) => ({
       jsx: sect(`${title(ctx, p.title, 'What customers say')}
         <div className="grid3" style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(260px,1fr))', gap:'1.5rem' }}>
-          {${arr(p.items, [{ name: 'Emma R.', stars: 5, text: 'Exactly as described — the quality genuinely surprised me.' }, { name: 'James T.', stars: 5, text: 'Fast delivery and premium packaging.' }, { name: 'Sofia L.', stars: 4, text: 'Better than expected for the price.' }])}.map((r:any,i:number)=>(
+          {${arr(p.items, [])}.map((r:any,i:number)=>(
             <Reveal key={i} v="fade" delay={i*120}><div style={{ padding:'1.75rem', border:'var(--bw) solid var(--c-border)', borderRadius:'var(--r-lg)', background:'var(--c-surface)' }}>
               <div style={{ color:'var(--c-accent)', marginBottom:'.75rem', letterSpacing:'2px' }}>{Array.from({length:r.stars||5}).map((_,k)=><span key={k}>&#9733;</span>)}</div>
               <p style={{ lineHeight:1.7, margin:'0 0 1rem', fontSize:'.95rem' }}>&#8220;{r.text}&#8221;</p>
@@ -33,7 +33,7 @@ const defs: ComponentDef[] = [
     render: (_ctx, p) => ({
       css: '.tm{overflow:hidden;white-space:nowrap}.tm-t{display:inline-flex;gap:1.5rem;animation:tmscroll 32s linear infinite;will-change:transform}@keyframes tmscroll{to{transform:translateX(-50%)}}',
       jsx: `<section className="tm" style={{ padding:'clamp(2.5rem,5vw,4rem) 0', background:'var(--c-surface-alt)' }}>
-        <div className="tm-t">{[...${arr(p.items, [{ name: 'Mia V.', text: 'Obsessed.' }, { name: 'Leo W.', text: 'Five stars, would buy again.' }, { name: 'Ava C.', text: 'Arrived in 3 days.' }, { name: 'Noah P.', text: 'Looks even better in person.' }])}, ...${arr(p.items, [{ name: 'Mia V.', text: 'Obsessed.' }, { name: 'Leo W.', text: 'Five stars, would buy again.' }, { name: 'Ava C.', text: 'Arrived in 3 days.' }, { name: 'Noah P.', text: 'Looks even better in person.' }])}].map((r:any,i:number)=>(
+        <div className="tm-t">{[...${arr(p.items, [])}, ...${arr(p.items, [])}].map((r:any,i:number)=>(
           <span key={i} style={{ display:'inline-flex', alignItems:'center', gap:'.6rem', fontSize:'1.05rem' }}><span style={{ color:'var(--c-accent)' }}>&#9733;</span>&#8220;{r.text}&#8221; <b style={{ color:'var(--c-muted)', fontWeight:600, fontSize:'.85rem' }}>{r.name}</b></span>
         ))}</div>
       </section>`,
@@ -44,19 +44,21 @@ const defs: ComponentDef[] = [
     tags: ['premium', 'editorial', 'brand'], props: { quote: 'de quote', author: 'naam' },
     render: (ctx, p) => ({
       jsx: sect(reveal(ctx.anim, 'fade', `<figure style={{ maxWidth:'820px', margin:'0 auto', textAlign:'center' }}>
-        <blockquote style={{ fontFamily:'var(--f-head)', fontSize:'clamp(1.6rem,3.6vw,2.6rem)', lineHeight:1.3, margin:0, textTransform:'var(--tt-head)' }}>&#8220;${txt(p.quote, 'The only one I recommend to friends.')}&#8221;</blockquote>
-        <figcaption style={{ marginTop:'1.5rem', color:'var(--c-muted)', fontSize:'.9rem', letterSpacing:'.05em' }}>${txt(p.author, '— A very happy customer')}</figcaption>
+        <blockquote style={{ fontFamily:'var(--f-head)', fontSize:'clamp(1.6rem,3.6vw,2.6rem)', lineHeight:1.3, margin:0, textTransform:'var(--tt-head)' }}>&#8220;${txt(p.quote, '')}&#8221;</blockquote>
+        <figcaption style={{ marginTop:'1.5rem', color:'var(--c-muted)', fontSize:'.9rem', letterSpacing:'.05em' }}>${txt(p.author, '')}</figcaption>
       </figure>`)),
     }),
   },
   {
     id: 'testimonials.stars-compact', category: 'testimonials', label: 'Compacte score + aantal reviews', styles: ['minimal', 'bold'], anims: ['subtle'],
-    tags: ['trust', 'conversion', 'compact'], props: { score: 'bv 4.8', count: 'aantal reviews' },
+    tags: ['trust', 'conversion', 'compact'], props: { score: '', count: '' },
+    // Rendert alleen met een ECHT aangeleverde score. De oude defaults (5 sterren,
+    // "4.8", "2,400+ verified reviews") waren verzonnen sociaal bewijs.
     render: (ctx, p) => ({
-      jsx: sect(reveal(ctx.anim, 'up', `<div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:'1rem', flexWrap:'wrap' }}>
-        <span style={{ color:'var(--c-accent)', fontSize:'1.4rem', letterSpacing:'3px' }}>&#9733;&#9733;&#9733;&#9733;&#9733;</span>
-        <span style={{ fontWeight:800, fontSize:'1.4rem' }}>${txt(p.score, '4.8')}</span>
-        <span style={{ color:'var(--c-muted)' }}>from ${txt(p.count, '2,400+')} verified reviews</span>
+      jsx: !p.score ? '' : sect(reveal(ctx.anim, 'up', `<div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:'1rem', flexWrap:'wrap' }}>
+        <span style={{ color:'var(--c-accent)', fontSize:'1.4rem', letterSpacing:'3px' }}>{String(p.stars ?? '')}</span>
+        <span style={{ fontWeight:800, fontSize:'1.4rem' }}>${txt(p.score, '')}</span>
+        ${p.count ? `<span style={{ color:'var(--c-muted)' }}>from ${txt(p.count, '')} verified reviews</span>` : ''}
       </div>`), 'var(--c-surface-alt)'),
     }),
   },
@@ -230,10 +232,12 @@ const defs: ComponentDef[] = [
   {
     id: 'badges.review-score', category: 'badges', label: 'Review-score badge (compact strip)', styles: ['minimal', 'playful'], anims: ['none'],
     tags: ['trust', 'compact'], props: { score: '', count: '' },
+    // Zelfde regel als testimonials.stars-compact: geen cijfer aangeleverd =
+    // geen badge. De oude default was 5 sterren + "4.8" + "2,400+ reviews".
     render: (_ctx, p) => ({
-      jsx: `<section style={{ padding:'1.2rem', textAlign:'center', background:'var(--c-surface-alt)' }}>
+      jsx: !p.score ? '' : `<section style={{ padding:'1.2rem', textAlign:'center', background:'var(--c-surface-alt)' }}>
         <span style={{ display:'inline-flex', alignItems:'center', gap:'.6rem', fontSize:'.9rem', fontWeight:600 }}>
-          <span style={{ color:'var(--c-accent)', letterSpacing:'2px' }}>&#9733;&#9733;&#9733;&#9733;&#9733;</span> ${txt(p.score, '4.8')} <span style={{ color:'var(--c-muted)', fontWeight:400 }}>· ${txt(p.count, '2,400+')} reviews</span>
+          <span style={{ color:'var(--c-accent)', letterSpacing:'2px' }}>{String(p.stars ?? '')}</span> ${txt(p.score, '')} <span style={{ color:'var(--c-muted)', fontWeight:400 }}>${p.count ? `· ${txt(p.count, '')} reviews` : ''}</span>
         </span>
       </section>`,
     }),

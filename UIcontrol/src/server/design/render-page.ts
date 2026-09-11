@@ -309,7 +309,7 @@ function productsInner(variant: ProductVariant): string {
 
 // ── Secties ───────────────────────────────────────────────────────────────────
 
-function sectionJsx(id: SectionId, layout: LayoutPlan): string {
+function sectionJsx(id: SectionId, layout: LayoutPlan, hasReviews: boolean): string {
   switch (id) {
     case 'usps':
       return `
@@ -331,6 +331,9 @@ function sectionJsx(id: SectionId, layout: LayoutPlan): string {
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>${productsInner(layout.product)}</div>
       </section>`
     case 'reviews':
+      // Geen echte reviews = geen sectie. Verzonnen reviews en sterren horen
+      // niet op een winkel die aan consumenten verkoopt (zie content-en.ts).
+      if (!hasReviews) return ''
       return `
       <section style={{ padding: DNA.sectionPadY + ' clamp(1.5rem,5vw,4rem)', background: DNA.surface }}>
         <Reveal><h2 style={S.sectionTitle}>What customers say</h2></Reveal>
@@ -471,7 +474,7 @@ export function renderStorePage(
 ): string {
   const dnaObj = flatDNA(dna)
   const css = buildCss(dna, signature)
-  const sections = layout.sections.map(s => sectionJsx(s, layout)).join('\n')
+  const sections = layout.sections.map(s => sectionJsx(s, layout, content.reviews.length > 0)).join('\n')
 
   // Signature tekst-parameters (JSON-veilig geëmit — nooit rauw in code)
   const sigText = (signature?.text ?? '').trim()

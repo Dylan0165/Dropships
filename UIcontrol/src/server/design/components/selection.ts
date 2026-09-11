@@ -90,6 +90,16 @@ function idsIn(category: string): string[] {
   return allComponents().filter(d => d.category === category).map(d => d.id)
 }
 
+/**
+ * Componenten die een reviewcijfer, reviewaantal of klantnaam tentoonstellen.
+ * Zonder ECHTE reviews mogen die niet geselecteerd worden: ze hebben hardgecodeerde
+ * voorbeeldcijfers als default (4.8 / "2,400+ reviews" / verzonnen namen), en dat
+ * is misleidend sociaal bewijs. Zie design/content-en.ts.
+ */
+const REVIEW_CLAIM_IDS = new Set(['badges.review-score'])
+const isReviewClaim = (id: string): boolean =>
+  getComponent(id)?.category === 'testimonials' || REVIEW_CLAIM_IDS.has(id)
+
 /** Deterministische keuze uit een pool. */
 function pick<T>(pool: readonly T[], seed: number, offset = 0): T {
   return pool[Math.abs(seed + offset) % pool.length]
@@ -187,7 +197,17 @@ export function buildSelection(
 
   // ── LLM-selectie (gevalideerd tegen de registry) ────────────────────────────
   if (llm?.sections?.length) {
-    const valid = llm.sections.filter(s => getComponent(s.id))
+    let valid = llm.sections.filter(s => getComponent(s.id))
+    // Zonder echte reviews is er geen enkele bron voor testimonials. De LLM
+    // schrijft ze niet (en mag dat niet — zie content-en.ts), dus de sectie
+    // vervalt in plaats van met verzonnen namen en sterren te renderen.
+    if (content.reviews.length === 0) {
+      const withoutTestimonials = valid.filter(s => !isReviewClaim(s.id))
+      if (withoutTestimonials.length !== valid.length) {
+        notes.push(`${valid.length - withoutTestimonials.length} testimonials-sectie(s) vervallen — geen echte reviews aangeleverd`)
+        valid = withoutTestimonials
+      }
+    }
     const hasProducts = valid.some(s => s.id.startsWith('products.'))
     const sections: ComponentSelection[] = valid.map(s => {
       // Weergave-keuze toetsen aan de werkelijke collectie: de LLM kiest zonder
@@ -243,11 +263,18 @@ export function buildSelection(
   const map: Record<string, string> = {
     usps: uspsId,
     products: productsId,
-    reviews: fresh(idsIn('testimonials'), 2),
+    // Testimonials uitsluitend met echte reviews (zie content-en.ts).
+    ...(content.reviews.length ? { reviews: fresh(idsIn('testimonials'), 2) } : {}),
     story: fresh(storyPool, 3),
     'cta-band': fresh(idsIn('cta'), 4),
   }
-  const trustId = fresh(idsIn('badges'), 5)
+  if (content.reviews.length === 0) {
+    notes.push('geen echte reviews aangeleverd — testimonials-sectie overgeslagen')
+  }
+  const trustId = fresh(
+    idsIn('badges').filter(id => content.reviews.length > 0 || !REVIEW_CLAIM_IDS.has(id)),
+    5,
+  )
   const bodyIds = [trustId, ...layout.sections.map(s => map[s]).filter(Boolean)]
   if (!bodyIds.includes(productsId)) bodyIds.splice(1, 0, productsId)
   // Eén toon-passende extra uit een categorie die verder nog niet aan bod kwam.
@@ -256,6 +283,12 @@ export function buildSelection(
   const extraPool = [...idsIn('gallery'), ...idsIn('form'), ...contentPool, ...idsIn('cta')]
     .filter(id => !bodyIds.includes(id))
   if (extraPool.length) bodyIds.push(fresh(extraPool, 6))
+  // Zonder testimonials-sectie is de pagina een blok korter. Compenseer dat met
+  // een extra trust/content-blok in plaats van de ruimte leeg te laten.
+  if (content.reviews.length === 0) {
+    const rest = extraPool.filter(id => !bodyIds.includes(id))
+    if (rest.length) bodyIds.push(fresh(rest, 10))
+  }
 
   const navId = fresh(idsIn('nav'), 7)
   const footerId = fresh(idsIn('footer'), 8)
