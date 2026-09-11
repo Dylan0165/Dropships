@@ -23,6 +23,7 @@
     "verify:small": "tsx scripts/verify-small-assortment.ts",
     "verify:quality": "tsx scripts/verify-store-quality.ts",
     "verify:honesty": "tsx scripts/verify-store-honesty.ts",
+    "smoke:brief": "tsx scripts/smoke-store-brief.ts",
     "verify:costume": "tsx scripts/verify-costume-filter.ts",
     "verify:marketing": "tsx scripts/verify-marketing.ts",
     "verify:presets": "tsx scripts/verify-preset-library.ts",

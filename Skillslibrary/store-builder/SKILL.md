@@ -186,6 +186,11 @@ ratings are a misleading commercial practice. The pipeline therefore renders
 
 ## Design rules — design a token system BEFORE you write copy
 
+Three extra rule sets ride along with this skill (`taste-skill`, `typeset`,
+`colorize`). They are about typography, colour discipline and banned defaults —
+read them as binding for your `design` block. They do NOT ask you to write CSS:
+you choose from the component catalog, you never style anything yourself.
+
 You are the art director. For every store you produce a DELIBERATE design plan
 in the `design` field. Work in this order: (1) study the persona and niche,
 (2) write the plan, (3) run the self-check, (4) only then finalize.

@@ -38,6 +38,32 @@ export function loadSkillPrompt(skillName: string): string {
   }
 }
 
+/**
+ * Laadt de eigen skill plus optionele extra skills uit `Skillslibrary/`.
+ *
+ * De extra's zijn andermans regels die de agent tijdens zijn werk nodig heeft —
+ * bijvoorbeeld de design-skills die de store-builder sturen bij het kiezen van
+ * een palet en lettercombinatie. Ze gaan mét hun frontmatter mee zodat in de
+ * prompt te zien blijft welke skill welke regel oplegt, en ze komen ná de
+ * eigen skill: bij een conflict wint de taak-specifieke instructie.
+ *
+ * Ontbreekt een extra skill, dan gaat de agent door zonder — een skill die in
+ * de repo ontbreekt mag nooit een hele run laten vallen.
+ */
+export function loadSkillPrompts(skillName: string, extraSkills: string[] = [], onLog?: (msg: string) => void): string {
+  const parts = [loadSkillPrompt(skillName)]
+  for (const extra of extraSkills) {
+    const f = path.join(SKILLS_PATH, extra, 'SKILL.md')
+    try {
+      const body = fs.readFileSync(f, 'utf-8').trim()
+      parts.push(`---\n\n# Extra regels: ${extra}\n\n${body}`)
+    } catch {
+      onLog?.(`extra skill "${extra}" niet gevonden in ${SKILLS_PATH} — overgeslagen`)
+    }
+  }
+  return parts.join('\n\n')
+}
+
 function stripJsonFences(text: string): string {
   let t = text.trim()
   if (t.startsWith('```')) {
@@ -139,6 +165,11 @@ export interface RunAgentConfig<T> {
   stage: string
   agentName: string
   skillName: string
+  /**
+   * Extra skills uit `Skillslibrary/` die met deze stage meeladen — bijvoorbeeld
+   * de design-skills achter de store-builder. Zie loadSkillPrompts().
+   */
+  extraSkills?: string[]
   model: string
   input: Record<string, unknown>
   /**
@@ -189,7 +220,7 @@ export async function runAgent<T>(cfg: RunAgentConfig<T>): Promise<AgentResult &
   let activeMaxTokens = cfg.maxTokens ?? 8000
   let switchedModel = false
 
-  const skill = loadSkillPrompt(cfg.skillName)
+  const skill = loadSkillPrompts(cfg.skillName, cfg.extraSkills, m => log('info', m))
   const systemPrompt = `${skill}
 
 CRITICAL RULES:

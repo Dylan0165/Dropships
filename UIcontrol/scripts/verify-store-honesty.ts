@@ -28,7 +28,8 @@ process.env.STORES_WORKSPACE = path.join(TMP, 'stores')
 delete process.env.OPENAI_API_KEY
 delete process.env.REPLICATE_API_TOKEN
 
-const { renderStore } = await import('../src/server/pipeline/store-builder.js')
+const { renderStore, STORE_BUILDER_EXTRA_SKILLS } = await import('../src/server/pipeline/store-builder.js')
+const { loadSkillPrompts } = await import('../src/server/pipeline/agent.js')
 const { realReviews, badgeFor } = await import('../src/server/design/content-en.js')
 const { STAGES } = await import('../src/server/pipeline/types.js')
 const { STAGE_RUNNERS, visibleTextSample } = await import('../src/server/pipeline/stages.js')
@@ -193,6 +194,33 @@ check('haalt de copy eruit en laat expressies weg',
   sample.includes('Shop the collection') && !sample.includes('PRODUCTS') && !sample.includes('color'),
   JSON.stringify(sample.slice(0, 80)))
 check('respecteert het tekensbudget', visibleTextSample('<p>' + 'Woord '.repeat(4000) + '</p>', 200).length <= 200)
+
+say('\n═══ 9. DESIGN-SKILLS MEELADEN MET DE STORE-BUILDER ═══')
+check('de extra-skills-lijst is niet leeg',
+  STORE_BUILDER_EXTRA_SKILLS.length > 0, STORE_BUILDER_EXTRA_SKILLS.join(', '))
+const combined = loadSkillPrompts('store-builder', STORE_BUILDER_EXTRA_SKILLS)
+check('de eigen store-builder-skill zit erin', combined.includes('# Store Builder'))
+for (const extra of STORE_BUILDER_EXTRA_SKILLS) {
+  const body = fs.readFileSync(path.join(workspaceRoot, 'Skillslibrary', extra, 'SKILL.md'), 'utf-8')
+  // Een kenmerkende regel uit de skill moet letterlijk in de prompt staan.
+  const marker = body.split('\n').find(l => l.startsWith('## ')) ?? body.split('\n')[0]
+  check(`extra skill "${extra}" is meegeladen`,
+    combined.includes(`# Extra regels: ${extra}`) && combined.includes(marker.trim()),
+    marker.trim().slice(0, 60))
+}
+const skipped: string[] = []
+check('een ontbrekende extra skill laat de agent niet vallen',
+  loadSkillPrompts('store-builder', ['deze-skill-bestaat-niet'], m => skipped.push(m)).includes('# Store Builder') &&
+  skipped.length === 1,
+  skipped[0] ?? 'geen waarschuwing')
+const designSkills = ['frontend-design', 'high-end-visual-design', 'image-taste-frontend', 'gpt-taste',
+  'design-taste-frontend', 'critique', 'audit', 'polish', 'typeset', 'colorize']
+const missing = designSkills.filter(s => !fs.existsSync(path.join(workspaceRoot, 'Skillslibrary', s, 'SKILL.md')))
+check('alle tien design-skills staan in Skillslibrary', missing.length === 0, missing.join(', ') || `${designSkills.length}/${designSkills.length}`)
+// De implementatie-skills horen NIET in de prompt: de store-builder schrijft geen code.
+check('code-gerichte skills worden niet in de prompt gezet',
+  !STORE_BUILDER_EXTRA_SKILLS.includes('frontend-design') && !STORE_BUILDER_EXTRA_SKILLS.includes('high-end-visual-design'),
+  STORE_BUILDER_EXTRA_SKILLS.join(', '))
 
 say(`\n═══ RESULTAAT: ${pass} geslaagd, ${fail} gefaald ═══`)
 process.exit(fail === 0 ? 0 : 1)

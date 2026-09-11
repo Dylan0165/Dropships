@@ -52,6 +52,18 @@ export const StoreBriefSchema = z.object({
 
 export type StoreBrief = z.infer<typeof StoreBriefSchema>
 
+/**
+ * Design-skills die met de store-builder meeladen (zie Skillslibrary/README.md).
+ *
+ * Bewust een korte lijst: deze drie gaan over de BESLISSINGEN die de
+ * store-builder neemt (palet, typografie, verboden defaults). De
+ * implementatie-skills (bento-grids, box-shadows) staan wél in de bibliotheek
+ * maar horen niet in deze prompt — de store-builder schrijft geen code, hij kiest
+ * componenten, en regels over CSS zouden hem ontwerpen laten beschrijven die de
+ * catalogus niet kan maken.
+ */
+export const STORE_BUILDER_EXTRA_SKILLS = ['taste-skill', 'typeset', 'colorize']
+
 export interface StoreBuildInput {
   runId: string
   niche: string
@@ -261,11 +273,15 @@ export async function generateBrief(input: StoreBuildInput): Promise<{
     ...(input.siteStructure ? { site_structuur: input.siteStructure } : {}),
   }
 
+  input.onLog?.(`[skills] store-builder + ${STORE_BUILDER_EXTRA_SKILLS.join(' + ')}`)
+
   const result = await runAgent({
     runId: input.runId,
     stage: 'store-build',
     agentName: 'store-builder',
     skillName: 'store-builder',
+    // Design-skills die de agent nodig heeft voor zijn ontwerp-beslissingen.
+    extraSkills: STORE_BUILDER_EXTRA_SKILLS,
     model: process.env.LLM_MODEL_STORE ?? 'deepseek-reasoner',
     input: {
       ...baseInput,
